@@ -1,0 +1,103 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-bg: #000;
+  --color-s1: #060809;
+  --color-s2: #0d0f10;
+  --color-s3: #141617;
+  --color-s4: #1b1d1f;
+  --color-s5: #222426;
+  --color-brd: #151718;
+  --color-brd2: #1e2022;
+  --color-t1: #eef0f2;
+  --color-t2: #a0a4a8;
+  --color-t3: #686c70;
+  --color-t4: #3e4245;
+  --color-acc: rgb(80, 210, 193);
+  --color-acc2: rgba(80, 210, 193, 0.10);
+  --color-acc3: rgba(80, 210, 193, 0.25);
+  --color-grn: #22c55e;
+  --color-grn2: rgba(34, 197, 94, 0.08);
+  --color-red: #ef4444;
+  --color-red2: rgba(239, 68, 68, 0.08);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-t1);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 12px;
+  overflow: hidden;
+  height: 100vh;
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-brd2); border-radius: 2px; }
+
+/* Animations */
+@keyframes nIn {
+  from { opacity: 0; transform: translateX(30px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes nOut {
+  to { opacity: 0; transform: translateX(30px); }
+}
+@keyframes pdot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Tabular nums utility */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Range slider */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 3px;
+  background: var(--color-s4);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: var(--color-acc);
+  cursor: pointer;
+  border: 2px solid #000;
+}
+
+/* Mobile overrides */
+@media (max-width: 767px) {
+  body {
+    overflow-y: auto;
+    height: auto;
+  }
+  input[type="range"] {
+    height: 6px;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    width: 20px;
+    height: 20px;
+  }
+}

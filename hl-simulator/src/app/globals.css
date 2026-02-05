@@ -1,0 +1,117 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #000;
+  --s1: #060809;
+  --s2: #0d0f10;
+  --s3: #141617;
+  --s4: #1b1d1f;
+  --s5: #222426;
+  --brd: #151718;
+  --brd2: #1e2022;
+  --t1: #eef0f2;
+  --t2: #a0a4a8;
+  --t3: #686c70;
+  --t4: #3e4245;
+  --acc: rgb(80, 210, 193);
+  --acc2: rgba(80, 210, 193, 0.1);
+  --acc3: rgba(80, 210, 193, 0.25);
+  --grn: #22c55e;
+  --grn2: rgba(34, 197, 94, 0.08);
+  --red: #ef4444;
+  --red2: rgba(239, 68, 68, 0.08);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--bg);
+  color: var(--t1);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 12px;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--brd2);
+  border-radius: 2px;
+}
+
+/* Form inputs */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* Range slider */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--s4);
+  border-radius: 2px;
+  cursor: pointer;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--acc);
+  cursor: pointer;
+  border: 2px solid #000;
+}
+
+/* Animations */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+@keyframes slide-in {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slide-out {
+  to { opacity: 0; transform: translateX(20px); }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.animate-pulse-dot {
+  animation: pulse-dot 2s infinite;
+}
+
+.animate-slide-in {
+  animation: slide-in 0.25s ease-out;
+}
+
+.animate-spin {
+  animation: spin 0.7s linear infinite;
+}
+
+/* Utilities */
+.font-tabular {
+  font-variant-numeric: tabular-nums;
+}

@@ -6,7 +6,7 @@ interface FooterProps {
   isConnected?: boolean;
 }
 
-export function Footer({ isConnected = true }: FooterProps) {
+export function Footer({ isConnected = false }: FooterProps) {
   return (
     <footer className="fixed bottom-0 left-0 right-0 h-[28px] flex items-center justify-between px-4 bg-bg border-t border-brd text-[11px] text-t3 z-40">
       {/* Left side - connection status */}

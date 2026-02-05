@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
 import { CoinInfoBar } from "@/components/CoinInfoBar";
-import { Chart } from "@/components/Chart";
+import { TradingViewChart } from "@/components/TradingViewChart";
 import { OrderForm } from "@/components/OrderForm";
 import { OrderBook } from "@/components/OrderBook";
 import { BottomTabsPanel } from "@/components/BottomTabsPanel";
@@ -131,56 +131,48 @@ export default function TradePage() {
         decimals={decimals}
       />
 
-      {/* Main Layout: 3-column Hyperliquid grid */}
-      {/* Desktop: [chart | orderbook(280px) | orderform(300px)] over [bottom-panel(200px)] */}
-      <div className="flex-1 flex flex-col md:grid md:grid-cols-[1fr_280px_300px] md:grid-rows-[1fr_200px] min-h-0 overflow-hidden">
+      {/* Main Layout: 2-column Hyperliquid grid */}
+      {/* Desktop: [chart | right-sidebar(300px)] over [bottom-panel(200px)] */}
+      <div className="flex-1 flex flex-col md:grid md:grid-cols-[1fr_300px] md:grid-rows-[1fr_200px] min-h-0 overflow-hidden">
         {/* Chart area - spans row 1, col 1 */}
         <div className="h-[40vh] md:h-auto md:row-span-1 md:col-span-1 min-h-0 overflow-hidden">
-          <Chart
-            candles={candles}
-            currentPrice={price}
-            entryPrice={currentPosition?.entry_price}
-            liquidationPrice={currentPosition?.liquidation_price}
-            coin={coin}
-            timeframe={timeframe}
-            onTimeframeChange={setTimeframe}
-            isLoading={isLoading}
-            status={status}
-          />
+          <TradingViewChart coin={coin} />
         </div>
 
-        {/* Order Book - middle column (280px), spans both rows */}
-        <div className="hidden md:flex md:row-span-2 md:col-start-2 flex-col border-l border-brd overflow-hidden bg-s1">
-          <div className="flex items-center justify-between px-2.5 py-2 border-b border-brd">
-            <span className="text-[11px] font-medium text-t1">Order Book</span>
-            <div className="flex items-center gap-1">
-              {/* Precision selector */}
-              <select className="bg-s2 border border-brd rounded px-1.5 py-0.5 text-[10px] text-t2 outline-none">
-                <option>0.01</option>
-                <option>0.1</option>
-                <option>1</option>
-                <option>10</option>
-              </select>
-            </div>
-          </div>
-          <div className="flex-1 overflow-hidden">
-            <OrderBook
-              asks={asks}
-              bids={bids}
-              midPrice={price}
-              decimals={decimals}
+        {/* Right Sidebar (300px) - OrderForm on top, OrderBook below */}
+        <div className="md:row-span-2 md:col-start-2 flex flex-col border-l border-brd overflow-hidden bg-s1">
+          {/* Order Form - fixed height at top */}
+          <div className="flex-shrink-0 border-b border-brd">
+            <OrderForm
+              coin={coin}
+              price={price}
+              availableBalance={getAvailableBalance()}
+              onPlaceOrder={handlePlaceOrder}
             />
           </div>
-        </div>
 
-        {/* Order Form - right column (300px), spans both rows */}
-        <div className="md:row-span-2 md:col-start-3 flex flex-col border-l border-brd overflow-y-auto bg-s1">
-          <OrderForm
-            coin={coin}
-            price={price}
-            availableBalance={getAvailableBalance()}
-            onPlaceOrder={handlePlaceOrder}
-          />
+          {/* Order Book - takes remaining space, scrollable */}
+          <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between px-2.5 py-2 border-b border-brd flex-shrink-0">
+              <span className="text-[11px] font-medium text-t1">Order Book</span>
+              <div className="flex items-center gap-1">
+                <select className="bg-s2 border border-brd rounded px-1.5 py-0.5 text-[10px] text-t2 outline-none">
+                  <option>0.01</option>
+                  <option>0.1</option>
+                  <option>1</option>
+                  <option>10</option>
+                </select>
+              </div>
+            </div>
+            <div className="flex-1 overflow-y-auto">
+              <OrderBook
+                asks={asks}
+                bids={bids}
+                midPrice={price}
+                decimals={decimals}
+              />
+            </div>
+          </div>
         </div>
 
         {/* Bottom Panel (200px fixed height, spans chart column only) */}

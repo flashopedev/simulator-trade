@@ -14,34 +14,31 @@ interface RecentTradesProps {
 
 export function RecentTrades({ trades, decimals }: RecentTradesProps) {
   return (
-    <div className="border-b border-brd max-h-[110px] overflow-hidden flex-shrink-0">
-      <div className="px-2 py-1 text-[10px] font-semibold text-t3">
-        Recent Trades
-      </div>
-
-      <div className="grid grid-cols-3 px-2 pb-1 text-[8px] text-t4 font-medium">
+    <div className="flex flex-col h-full">
+      {/* Headers */}
+      <div className="grid grid-cols-3 px-2.5 py-1.5 text-[9px] text-t3 font-medium uppercase tracking-wide border-b border-brd">
         <span>Price</span>
-        <span className="text-center">Size</span>
+        <span className="text-right">Size</span>
         <span className="text-right">Time</span>
       </div>
 
-      <div className="overflow-hidden">
+      <div className="overflow-y-auto flex-1">
         {trades.map((trade, i) => (
           <div
             key={`${trade.time}-${trade.price}-${i}`}
-            className={`grid grid-cols-3 px-2 py-[2px] text-[10px] font-tabular ${
+            className={`grid grid-cols-3 px-2.5 py-[2px] text-[11px] font-tabular ${
               i === 0 ? "trade-flash" : ""
             }`}
           >
             <span className={trade.isBuy ? "text-grn" : "text-red"}>
               {trade.price.toFixed(decimals)}
             </span>
-            <span className="text-center text-t2">{trade.size.toFixed(2)}</span>
-            <span className="text-right text-t4">{trade.time}</span>
+            <span className="text-right text-t2">{trade.size.toFixed(2)}</span>
+            <span className="text-right text-t3">{trade.time}</span>
           </div>
         ))}
         {trades.length === 0 && (
-          <div className="text-center py-4 text-t4 text-[11px]">
+          <div className="text-center py-8 text-t3 text-[11px]">
             Waiting for trades...
           </div>
         )}

@@ -9,24 +9,29 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        bg: "#000",
-        s1: "#060809",
-        s2: "#0d0f10",
-        s3: "#141617",
-        s4: "#1b1d1f",
-        s5: "#222426",
-        brd: "#151718",
-        brd2: "#1e2022",
-        t1: "#eef0f2",
-        t2: "#a0a4a8",
-        t3: "#686c70",
-        t4: "#3e4245",
-        acc: "rgb(80,210,193)",
-        grn: "#22c55e",
-        red: "#ef4444",
+        // Backgrounds (exact Hyperliquid)
+        bg: "#0a0f14",
+        s1: "#0f1419",
+        s2: "#151b21",
+        s3: "#1c2430",
+        s4: "#232d3b",
+        s5: "#2a3544",
+        // Borders
+        brd: "#1a1f2e",
+        brd2: "#2a3544",
+        // Text
+        t1: "#ffffff",
+        t2: "#8a949e",
+        t3: "#6b7280",
+        t4: "#4b5563",
+        // Accent
+        acc: "#00d8c4",
+        grn: "#00c076",
+        red: "#ff4976",
+        blu: "#0066ff",
       },
       fontFamily: {
-        sans: ["-apple-system", "BlinkMacSystemFont", "Segoe UI", "sans-serif"],
+        sans: ["Inter", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "sans-serif"],
       },
     },
   },

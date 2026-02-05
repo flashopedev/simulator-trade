@@ -16,85 +16,72 @@ interface OrderBookProps {
 }
 
 export function OrderBook({ asks, bids, midPrice, decimals }: OrderBookProps) {
-  const prevMidRef = useRef<number | null>(null);
-  const flashClass = useRef<string>("");
-
-  // Detect price direction for mid-price flash
-  useEffect(() => {
-    if (midPrice !== null && prevMidRef.current !== null) {
-      if (midPrice > prevMidRef.current) {
-        flashClass.current = "flash-green";
-      } else if (midPrice < prevMidRef.current) {
-        flashClass.current = "flash-red";
-      }
-    }
-    prevMidRef.current = midPrice;
-  }, [midPrice]);
-
   const maxTotal = Math.max(
     ...asks.map((a) => a.total),
     ...bids.map((b) => b.total),
     1
   );
 
-  return (
-    <div className="flex flex-col overflow-hidden border-b border-brd">
-      <div className="px-2 py-1 text-[10px] font-semibold text-t3">
-        Order Book
-      </div>
+  // Calculate spread
+  const lowestAsk = asks.length > 0 ? asks[asks.length - 1]?.price : null;
+  const highestBid = bids.length > 0 ? bids[0]?.price : null;
+  const spread = lowestAsk && highestBid ? lowestAsk - highestBid : null;
+  const spreadPct = spread && midPrice ? (spread / midPrice) * 100 : null;
 
+  return (
+    <div className="flex flex-col h-full">
       {/* Headers */}
-      <div className="grid grid-cols-3 px-2 pb-1 text-[8px] text-t4 font-medium uppercase tracking-wide">
+      <div className="grid grid-cols-3 px-2.5 py-1.5 text-[9px] text-t3 font-medium uppercase tracking-wide border-b border-brd">
         <span>Price</span>
-        <span className="text-center">Size</span>
+        <span className="text-right">Size</span>
         <span className="text-right">Total</span>
       </div>
 
       {/* Asks */}
-      <div className="flex flex-col justify-end overflow-hidden max-h-[120px] md:max-h-none md:flex-1">
+      <div className="flex flex-col justify-end overflow-hidden flex-1">
         {asks.map((level, i) => (
           <div
             key={`ask-${i}-${level.price}`}
-            className="grid grid-cols-3 px-2 py-[2px] text-[10px] font-medium relative ob-row"
+            className="grid grid-cols-3 px-2.5 py-[2px] text-[11px] font-medium relative ob-row"
           >
             <span className="text-red font-tabular">
               {level.price.toFixed(decimals)}
             </span>
-            <span className="text-center text-t2 font-tabular">
-              {level.size.toFixed(1)}
+            <span className="text-right text-t2 font-tabular">
+              {level.size.toFixed(2)}
             </span>
-            <span className="text-right text-t4 font-tabular">
+            <span className="text-right text-t3 font-tabular">
               {level.total.toFixed(0)}
             </span>
             <div
-              className="absolute right-0 top-0 bottom-0 bg-red opacity-[0.04]"
+              className="absolute right-0 top-0 bottom-0 bg-red/[0.06]"
               style={{ width: `${(level.total / maxTotal) * 100}%` }}
             />
           </div>
         ))}
       </div>
 
-      {/* Mid price with flash */}
-      <MidPrice midPrice={midPrice} decimals={decimals} />
+      {/* Spread row */}
+      <SpreadRow midPrice={midPrice} decimals={decimals} spread={spread} spreadPct={spreadPct} />
 
       {/* Bids */}
-      <div className="flex flex-col overflow-hidden max-h-[120px] md:max-h-none md:flex-1">
+      <div className="flex flex-col overflow-hidden flex-1">
         {bids.map((level, i) => (
           <div
             key={`bid-${i}-${level.price}`}
-            className="grid grid-cols-3 px-2 py-[2px] text-[10px] font-medium relative ob-row"
+            className="grid grid-cols-3 px-2.5 py-[2px] text-[11px] font-medium relative ob-row"
           >
             <span className="text-grn font-tabular">
               {level.price.toFixed(decimals)}
             </span>
-            <span className="text-center text-t2 font-tabular">
-              {level.size.toFixed(1)}
+            <span className="text-right text-t2 font-tabular">
+              {level.size.toFixed(2)}
             </span>
-            <span className="text-right text-t4 font-tabular">
+            <span className="text-right text-t3 font-tabular">
               {level.total.toFixed(0)}
             </span>
             <div
-              className="absolute right-0 top-0 bottom-0 bg-grn opacity-[0.04]"
+              className="absolute right-0 top-0 bottom-0 bg-grn/[0.06]"
               style={{ width: `${(level.total / maxTotal) * 100}%` }}
             />
           </div>
@@ -104,8 +91,17 @@ export function OrderBook({ asks, bids, midPrice, decimals }: OrderBookProps) {
   );
 }
 
-// Separate component for mid-price to isolate flash animation
-function MidPrice({ midPrice, decimals }: { midPrice: number | null; decimals: number }) {
+function SpreadRow({
+  midPrice,
+  decimals,
+  spread,
+  spreadPct,
+}: {
+  midPrice: number | null;
+  decimals: number;
+  spread: number | null;
+  spreadPct: number | null;
+}) {
   const prevPriceRef = useRef<number | null>(null);
   const flashRef = useRef<HTMLDivElement>(null);
 
@@ -114,29 +110,28 @@ function MidPrice({ midPrice, decimals }: { midPrice: number | null; decimals: n
       prevPriceRef.current = midPrice;
       return;
     }
-
     if (midPrice !== prevPriceRef.current && flashRef.current) {
       const direction = midPrice > prevPriceRef.current ? "green" : "red";
       flashRef.current.classList.remove("mid-flash-green", "mid-flash-red");
-      // Force reflow
       void flashRef.current.offsetWidth;
       flashRef.current.classList.add(`mid-flash-${direction}`);
     }
-
     prevPriceRef.current = midPrice;
   }, [midPrice]);
 
   return (
     <div
       ref={flashRef}
-      className="flex items-center gap-1.5 px-2 py-1 border-y border-brd bg-s1 transition-colors"
+      className="flex items-center justify-between px-2.5 py-1.5 border-y border-brd bg-s2"
     >
-      <span className="text-[13px] font-bold font-tabular">
+      <span className="text-[14px] font-bold font-tabular text-t1">
         {midPrice ? midPrice.toFixed(decimals) : "\u2014"}
       </span>
-      <span className="text-[9px] text-t4">
-        {"\u2248"} ${midPrice ? midPrice.toFixed(decimals) : "\u2014"}
-      </span>
+      {spread !== null && (
+        <span className="text-[10px] text-t3 font-tabular">
+          Spread {spread.toFixed(decimals)} ({spreadPct?.toFixed(3)}%)
+        </span>
+      )}
     </div>
   );
 }

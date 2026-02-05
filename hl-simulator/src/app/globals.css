@@ -3,25 +3,22 @@
 @tailwind utilities;
 
 :root {
-  --bg: #000;
-  --s1: #060809;
-  --s2: #0d0f10;
-  --s3: #141617;
-  --s4: #1b1d1f;
-  --s5: #222426;
-  --brd: #151718;
-  --brd2: #1e2022;
-  --t1: #eef0f2;
-  --t2: #a0a4a8;
-  --t3: #686c70;
-  --t4: #3e4245;
-  --acc: rgb(80, 210, 193);
-  --acc2: rgba(80, 210, 193, 0.1);
-  --acc3: rgba(80, 210, 193, 0.25);
-  --grn: #22c55e;
-  --grn2: rgba(34, 197, 94, 0.08);
-  --red: #ef4444;
-  --red2: rgba(239, 68, 68, 0.08);
+  --bg: #0a0f14;
+  --s1: #0f1419;
+  --s2: #151b21;
+  --s3: #1c2430;
+  --s4: #232d3b;
+  --s5: #2a3544;
+  --brd: #1a1f2e;
+  --brd2: #2a3544;
+  --t1: #ffffff;
+  --t2: #8a949e;
+  --t3: #6b7280;
+  --t4: #4b5563;
+  --acc: #00d8c4;
+  --grn: #00c076;
+  --red: #ff4976;
+  --blu: #0066ff;
 }
 
 * {
@@ -33,8 +30,8 @@
 body {
   background: var(--bg);
   color: var(--t1);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  font-size: 12px;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 13px;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
 }
@@ -72,12 +69,12 @@ input[type="range"] {
 }
 input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
   background: var(--acc);
   cursor: pointer;
-  border: 2px solid #000;
+  border: 2px solid var(--bg);
 }
 
 /* Animations */
@@ -113,17 +110,17 @@ input[type="range"]::-webkit-slider-thumb {
 
 /* Flash animations for price updates */
 @keyframes flash-green {
-  0% { background-color: rgba(34, 197, 94, 0.15); }
+  0% { background-color: rgba(0, 192, 118, 0.15); }
   100% { background-color: transparent; }
 }
 
 @keyframes flash-red {
-  0% { background-color: rgba(239, 68, 68, 0.15); }
+  0% { background-color: rgba(255, 73, 118, 0.15); }
   100% { background-color: transparent; }
 }
 
 @keyframes trade-flash-in {
-  0% { background-color: rgba(80, 210, 193, 0.12); }
+  0% { background-color: rgba(0, 216, 196, 0.1); }
   100% { background-color: transparent; }
 }
 

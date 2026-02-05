@@ -2,12 +2,11 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Navigation } from "@/components/Navigation";
-import { CoinSelector } from "@/components/CoinSelector";
+import { CoinInfoBar } from "@/components/CoinInfoBar";
 import { Chart } from "@/components/Chart";
-import { OrderBook } from "@/components/OrderBook";
-import { RecentTrades } from "@/components/RecentTrades";
 import { OrderForm } from "@/components/OrderForm";
-import { Positions } from "@/components/Positions";
+import { OrderBookTabs } from "@/components/OrderBookTabs";
+import { BottomTabsPanel } from "@/components/BottomTabsPanel";
 import { AuthForm } from "@/components/AuthForm";
 import { NotificationContainer } from "@/components/Notification";
 import { useAuth } from "@/hooks/useAuth";
@@ -25,6 +24,7 @@ export default function TradePage() {
   const {
     positions,
     history,
+    orders,
     placeOrder,
     closePosition,
     checkLiquidations,
@@ -52,36 +52,25 @@ export default function TradePage() {
 
   const decimals = COIN_DECIMALS[coin] || 2;
 
-  // Merge allPrices from useMarketData — this now tracks ALL coins automatically
+  // Merge all prices
   const [prices, setPrices] = useState<Record<string, number>>({});
 
   useEffect(() => {
-    // Merge allPrices from WS/polling (all coins) + current coin price
     const merged: Record<string, number> = { ...allPrices };
-    if (price) {
-      merged[coin] = price;
-    }
+    if (price) merged[coin] = price;
     setPrices((prev) => {
-      // Only update if something actually changed
-      const hasChanges = Object.keys(merged).some(
-        (k) => prev[k] !== merged[k]
-      );
-      if (!hasChanges && Object.keys(prev).length === Object.keys(merged).length) {
-        return prev;
-      }
+      const hasChanges = Object.keys(merged).some((k) => prev[k] !== merged[k]);
+      if (!hasChanges && Object.keys(prev).length === Object.keys(merged).length) return prev;
       return { ...prev, ...merged };
     });
   }, [allPrices, price, coin]);
 
-  // Check liquidations every 5 seconds with fresh prices
+  // Check liquidations every 5 seconds
   useEffect(() => {
-    const timer = setInterval(() => {
-      checkLiquidations(prices);
-    }, 5000);
+    const timer = setInterval(() => checkLiquidations(prices), 5000);
     return () => clearInterval(timer);
   }, [checkLiquidations, prices]);
 
-  // Get current position for selected coin
   const currentPosition = positions.find((p) => p.coin === coin);
 
   const handlePlaceOrder = useCallback(
@@ -99,14 +88,14 @@ export default function TradePage() {
   );
 
   const handleClosePosition = useCallback(
-    async (position: Position) => {
+    async (position: Position, size?: number) => {
       const currentPrice = prices[position.coin] || position.entry_price;
       await closePosition(position, currentPrice);
     },
     [closePosition, prices]
   );
 
-  // Show loading
+  // Auth loading
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-bg">
@@ -115,7 +104,6 @@ export default function TradePage() {
     );
   }
 
-  // Show auth form if not logged in
   if (!user) {
     return <AuthForm />;
   }
@@ -123,9 +111,10 @@ export default function TradePage() {
   const totalEquity = getTotalEquity(prices);
 
   return (
-    <div className="min-h-screen flex flex-col bg-bg">
+    <div className="h-screen flex flex-col bg-bg overflow-hidden">
       <NotificationContainer />
 
+      {/* Header */}
       <Navigation
         balance={totalEquity}
         isConnected={isConnected}
@@ -133,17 +122,19 @@ export default function TradePage() {
         onSignOut={signOut}
       />
 
-      <CoinSelector
+      {/* Coin Info Bar */}
+      <CoinInfoBar
         selectedCoin={coin}
         onSelectCoin={setCoin}
         stats={stats}
         decimals={decimals}
       />
 
-      {/* Main grid */}
-      <div className="flex-1 grid grid-cols-1 md:grid-cols-[1fr_234px] grid-rows-[1fr_auto] md:grid-rows-[1fr_148px] overflow-hidden">
-        {/* Chart */}
-        <div className="h-[50vh] md:h-auto min-h-[280px] md:min-h-0 md:row-span-1">
+      {/* Main Layout: Hyperliquid grid */}
+      {/* Desktop: [chart | right-sidebar(280px)] over [bottom-panel(200px, full width)] */}
+      <div className="flex-1 flex flex-col md:grid md:grid-cols-[1fr_280px] md:grid-rows-[1fr_200px] min-h-0 overflow-hidden">
+        {/* Chart area */}
+        <div className="h-[45vh] md:h-auto md:row-span-1 md:col-span-1 min-h-0 overflow-hidden">
           <Chart
             candles={candles}
             currentPrice={price}
@@ -157,33 +148,34 @@ export default function TradePage() {
           />
         </div>
 
-        {/* Right panel */}
-        <div className="flex flex-col md:row-span-2 overflow-y-auto">
-          <div className="flex-1 flex flex-col min-h-0">
-            <OrderBook
-              asks={asks}
-              bids={bids}
-              midPrice={price}
-              decimals={decimals}
-            />
-          </div>
-
-          <RecentTrades trades={trades} decimals={decimals} />
-
+        {/* Right Sidebar: Order Form + Order Book/Trades (280px) */}
+        <div className="md:row-span-2 md:col-start-2 flex flex-col border-l border-brd overflow-y-auto bg-s1">
+          {/* Order Form */}
           <OrderForm
             coin={coin}
             price={price}
             availableBalance={getAvailableBalance()}
             onPlaceOrder={handlePlaceOrder}
           />
+
+          {/* Order Book / Trades tabs */}
+          <OrderBookTabs
+            asks={asks}
+            bids={bids}
+            midPrice={price}
+            trades={trades}
+            decimals={decimals}
+          />
         </div>
 
-        {/* Positions (bottom on desktop, inline on mobile) */}
-        <div className="min-h-[148px] md:col-span-1 md:row-start-2">
-          <Positions
+        {/* Bottom Panel (200px fixed height, full width) */}
+        <div className="h-[200px] md:h-auto md:col-span-1 md:row-start-2 border-t border-brd overflow-hidden">
+          <BottomTabsPanel
             positions={positions}
             history={history}
+            orders={orders}
             currentPrices={prices}
+            balance={account?.balance ?? 10000}
             onClosePosition={handleClosePosition}
           />
         </div>

@@ -221,10 +221,10 @@ export function useMarketData(coin: SupportedCoin, timeframe: Timeframe) {
     };
 
     ws.on("connected", handleConnected as (data: unknown) => void);
-    ws.on("allMids", handleAllMids);
-    ws.on("trades", handleTrades);
-    ws.on("l2Book", handleL2Book);
-    ws.on("candle", handleCandle);
+    ws.on("allMids", handleAllMids as (data: unknown) => void);
+    ws.on("trades", handleTrades as (data: unknown) => void);
+    ws.on("l2Book", handleL2Book as (data: unknown) => void);
+    ws.on("candle", handleCandle as (data: unknown) => void);
 
     // Connect and subscribe
     ws.connect();
@@ -235,10 +235,10 @@ export function useMarketData(coin: SupportedCoin, timeframe: Timeframe) {
 
     return () => {
       ws.off("connected", handleConnected as (data: unknown) => void);
-      ws.off("allMids", handleAllMids);
-      ws.off("trades", handleTrades);
-      ws.off("l2Book", handleL2Book);
-      ws.off("candle", handleCandle);
+      ws.off("allMids", handleAllMids as (data: unknown) => void);
+      ws.off("trades", handleTrades as (data: unknown) => void);
+      ws.off("l2Book", handleL2Book as (data: unknown) => void);
+      ws.off("candle", handleCandle as (data: unknown) => void);
 
       ws.unsubscribe({ type: "trades", coin });
       ws.unsubscribe({ type: "l2Book", coin });

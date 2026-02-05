@@ -83,3 +83,10 @@ export type SupportedCoin = (typeof SUPPORTED_COINS)[number];
 
 export const TIMEFRAMES = ["1m", "5m", "15m", "1h", "4h", "1d"] as const;
 export type Timeframe = (typeof TIMEFRAMES)[number];
+
+export const FALLBACK_PRICES: Record<string, number> = {
+  HYPE: 21.5,
+  BTC: 98000,
+  ETH: 3200,
+  SOL: 180,
+};

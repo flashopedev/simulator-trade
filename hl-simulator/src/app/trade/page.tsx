@@ -2,10 +2,11 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Navigation } from "@/components/Navigation";
+import { Footer } from "@/components/Footer";
 import { CoinInfoBar } from "@/components/CoinInfoBar";
 import { Chart } from "@/components/Chart";
 import { OrderForm } from "@/components/OrderForm";
-import { OrderBookTabs } from "@/components/OrderBookTabs";
+import { OrderBook } from "@/components/OrderBook";
 import { BottomTabsPanel } from "@/components/BottomTabsPanel";
 import { AuthForm } from "@/components/AuthForm";
 import { NotificationContainer } from "@/components/Notification";
@@ -130,11 +131,11 @@ export default function TradePage() {
         decimals={decimals}
       />
 
-      {/* Main Layout: Hyperliquid grid */}
-      {/* Desktop: [chart | right-sidebar(280px)] over [bottom-panel(200px, full width)] */}
-      <div className="flex-1 flex flex-col md:grid md:grid-cols-[1fr_280px] md:grid-rows-[1fr_200px] min-h-0 overflow-hidden">
-        {/* Chart area */}
-        <div className="h-[45vh] md:h-auto md:row-span-1 md:col-span-1 min-h-0 overflow-hidden">
+      {/* Main Layout: 3-column Hyperliquid grid */}
+      {/* Desktop: [chart | orderbook(280px) | orderform(300px)] over [bottom-panel(200px)] */}
+      <div className="flex-1 flex flex-col md:grid md:grid-cols-[1fr_280px_300px] md:grid-rows-[1fr_200px] min-h-0 overflow-hidden">
+        {/* Chart area - spans row 1, col 1 */}
+        <div className="h-[40vh] md:h-auto md:row-span-1 md:col-span-1 min-h-0 overflow-hidden">
           <Chart
             candles={candles}
             currentPrice={price}
@@ -148,27 +149,41 @@ export default function TradePage() {
           />
         </div>
 
-        {/* Right Sidebar: Order Form + Order Book/Trades (280px) */}
-        <div className="md:row-span-2 md:col-start-2 flex flex-col border-l border-brd overflow-y-auto bg-s1">
-          {/* Order Form */}
+        {/* Order Book - middle column (280px), spans both rows */}
+        <div className="hidden md:flex md:row-span-2 md:col-start-2 flex-col border-l border-brd overflow-hidden bg-s1">
+          <div className="flex items-center justify-between px-2.5 py-2 border-b border-brd">
+            <span className="text-[11px] font-medium text-t1">Order Book</span>
+            <div className="flex items-center gap-1">
+              {/* Precision selector */}
+              <select className="bg-s2 border border-brd rounded px-1.5 py-0.5 text-[10px] text-t2 outline-none">
+                <option>0.01</option>
+                <option>0.1</option>
+                <option>1</option>
+                <option>10</option>
+              </select>
+            </div>
+          </div>
+          <div className="flex-1 overflow-hidden">
+            <OrderBook
+              asks={asks}
+              bids={bids}
+              midPrice={price}
+              decimals={decimals}
+            />
+          </div>
+        </div>
+
+        {/* Order Form - right column (300px), spans both rows */}
+        <div className="md:row-span-2 md:col-start-3 flex flex-col border-l border-brd overflow-y-auto bg-s1">
           <OrderForm
             coin={coin}
             price={price}
             availableBalance={getAvailableBalance()}
             onPlaceOrder={handlePlaceOrder}
           />
-
-          {/* Order Book / Trades tabs */}
-          <OrderBookTabs
-            asks={asks}
-            bids={bids}
-            midPrice={price}
-            trades={trades}
-            decimals={decimals}
-          />
         </div>
 
-        {/* Bottom Panel (200px fixed height, full width) */}
+        {/* Bottom Panel (200px fixed height, spans chart column only) */}
         <div className="h-[200px] md:h-auto md:col-span-1 md:row-start-2 border-t border-brd overflow-hidden">
           <BottomTabsPanel
             positions={positions}
@@ -180,6 +195,9 @@ export default function TradePage() {
           />
         </div>
       </div>
+
+      {/* Footer */}
+      <Footer isConnected={isConnected} />
 
       {/* Mobile bottom nav spacer */}
       <div className="h-12 md:hidden" />

@@ -4,7 +4,16 @@ import { useState } from "react";
 import { cn, formatPnl, formatNumber, calculatePnl, calculateRoe, COIN_DECIMALS } from "@/lib/utils";
 import type { Position, TradeHistory, OrderHistory } from "@/lib/supabase/types";
 
-type BottomTab = "positions" | "orders" | "history" | "balances";
+type BottomTab =
+  | "positions"
+  | "orders"
+  | "twap"
+  | "tp-sl"
+  | "history"
+  | "funding"
+  | "transfers"
+  | "balances"
+  | "vaults";
 
 interface BottomTabsPanelProps {
   positions: Position[];
@@ -27,11 +36,16 @@ export function BottomTabsPanel({
   const [closeModal, setCloseModal] = useState<Position | null>(null);
   const [closeSize, setCloseSize] = useState("");
 
-  const tabs: { key: BottomTab; label: string; count?: number }[] = [
-    { key: "balances", label: "Balances" },
+  const tabs: { key: BottomTab; label: string; count?: number; disabled?: boolean }[] = [
     { key: "positions", label: "Positions", count: positions.length },
-    { key: "orders", label: "Open Orders", count: orders?.length || 0 },
+    { key: "orders", label: "Open Orders", count: orders?.filter(o => o.status === "pending").length || 0 },
+    { key: "twap", label: "TWAP", disabled: true },
+    { key: "tp-sl", label: "TP/SL", disabled: true },
     { key: "history", label: "Trade History" },
+    { key: "funding", label: "Funding History", disabled: true },
+    { key: "transfers", label: "Transfers", disabled: true },
+    { key: "balances", label: "Balances" },
+    { key: "vaults", label: "Vaults", disabled: true },
   ];
 
   const handleClose = (p: Position) => {
@@ -50,20 +64,23 @@ export function BottomTabsPanel({
   return (
     <div className="h-full flex flex-col bg-s1 border-t border-brd">
       {/* Tabs */}
-      <div className="flex items-center gap-1 px-3 border-b border-brd overflow-x-auto flex-shrink-0">
+      <div className="flex items-center gap-1 px-3 border-b border-brd overflow-x-auto flex-shrink-0 scrollbar-hide">
         {tabs.map((tab) => (
           <button
             key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
+            onClick={() => !tab.disabled && setActiveTab(tab.key)}
+            disabled={tab.disabled}
             className={cn(
               "px-2.5 py-2 text-[11px] font-medium border-b-2 whitespace-nowrap transition-colors",
-              activeTab === tab.key
-                ? "text-t1 border-acc"
-                : "text-t3 border-transparent hover:text-t2"
+              tab.disabled
+                ? "text-t4 border-transparent cursor-not-allowed"
+                : activeTab === tab.key
+                  ? "text-t1 border-acc"
+                  : "text-t3 border-transparent hover:text-t2"
             )}
           >
             {tab.label}
-            {tab.count !== undefined && tab.count > 0 && (
+            {tab.count !== undefined && tab.count > 0 && !tab.disabled && (
               <span className="ml-1 text-[9px] text-acc">({tab.count})</span>
             )}
           </button>
@@ -87,6 +104,9 @@ export function BottomTabsPanel({
         )}
         {activeTab === "history" && (
           <HistoryContent history={history} />
+        )}
+        {(activeTab === "twap" || activeTab === "tp-sl" || activeTab === "funding" || activeTab === "transfers" || activeTab === "vaults") && (
+          <DisabledTabContent tabName={tabs.find(t => t.key === activeTab)?.label || ""} />
         )}
       </div>
 
@@ -141,6 +161,14 @@ export function BottomTabsPanel({
 }
 
 /* --- Sub-components --- */
+
+function DisabledTabContent({ tabName }: { tabName: string }) {
+  return (
+    <div className="text-center py-8 text-t3 text-[11px]">
+      {tabName} - Coming soon (simulation mode)
+    </div>
+  );
+}
 
 function BalancesContent({ balance }: { balance: number }) {
   return (
@@ -241,7 +269,9 @@ function PositionsContent({
 }
 
 function OrdersContent({ orders }: { orders: OrderHistory[] }) {
-  if (!orders || orders.length === 0) {
+  const pendingOrders = orders?.filter(o => o.status === "pending") || [];
+
+  if (pendingOrders.length === 0) {
     return (
       <div className="text-center py-8 text-t3 text-[11px]">No open orders yet</div>
     );
@@ -262,7 +292,7 @@ function OrdersContent({ orders }: { orders: OrderHistory[] }) {
           </tr>
         </thead>
         <tbody>
-          {orders.filter(o => o.status === "pending").map((o) => (
+          {pendingOrders.map((o) => (
             <tr key={o.id} className="border-t border-brd">
               <td className="py-2 text-t3">{new Date(o.created_at).toLocaleTimeString()}</td>
               <td className="py-2">{o.order_type}</td>

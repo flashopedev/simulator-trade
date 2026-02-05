@@ -108,6 +108,15 @@ export async function fetchL2Book(coin: string): Promise<L2Book | null> {
   }
 }
 
+// Fetch all mid-market prices via REST (polling fallback)
+export async function fetchAllMids(): Promise<Record<string, string> | null> {
+  try {
+    return await apiPost<Record<string, string>>({ type: "allMids" }, 5000);
+  } catch {
+    return null;
+  }
+}
+
 function generateFakeCandles(coin: string, count: number): Candle[] {
   const base = FALLBACK_PRICES[coin] || 20;
   const candles: Candle[] = [];
@@ -166,38 +175,54 @@ export function generateFakeOrderBook(price: number, decimals: number) {
   return { asks: asks.reverse(), bids };
 }
 
-// WebSocket management
+// WebSocket with exponential backoff reconnection + heartbeat
 type WsCallback = (data: unknown) => void;
+
+const MAX_RECONNECT_ATTEMPTS = 5;
+const BASE_RECONNECT_DELAY = 1000;
+const HEARTBEAT_INTERVAL = 30000;
 
 export class HyperliquidWebSocket {
   private ws: WebSocket | null = null;
   private callbacks: Map<string, WsCallback[]> = new Map();
   private reconnectTimer: NodeJS.Timeout | null = null;
+  private heartbeatTimer: NodeJS.Timeout | null = null;
   private subscriptions: Set<string> = new Set();
+  private reconnectAttempts = 0;
+  private intentionalClose = false;
 
   connect() {
+    this.intentionalClose = false;
+
     try {
       this.ws = new WebSocket(WS_URL);
 
       this.ws.onopen = () => {
-        console.log("WebSocket connected");
+        console.log("[WS] Connected");
+        this.reconnectAttempts = 0;
         this.resubscribe();
+        this.startHeartbeat();
         this.emit("connected", true);
       };
 
       this.ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          this.emit(data.channel, data);
+          if (data.channel) {
+            this.emit(data.channel, data);
+          }
         } catch {
           // Ignore parse errors
         }
       };
 
       this.ws.onclose = () => {
-        console.log("WebSocket disconnected");
+        console.log("[WS] Disconnected");
+        this.stopHeartbeat();
         this.emit("connected", false);
-        this.scheduleReconnect();
+        if (!this.intentionalClose) {
+          this.scheduleReconnect();
+        }
       };
 
       this.ws.onerror = () => {
@@ -210,15 +235,42 @@ export class HyperliquidWebSocket {
 
   private scheduleReconnect() {
     if (this.reconnectTimer) return;
+    if (this.reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+      console.log("[WS] Max reconnect attempts reached — switching to polling");
+      this.emit("maxReconnectFailed", true);
+      return;
+    }
+
+    const delay = BASE_RECONNECT_DELAY * Math.pow(2, this.reconnectAttempts);
+    this.reconnectAttempts++;
+    console.log(`[WS] Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})`);
+
     this.reconnectTimer = setTimeout(() => {
       this.reconnectTimer = null;
       this.connect();
-    }, 4000);
+    }, delay);
+  }
+
+  private startHeartbeat() {
+    this.stopHeartbeat();
+    this.heartbeatTimer = setInterval(() => {
+      if (this.ws?.readyState === WebSocket.OPEN) {
+        this.send({ method: "ping" });
+      }
+    }, HEARTBEAT_INTERVAL);
+  }
+
+  private stopHeartbeat() {
+    if (this.heartbeatTimer) {
+      clearInterval(this.heartbeatTimer);
+      this.heartbeatTimer = null;
+    }
   }
 
   private resubscribe() {
     this.subscriptions.forEach((sub) => {
-      this.send(JSON.parse(sub));
+      const subscription = JSON.parse(sub);
+      this.send({ method: "subscribe", subscription });
     });
   }
 
@@ -267,7 +319,17 @@ export class HyperliquidWebSocket {
     this.callbacks.get(channel)?.forEach((cb) => cb(data));
   }
 
+  get connected(): boolean {
+    return this.ws?.readyState === WebSocket.OPEN;
+  }
+
+  resetReconnect() {
+    this.reconnectAttempts = 0;
+  }
+
   disconnect() {
+    this.intentionalClose = true;
+    this.stopHeartbeat();
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;
@@ -277,7 +339,7 @@ export class HyperliquidWebSocket {
   }
 }
 
-// Singleton instance
+// Singleton
 let wsInstance: HyperliquidWebSocket | null = null;
 
 export function getWebSocket(): HyperliquidWebSocket {

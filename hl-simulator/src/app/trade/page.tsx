@@ -39,27 +39,41 @@ export default function TradePage() {
   const {
     candles,
     price,
+    allPrices,
     asks,
     bids,
     trades,
     isConnected,
     isLoading,
+    connectionMode,
     status,
     stats,
   } = useMarketData(coin, timeframe);
 
   const decimals = COIN_DECIMALS[coin] || 2;
 
-  // Track prices for all coins
+  // Merge allPrices from useMarketData — this now tracks ALL coins automatically
   const [prices, setPrices] = useState<Record<string, number>>({});
 
   useEffect(() => {
+    // Merge allPrices from WS/polling (all coins) + current coin price
+    const merged: Record<string, number> = { ...allPrices };
     if (price) {
-      setPrices((prev) => ({ ...prev, [coin]: price }));
+      merged[coin] = price;
     }
-  }, [coin, price]);
+    setPrices((prev) => {
+      // Only update if something actually changed
+      const hasChanges = Object.keys(merged).some(
+        (k) => prev[k] !== merged[k]
+      );
+      if (!hasChanges && Object.keys(prev).length === Object.keys(merged).length) {
+        return prev;
+      }
+      return { ...prev, ...merged };
+    });
+  }, [allPrices, price, coin]);
 
-  // Check liquidations periodically
+  // Check liquidations every 5 seconds with fresh prices
   useEffect(() => {
     const timer = setInterval(() => {
       checkLiquidations(prices);
@@ -115,6 +129,7 @@ export default function TradePage() {
       <Navigation
         balance={totalEquity}
         isConnected={isConnected}
+        connectionMode={connectionMode}
         onSignOut={signOut}
       />
 

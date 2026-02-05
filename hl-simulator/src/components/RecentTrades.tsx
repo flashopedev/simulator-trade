@@ -28,8 +28,10 @@ export function RecentTrades({ trades, decimals }: RecentTradesProps) {
       <div className="overflow-hidden">
         {trades.map((trade, i) => (
           <div
-            key={i}
-            className="grid grid-cols-3 px-2 py-[2px] text-[10px] font-tabular"
+            key={`${trade.time}-${trade.price}-${i}`}
+            className={`grid grid-cols-3 px-2 py-[2px] text-[10px] font-tabular ${
+              i === 0 ? "trade-flash" : ""
+            }`}
           >
             <span className={trade.isBuy ? "text-grn" : "text-red"}>
               {trade.price.toFixed(decimals)}

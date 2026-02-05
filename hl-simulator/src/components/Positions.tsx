@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
-import { cn, formatNumber, formatPnl, calculatePnl, calculateRoe, COIN_DECIMALS } from "@/lib/utils";
+import { useState, useMemo } from "react";
+import { cn, formatPnl, calculatePnl, calculateRoe, COIN_DECIMALS } from "@/lib/utils";
 import type { Position, TradeHistory } from "@/lib/supabase/types";
 
 interface PositionWithPnl extends Position {
   pnl: number;
   roe: number;
+  markPrice: number;
 }
 
 interface PositionsProps {
@@ -24,12 +25,15 @@ export function Positions({
 }: PositionsProps) {
   const [tab, setTab] = useState<"positions" | "history">("positions");
 
-  const positionsWithPnl: PositionWithPnl[] = positions.map((p) => {
-    const currentPrice = currentPrices[p.coin] || p.entry_price;
-    const pnl = calculatePnl(p.entry_price, currentPrice, p.size, p.side === "Long");
-    const roe = calculateRoe(pnl, p.entry_price, p.size, p.leverage);
-    return { ...p, pnl, roe };
-  });
+  // Recalculate PnL every time currentPrices changes
+  const positionsWithPnl: PositionWithPnl[] = useMemo(() => {
+    return positions.map((p) => {
+      const currentPrice = currentPrices[p.coin] || p.entry_price;
+      const pnl = calculatePnl(p.entry_price, currentPrice, p.size, p.side === "Long");
+      const roe = calculateRoe(pnl, p.entry_price, p.size, p.leverage);
+      return { ...p, pnl, roe, markPrice: currentPrice };
+    });
+  }, [positions, currentPrices]);
 
   return (
     <div className="border-t border-brd flex flex-col overflow-hidden">
@@ -64,7 +68,6 @@ export function Positions({
         {tab === "positions" ? (
           <PositionsTable
             positions={positionsWithPnl}
-            currentPrices={currentPrices}
             onClose={onClosePosition}
           />
         ) : (
@@ -77,11 +80,9 @@ export function Positions({
 
 function PositionsTable({
   positions,
-  currentPrices,
   onClose,
 }: {
   positions: PositionWithPnl[];
-  currentPrices: Record<string, number>;
   onClose: (p: Position) => void;
 }) {
   if (positions.length === 0) {
@@ -107,15 +108,14 @@ function PositionsTable({
         <span></span>
       </div>
 
-      {/* Rows */}
+      {/* Rows — key includes markPrice to force rerender on price changes */}
       {positions.map((p) => {
         const decimals = COIN_DECIMALS[p.coin] || 2;
-        const markPrice = currentPrices[p.coin] || p.entry_price;
 
         return (
           <div
-            key={p.id}
-            className="grid grid-cols-[70px_55px_55px_65px_65px_60px_80px_55px_50px] gap-1 py-1 text-[10px] font-medium hover:bg-s2 min-w-[600px]"
+            key={`${p.id}-${p.markPrice.toFixed(decimals)}`}
+            className="grid grid-cols-[70px_55px_55px_65px_65px_60px_80px_55px_50px] gap-1 py-1 text-[10px] font-medium hover:bg-s2 min-w-[600px] pnl-row"
           >
             <span>{p.coin}-USD</span>
             <span
@@ -128,7 +128,7 @@ function PositionsTable({
             </span>
             <span className="font-tabular">{p.size.toFixed(2)}</span>
             <span className="font-tabular">{p.entry_price.toFixed(decimals)}</span>
-            <span className="font-tabular">{markPrice.toFixed(decimals)}</span>
+            <span className="font-tabular">{p.markPrice.toFixed(decimals)}</span>
             <span className="text-red font-tabular">
               {p.liquidation_price.toFixed(decimals)}
             </span>
@@ -190,7 +190,7 @@ function HistoryTable({ history }: { history: TradeHistory[] }) {
           >
             <span>
               {h.coin}
-              {h.liquidated ? " 💀" : ""}
+              {h.liquidated ? " \uD83D\uDC80" : ""}
             </span>
             <span className={h.side === "Long" ? "text-grn" : "text-red"}>
               {h.leverage}x {h.side}
@@ -198,7 +198,7 @@ function HistoryTable({ history }: { history: TradeHistory[] }) {
             <span className="font-tabular">{h.size.toFixed(2)}</span>
             <span className="font-tabular">{h.entry_price.toFixed(decimals)}</span>
             <span className="font-tabular">{h.exit_price.toFixed(decimals)}</span>
-            <span className="text-red font-tabular">—</span>
+            <span className="text-red font-tabular">{"\u2014"}</span>
             <span
               className={cn("font-semibold font-tabular", h.pnl >= 0 ? "text-grn" : "text-red")}
             >

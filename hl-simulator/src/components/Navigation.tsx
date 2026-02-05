@@ -7,10 +7,11 @@ import { cn, formatNumber } from "@/lib/utils";
 interface NavigationProps {
   balance: number;
   isConnected: boolean;
+  connectionMode?: "ws" | "polling" | "simulation";
   onSignOut?: () => void;
 }
 
-export function Navigation({ balance, isConnected, onSignOut }: NavigationProps) {
+export function Navigation({ balance, isConnected, connectionMode, onSignOut }: NavigationProps) {
   const pathname = usePathname();
 
   const links = [
@@ -18,6 +19,13 @@ export function Navigation({ balance, isConnected, onSignOut }: NavigationProps)
     { href: "/portfolio", label: "Portfolio" },
     { href: "/faucet", label: "Faucet" },
   ];
+
+  const statusLabel =
+    connectionMode === "ws"
+      ? "Live"
+      : connectionMode === "polling"
+      ? "REST"
+      : "Sim";
 
   return (
     <nav className="flex items-center h-[38px] px-2.5 border-b border-brd bg-bg sticky top-0 z-50">
@@ -53,14 +61,21 @@ export function Navigation({ balance, isConnected, onSignOut }: NavigationProps)
 
       {/* Right side */}
       <div className="ml-auto flex items-center gap-1.5">
-        <div
-          className={cn(
-            "w-[7px] h-[7px] rounded-full mr-1",
-            isConnected
-              ? "bg-grn shadow-[0_0_4px] shadow-grn animate-pulse-dot"
-              : "bg-red"
-          )}
-        />
+        {/* Connection indicator */}
+        <div className="flex items-center gap-1 mr-1">
+          <div
+            className={cn(
+              "w-[7px] h-[7px] rounded-full",
+              isConnected
+                ? "bg-grn shadow-[0_0_4px] shadow-grn animate-pulse-dot"
+                : connectionMode === "polling"
+                ? "bg-yellow-500 shadow-[0_0_4px] shadow-yellow-500 animate-pulse-dot"
+                : "bg-red"
+            )}
+          />
+          <span className="text-[9px] text-t4 hidden sm:inline">{statusLabel}</span>
+        </div>
+
         <div className="flex items-center gap-1.5 px-2.5 py-1 bg-s2 border border-brd rounded text-[11px]">
           <span className="text-t3 font-medium hidden sm:inline">Equity:</span>
           <span className="font-bold text-acc font-tabular">

@@ -15,6 +15,7 @@ import {
   COIN_DECIMALS,
   FALLBACK_PRICES,
 } from "@/lib/utils";
+import { fetchAllMids } from "@/lib/hyperliquid";
 import type { Position } from "@/lib/supabase/types";
 
 export default function PortfolioPage() {
@@ -34,19 +35,29 @@ export default function PortfolioPage() {
     onBalanceChange: updateBalance,
   });
 
-  // Simulate price updates (in real app, use WebSocket)
+  // Real price polling via REST API
   useEffect(() => {
-    const timer = setInterval(() => {
-      setPrices((prev) => {
-        const updated = { ...prev };
-        Object.keys(updated).forEach((coin) => {
-          const change = (Math.random() - 0.5) * updated[coin] * 0.001;
-          updated[coin] += change;
-        });
-        return updated;
-      });
-    }, 2000);
-    return () => clearInterval(timer);
+    let active = true;
+    const pollPrices = async () => {
+      try {
+        const mids = await fetchAllMids();
+        if (mids && active) {
+          const updated: Record<string, number> = { ...FALLBACK_PRICES };
+          Object.entries(mids).forEach(([coin, mid]) => {
+            if (mid) updated[coin] = parseFloat(mid);
+          });
+          setPrices(updated);
+        }
+      } catch {
+        // Keep existing prices on error
+      }
+    };
+    pollPrices();
+    const timer = setInterval(pollPrices, 3000);
+    return () => {
+      active = false;
+      clearInterval(timer);
+    };
   }, []);
 
   if (authLoading) {

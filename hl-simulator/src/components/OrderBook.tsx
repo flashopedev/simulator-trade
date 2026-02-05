@@ -1,6 +1,6 @@
 "use client";
 
-import { cn } from "@/lib/utils";
+import { useRef, useEffect } from "react";
 
 interface OrderBookLevel {
   price: number;
@@ -16,6 +16,21 @@ interface OrderBookProps {
 }
 
 export function OrderBook({ asks, bids, midPrice, decimals }: OrderBookProps) {
+  const prevMidRef = useRef<number | null>(null);
+  const flashClass = useRef<string>("");
+
+  // Detect price direction for mid-price flash
+  useEffect(() => {
+    if (midPrice !== null && prevMidRef.current !== null) {
+      if (midPrice > prevMidRef.current) {
+        flashClass.current = "flash-green";
+      } else if (midPrice < prevMidRef.current) {
+        flashClass.current = "flash-red";
+      }
+    }
+    prevMidRef.current = midPrice;
+  }, [midPrice]);
+
   const maxTotal = Math.max(
     ...asks.map((a) => a.total),
     ...bids.map((b) => b.total),
@@ -39,8 +54,8 @@ export function OrderBook({ asks, bids, midPrice, decimals }: OrderBookProps) {
       <div className="flex flex-col justify-end overflow-hidden max-h-[120px] md:max-h-none md:flex-1">
         {asks.map((level, i) => (
           <div
-            key={`ask-${i}`}
-            className="grid grid-cols-3 px-2 py-[2px] text-[10px] font-medium relative"
+            key={`ask-${i}-${level.price}`}
+            className="grid grid-cols-3 px-2 py-[2px] text-[10px] font-medium relative ob-row"
           >
             <span className="text-red font-tabular">
               {level.price.toFixed(decimals)}
@@ -59,22 +74,15 @@ export function OrderBook({ asks, bids, midPrice, decimals }: OrderBookProps) {
         ))}
       </div>
 
-      {/* Mid price */}
-      <div className="flex items-center gap-1.5 px-2 py-1 border-y border-brd bg-s1">
-        <span className="text-[13px] font-bold font-tabular">
-          {midPrice ? midPrice.toFixed(decimals) : "—"}
-        </span>
-        <span className="text-[9px] text-t4">
-          ≈ ${midPrice ? midPrice.toFixed(decimals) : "—"}
-        </span>
-      </div>
+      {/* Mid price with flash */}
+      <MidPrice midPrice={midPrice} decimals={decimals} />
 
       {/* Bids */}
       <div className="flex flex-col overflow-hidden max-h-[120px] md:max-h-none md:flex-1">
         {bids.map((level, i) => (
           <div
-            key={`bid-${i}`}
-            className="grid grid-cols-3 px-2 py-[2px] text-[10px] font-medium relative"
+            key={`bid-${i}-${level.price}`}
+            className="grid grid-cols-3 px-2 py-[2px] text-[10px] font-medium relative ob-row"
           >
             <span className="text-grn font-tabular">
               {level.price.toFixed(decimals)}
@@ -92,6 +100,43 @@ export function OrderBook({ asks, bids, midPrice, decimals }: OrderBookProps) {
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+// Separate component for mid-price to isolate flash animation
+function MidPrice({ midPrice, decimals }: { midPrice: number | null; decimals: number }) {
+  const prevPriceRef = useRef<number | null>(null);
+  const flashRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (midPrice === null || prevPriceRef.current === null) {
+      prevPriceRef.current = midPrice;
+      return;
+    }
+
+    if (midPrice !== prevPriceRef.current && flashRef.current) {
+      const direction = midPrice > prevPriceRef.current ? "green" : "red";
+      flashRef.current.classList.remove("mid-flash-green", "mid-flash-red");
+      // Force reflow
+      void flashRef.current.offsetWidth;
+      flashRef.current.classList.add(`mid-flash-${direction}`);
+    }
+
+    prevPriceRef.current = midPrice;
+  }, [midPrice]);
+
+  return (
+    <div
+      ref={flashRef}
+      className="flex items-center gap-1.5 px-2 py-1 border-y border-brd bg-s1 transition-colors"
+    >
+      <span className="text-[13px] font-bold font-tabular">
+        {midPrice ? midPrice.toFixed(decimals) : "\u2014"}
+      </span>
+      <span className="text-[9px] text-t4">
+        {"\u2248"} ${midPrice ? midPrice.toFixed(decimals) : "\u2014"}
+      </span>
     </div>
   );
 }

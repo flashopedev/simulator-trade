@@ -140,32 +140,32 @@ export default function PortfolioPage() {
           </div>
         </div>
 
-        {/* Main 3-column content - NO borders between columns */}
-        <div className="flex px-5 pb-6">
-          {/* Left column - 14 Day Volume + Fees */}
-          <div className="w-[200px] flex-shrink-0 pr-6">
-            {/* 14 Day Volume */}
-            <div className="mb-6">
+        {/* Main 3-column grid - FIX 5 & 7: grid with gap-4, cols [300px_300px_1fr] */}
+        <div className="grid grid-cols-[300px_300px_1fr] gap-4 px-6 mt-4">
+          {/* Left column - 14 Day Volume + Fees stacked with gap-4 */}
+          <div className="flex flex-col gap-4">
+            {/* FIX 1: 14 Day Volume card with border + cyan accent */}
+            <div className="bg-s1 border border-brd rounded-lg border-l-2 border-l-acc p-5">
               <div className="text-[13px] text-t3 mb-1">14 Day Volume</div>
               <div className="text-[40px] font-semibold text-t1 leading-none">$0</div>
               <button className="text-[13px] text-acc mt-3 hover:underline">View Volume</button>
             </div>
 
-            {/* Fees */}
-            <div>
+            {/* FIX 1 & 2: Fees card with border + cyan accent + correct fees */}
+            <div className="bg-s1 border border-brd rounded-lg border-l-2 border-l-acc p-5">
               <div className="flex items-center justify-between mb-1">
                 <span className="text-[13px] text-t3">Fees (Taker / Maker)</span>
                 <button className="flex items-center gap-1 text-[12px] text-t2 hover:text-t1">
                   Perps <ChevronDown className="w-3 h-3" />
                 </button>
               </div>
-              <div className="text-[26px] font-semibold text-t1 leading-tight">0.0350% / 0.0100%</div>
+              <div className="text-[26px] font-semibold text-t1 leading-tight">0.0450% / 0.0150%</div>
               <button className="text-[13px] text-acc mt-3 hover:underline">View Fee Schedule</button>
             </div>
           </div>
 
-          {/* Middle column - Stats with dropdowns inline */}
-          <div className="flex-1 px-6">
+          {/* FIX 1: Middle column - Stats card with border + cyan accent */}
+          <div className="bg-s1 border border-brd rounded-lg border-l-2 border-l-acc p-5">
             {/* Row with dropdowns */}
             <div className="flex items-center gap-6 mb-2">
               <button className="flex items-center gap-1.5 text-[13px] text-t1 hover:text-acc">
@@ -195,8 +195,8 @@ export default function PortfolioPage() {
             </div>
           </div>
 
-          {/* Right column - Chart */}
-          <div className="w-[400px] flex-shrink-0 pl-6">
+          {/* FIX 1: Right column - Chart card with border + cyan accent */}
+          <div className="bg-s1 border border-brd rounded-lg border-l-2 border-l-acc p-5">
             {/* Chart tabs - no underlines, just text */}
             <div className="flex items-center gap-6 mb-3">
               <button
@@ -244,9 +244,9 @@ export default function PortfolioPage() {
           </div>
         </div>
 
-        {/* Bottom tabs - green underline on active, no full border */}
-        <div className="px-5">
-          <div className="flex items-center justify-between">
+        {/* FIX 3 & 6: Bottom tabs - WHITE underline on active, disabled tabs text-t4 */}
+        <div className="px-6 mt-4">
+          <div className="flex items-center justify-between border-b border-brd">
             <div className="flex items-center">
               {BOTTOM_TABS.map((tab) => (
                 <button
@@ -254,19 +254,15 @@ export default function PortfolioPage() {
                   onClick={() => !tab.disabled && setActiveTab(tab.key)}
                   disabled={tab.disabled}
                   className={cn(
-                    "px-4 py-3 text-[13px] font-medium whitespace-nowrap relative transition-colors",
+                    "px-4 py-3 text-[13px] font-medium whitespace-nowrap border-b-2 -mb-[1px] transition-colors",
                     activeTab === tab.key
-                      ? "text-t1"
+                      ? "text-t1 border-t1"
                       : tab.disabled
-                      ? "text-t4 cursor-default"
-                      : "text-t3 hover:text-t2"
+                      ? "text-t4 border-transparent cursor-default"
+                      : "text-t3 border-transparent hover:text-t2"
                   )}
                 >
                   {tab.label}
-                  {/* Green underline for active tab */}
-                  {activeTab === tab.key && (
-                    <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-grn rounded-t" />
-                  )}
                 </button>
               ))}
             </div>
@@ -274,8 +270,6 @@ export default function PortfolioPage() {
               Filter <ChevronDown className="w-4 h-4" />
             </button>
           </div>
-          {/* Thin separator line */}
-          <div className="h-px bg-brd" />
         </div>
 
         {/* Tab Content */}

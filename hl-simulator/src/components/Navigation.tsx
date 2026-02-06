@@ -38,7 +38,7 @@ export function Navigation({
 
   return (
     <>
-      <nav className="flex items-center h-[48px] px-4 border-b border-brd bg-s1 sticky top-0 z-50">
+      <nav className="flex items-center h-[56px] px-4 border-b border-brd bg-s1 sticky top-0 z-50">
         {/* Logo */}
         <div className="flex items-center gap-1.5 pr-4 border-r border-brd mr-3 h-full">
           {/* Two circles logo like Hyperliquid */}
@@ -60,10 +60,10 @@ export function Navigation({
                 key={item.label}
                 href={item.href}
                 className={cn(
-                  "flex items-center px-3 text-[13px] font-medium border-b-2 transition-colors",
+                  "flex items-center px-3 text-[12px] font-normal border-b-2 transition-colors",
                   pathname === item.href || (item.href === "/earn" && pathname === "/faucet")
-                    ? "text-t1 border-acc"
-                    : "text-t3 border-transparent hover:text-t2"
+                    ? "text-[#97FCE4] border-[#97FCE4]"
+                    : "text-t1 border-transparent hover:text-[#97FCE4]"
                 )}
               >
                 {item.label}
@@ -71,7 +71,7 @@ export function Navigation({
             ) : (
               <span
                 key={item.label}
-                className="flex items-center px-3 text-[13px] font-medium text-t4 cursor-not-allowed opacity-50 border-b-2 border-transparent"
+                className="flex items-center px-3 text-[12px] font-normal text-t1 cursor-default border-b-2 border-transparent"
               >
                 {item.label}
                 {item.hasDropdown && (

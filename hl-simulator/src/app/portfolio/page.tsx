@@ -128,12 +128,12 @@ export default function PortfolioPage() {
         {/* Header: Portfolio title + buttons */}
         <div className="max-w-[1312px] mx-auto w-full px-4">
           <div className="flex items-center justify-between py-4">
-            <h1 className="text-[36px] font-semibold text-t1">Portfolio</h1>
+            <h1 className="text-[34px] font-normal text-white">Portfolio</h1>
             <div className="flex items-center gap-2">
               {HEADER_BUTTONS.map((btn) => (
                 <button
                   key={btn}
-                  className="px-4 py-[7px] text-[13px] rounded-[8px] border border-brd text-t2 hover:bg-s1 transition-colors"
+                  className="h-[40px] px-4 text-[12px] font-normal rounded-[8px] border border-[#50D2C1] text-[#50D2C1] hover:bg-s1 transition-colors"
                 >
                   {btn}
                 </button>
@@ -148,33 +148,33 @@ export default function PortfolioPage() {
             {/* Left column - 14 Day Volume + Fees stacked */}
             <div className="flex flex-col gap-2">
               {/* 14 Day Volume card */}
-              <div className="bg-s1 rounded-[10px] px-3 py-4">
-                <div className="text-[13px] text-t3 mb-1">14 Day Volume</div>
-                <div className="text-[40px] font-semibold text-t1 leading-none">$0</div>
-                <button className="text-[13px] text-acc mt-3 hover:text-acc/80">View Volume</button>
+              <div className="bg-s1 rounded-[10px] p-3">
+                <div className="text-[14px] text-t2 mb-1">14 Day Volume</div>
+                <div className="text-[28px] font-normal text-white leading-[30px]">$0</div>
+                <button className="text-[13px] text-[#50D2C1] mt-3 hover:text-[#50D2C1]/80">View Volume</button>
               </div>
 
               {/* Fees card */}
-              <div className="bg-s1 rounded-[10px] px-3 py-4">
+              <div className="bg-s1 rounded-[10px] p-3">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-[13px] text-t3">Fees (Taker / Maker)</span>
+                  <span className="text-[14px] text-t2">Fees (Taker / Maker)</span>
                   <button className="flex items-center gap-1 text-[12px] text-t2 hover:text-t1">
                     Perps <ChevronDown className="w-3 h-3" />
                   </button>
                 </div>
-                <div className="text-[26px] font-semibold text-t1 leading-tight">0.0450% / 0.0150%</div>
-                <button className="text-[13px] text-acc mt-3 hover:text-acc/80">View Fee Schedule</button>
+                <div className="text-[20px] font-normal text-white leading-tight">0.0450% / 0.0150%</div>
+                <button className="text-[13px] text-[#50D2C1] mt-3 hover:text-[#50D2C1]/80">View Fee Schedule</button>
               </div>
             </div>
 
             {/* Middle column - Stats card */}
-            <div className="bg-s1 rounded-[10px] px-3 py-4">
+            <div className="bg-s1 rounded-[10px] p-3">
               {/* Row with dropdowns */}
               <div className="flex items-center gap-6 mb-2">
-                <button className="flex items-center gap-1.5 text-[13px] text-t1 hover:text-t2">
+                <button className="flex items-center gap-1.5 text-[12px] text-t1 hover:text-t2">
                   Perps + Spot + Vaults <ChevronDown className="w-4 h-4 text-t3" />
                 </button>
-                <button className="flex items-center gap-1.5 text-[13px] text-t1 hover:text-t2">
+                <button className="flex items-center gap-1.5 text-[12px] text-t1 hover:text-t2">
                   All-time <ChevronDown className="w-4 h-4 text-t3" />
                 </button>
               </div>
@@ -182,7 +182,7 @@ export default function PortfolioPage() {
               {/* Stats rows */}
               <div className="divide-y divide-brd/40">
                 {[
-                  { label: "PNL", value: formatPnl(totalUnrealizedPnl), color: totalUnrealizedPnl >= 0 ? "text-grn" : "text-red" },
+                  { label: "PNL", value: formatPnl(totalUnrealizedPnl), color: totalUnrealizedPnl > 0 ? "text-grn" : totalUnrealizedPnl < 0 ? "text-red" : "text-t1" },
                   { label: "Volume", value: "$0.00" },
                   { label: "Max Drawdown", value: "0.00%" },
                   { label: "Total Equity", value: `$${formatNumber(totalEquity)}` },
@@ -190,8 +190,8 @@ export default function PortfolioPage() {
                   { label: "Spot Account Equity", value: "$0.00" },
                   { label: "Earn Balance", value: "$0.00" },
                 ].map((row) => (
-                  <div key={row.label} className="flex justify-between py-[7px] text-[13px]">
-                    <span className="text-t3">{row.label}</span>
+                  <div key={row.label} className="flex justify-between py-[7px] text-[12px]">
+                    <span className="text-t2">{row.label}</span>
                     <span className={cn("font-tabular", row.color || "text-t1")}>{row.value}</span>
                   </div>
                 ))}
@@ -199,7 +199,7 @@ export default function PortfolioPage() {
             </div>
 
             {/* Right column - Chart card */}
-            <div className="bg-s1 rounded-[10px] px-3 py-4">
+            <div className="bg-s1 rounded-[10px] p-3">
               {/* Chart tabs - no underlines, just text */}
               <div className="flex items-center gap-6 mb-3">
                 <button
@@ -259,17 +259,17 @@ export default function PortfolioPage() {
                   key={tab.key}
                   onClick={() => setActiveTab(tab.key)}
                   className={cn(
-                    "px-4 py-3 text-[13px] font-medium whitespace-nowrap border-b-2 -mb-[1px] transition-colors",
+                    "px-4 py-3 text-[12px] font-normal whitespace-nowrap border-b-2 -mb-[1px] transition-colors",
                     activeTab === tab.key
                       ? "text-t1 border-t1"
-                      : "text-t3 border-transparent hover:text-t2"
+                      : "text-t2 border-transparent hover:text-t1"
                   )}
                 >
                   {tab.label}
                 </button>
               ))}
             </div>
-            <button className="flex items-center gap-1.5 text-[13px] text-t2 hover:text-t1">
+            <button className="flex items-center gap-1.5 text-[12px] text-t1 hover:text-t2">
               Filter <ChevronDown className="w-4 h-4" />
             </button>
           </div>

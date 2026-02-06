@@ -149,28 +149,28 @@ export default function PortfolioPage() {
             <div className="flex flex-col gap-2">
               {/* 14 Day Volume card */}
               <div className="bg-s1 rounded-[10px] p-3">
-                <div className="text-[14px] text-t2 mb-1">14 Day Volume</div>
+                <div className="text-[14px] text-t3 mb-1">14 Day Volume</div>
                 <div className="text-[28px] font-normal text-white leading-[30px]">$0</div>
-                <button className="text-[13px] text-[#50D2C1] mt-3 hover:text-[#50D2C1]/80">View Volume</button>
+                <button className="text-[12px] text-[#50D2C1] mt-3 hover:text-[#50D2C1]/80">View Volume</button>
               </div>
 
               {/* Fees card */}
               <div className="bg-s1 rounded-[10px] p-3">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-[14px] text-t2">Fees (Taker / Maker)</span>
-                  <button className="flex items-center gap-1 text-[12px] text-t2 hover:text-t1">
+                  <span className="text-[14px] text-t3">Fees (Taker / Maker)</span>
+                  <button className="flex items-center gap-1 text-[12px] text-t1 hover:text-t2">
                     Perps <ChevronDown className="w-3 h-3" />
                   </button>
                 </div>
                 <div className="text-[20px] font-normal text-white leading-tight">0.0450% / 0.0150%</div>
-                <button className="text-[13px] text-[#50D2C1] mt-3 hover:text-[#50D2C1]/80">View Fee Schedule</button>
+                <button className="text-[12px] text-[#50D2C1] mt-3 hover:text-[#50D2C1]/80">View Fee Schedule</button>
               </div>
             </div>
 
             {/* Middle column - Stats card */}
             <div className="bg-s1 rounded-[10px] p-3">
               {/* Row with dropdowns */}
-              <div className="flex items-center gap-6 mb-2">
+              <div className="flex items-center gap-6 pb-2 mb-2 border-b border-brd">
                 <button className="flex items-center gap-1.5 text-[12px] text-t1 hover:text-t2">
                   Perps + Spot + Vaults <ChevronDown className="w-4 h-4 text-t3" />
                 </button>
@@ -180,7 +180,7 @@ export default function PortfolioPage() {
               </div>
 
               {/* Stats rows */}
-              <div className="divide-y divide-brd/40">
+              <div>
                 {[
                   { label: "PNL", value: formatPnl(totalUnrealizedPnl), color: totalUnrealizedPnl > 0 ? "text-grn" : totalUnrealizedPnl < 0 ? "text-red" : "text-t1" },
                   { label: "Volume", value: "$0.00" },
@@ -205,8 +205,8 @@ export default function PortfolioPage() {
                 <button
                   onClick={() => setChartTab("value")}
                   className={cn(
-                    "text-[13px] transition-colors",
-                    chartTab === "value" ? "text-t1" : "text-t3 hover:text-t2"
+                    "text-[12px] transition-colors",
+                    chartTab === "value" ? "text-t1" : "text-t2 hover:text-t1"
                   )}
                 >
                   Account Value
@@ -214,8 +214,8 @@ export default function PortfolioPage() {
                 <button
                   onClick={() => setChartTab("pnl")}
                   className={cn(
-                    "text-[13px] transition-colors",
-                    chartTab === "pnl" ? "text-t1" : "text-t3 hover:text-t2"
+                    "text-[12px] transition-colors",
+                    chartTab === "pnl" ? "text-t1" : "text-t2 hover:text-t1"
                   )}
                 >
                   PNL
@@ -281,22 +281,22 @@ export default function PortfolioPage() {
           {activeTab === "positions" && (
             <div>
               {positions.length === 0 ? (
-                <div className="text-t3 text-[13px]">No open positions yet</div>
+                <div className="text-t3 text-[12px]">No open positions yet</div>
               ) : (
-                <table className="w-full text-[13px]">
+                <table className="w-full text-[12px]">
                   <thead>
-                    <tr className="text-t3 text-left">
-                      <th className="py-2 font-medium">Coin</th>
-                      <th className="py-2 font-medium">Size</th>
-                      <th className="py-2 font-medium">
+                    <tr className="text-t2 text-left text-[12px]">
+                      <th className="py-2 font-normal">Coin</th>
+                      <th className="py-2 font-normal">Size</th>
+                      <th className="py-2 font-normal">
                         Position Value <span className="text-t4">▾</span>
                       </th>
-                      <th className="py-2 font-medium">Entry Price</th>
-                      <th className="py-2 font-medium">Mark Price</th>
-                      <th className="py-2 font-medium">PNL (ROE %)</th>
-                      <th className="py-2 font-medium">Liq. Price</th>
-                      <th className="py-2 font-medium">Margin</th>
-                      <th className="py-2 font-medium">Funding</th>
+                      <th className="py-2 font-normal">Entry Price</th>
+                      <th className="py-2 font-normal">Mark Price</th>
+                      <th className="py-2 font-normal">PNL (ROE %)</th>
+                      <th className="py-2 font-normal">Liq. Price</th>
+                      <th className="py-2 font-normal">Margin</th>
+                      <th className="py-2 font-normal">Funding</th>
                       <th className="py-2"></th>
                     </tr>
                   </thead>
@@ -345,13 +345,13 @@ export default function PortfolioPage() {
 
           {/* Balances Tab */}
           {activeTab === "balances" && (
-            <table className="w-full text-[13px]">
+            <table className="w-full text-[12px]">
               <thead>
-                <tr className="text-t3 text-left">
-                  <th className="py-2 font-medium">Coin</th>
-                  <th className="py-2 font-medium">Total Balance</th>
-                  <th className="py-2 font-medium">Available Balance</th>
-                  <th className="py-2 font-medium">In Orders</th>
+                <tr className="text-t2 text-left text-[12px]">
+                  <th className="py-2 font-normal">Coin</th>
+                  <th className="py-2 font-normal">Total Balance</th>
+                  <th className="py-2 font-normal">Available Balance</th>
+                  <th className="py-2 font-normal">In Orders</th>
                 </tr>
               </thead>
               <tbody>
@@ -368,27 +368,27 @@ export default function PortfolioPage() {
           {/* Open Orders Tab */}
           {activeTab === "openOrders" && (
             <div>
-              <table className="w-full text-[13px]">
+              <table className="w-full text-[12px]">
                 <thead>
-                  <tr className="text-t3 text-left">
-                    <th className="py-2 font-medium">Time</th>
-                    <th className="py-2 font-medium">Type</th>
-                    <th className="py-2 font-medium">Coin</th>
-                    <th className="py-2 font-medium">Direction</th>
-                    <th className="py-2 font-medium">Size</th>
-                    <th className="py-2 font-medium">Original Size</th>
-                    <th className="py-2 font-medium">
+                  <tr className="text-t2 text-left text-[12px]">
+                    <th className="py-2 font-normal">Time</th>
+                    <th className="py-2 font-normal">Type</th>
+                    <th className="py-2 font-normal">Coin</th>
+                    <th className="py-2 font-normal">Direction</th>
+                    <th className="py-2 font-normal">Size</th>
+                    <th className="py-2 font-normal">Original Size</th>
+                    <th className="py-2 font-normal">
                       Order Value <ChevronDown className="w-3 h-3 inline" />
                     </th>
-                    <th className="py-2 font-medium">Price</th>
-                    <th className="py-2 font-medium">Reduce Only</th>
-                    <th className="py-2 font-medium">Trigger Conditions</th>
-                    <th className="py-2 font-medium">TP/SL</th>
+                    <th className="py-2 font-normal">Price</th>
+                    <th className="py-2 font-normal">Reduce Only</th>
+                    <th className="py-2 font-normal">Trigger Conditions</th>
+                    <th className="py-2 font-normal">TP/SL</th>
                   </tr>
                 </thead>
               </table>
               {orders.length === 0 && (
-                <div className="text-t3 text-[13px] py-2">No open orders yet</div>
+                <div className="text-t3 text-[12px] py-2">No open orders yet</div>
               )}
             </div>
           )}
@@ -397,18 +397,18 @@ export default function PortfolioPage() {
           {activeTab === "tradeHistory" && (
             <div>
               {history.length === 0 ? (
-                <div className="text-t3 text-[13px]">No trade history yet</div>
+                <div className="text-t3 text-[12px]">No trade history yet</div>
               ) : (
-                <table className="w-full text-[13px]">
+                <table className="w-full text-[12px]">
                   <thead>
-                    <tr className="text-t3 text-left">
-                      <th className="py-2 font-medium">Time</th>
-                      <th className="py-2 font-medium">Coin</th>
-                      <th className="py-2 font-medium">Side</th>
-                      <th className="py-2 font-medium">Size</th>
-                      <th className="py-2 font-medium">Entry</th>
-                      <th className="py-2 font-medium">Exit</th>
-                      <th className="py-2 font-medium">PNL</th>
+                    <tr className="text-t2 text-left text-[12px]">
+                      <th className="py-2 font-normal">Time</th>
+                      <th className="py-2 font-normal">Coin</th>
+                      <th className="py-2 font-normal">Side</th>
+                      <th className="py-2 font-normal">Size</th>
+                      <th className="py-2 font-normal">Entry</th>
+                      <th className="py-2 font-normal">Exit</th>
+                      <th className="py-2 font-normal">PNL</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -437,23 +437,23 @@ export default function PortfolioPage() {
           )}
 
           {activeTab === "fundingHistory" && (
-            <div className="text-t3 text-[13px]">No funding history</div>
+            <div className="text-t3 text-[12px]">No funding history</div>
           )}
 
           {activeTab === "orderHistory" && (
-            <div className="text-t3 text-[13px]">No order history</div>
+            <div className="text-t3 text-[12px]">No order history</div>
           )}
 
           {activeTab === "twap" && (
-            <div className="text-t3 text-[13px]">No TWAP orders</div>
+            <div className="text-t3 text-[12px]">No TWAP orders</div>
           )}
 
           {activeTab === "interest" && (
-            <div className="text-t3 text-[13px]">No interest history</div>
+            <div className="text-t3 text-[12px]">No interest history</div>
           )}
 
           {activeTab === "deposits" && (
-            <div className="text-t3 text-[13px]">No deposits or withdrawals</div>
+            <div className="text-t3 text-[12px]">No deposits or withdrawals</div>
           )}
         </div>
       </div>

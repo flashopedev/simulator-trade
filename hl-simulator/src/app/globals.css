@@ -3,19 +3,19 @@
 @tailwind utilities;
 
 :root {
-  --bg: #0a0f14;
-  --s1: #0f1419;
-  --s2: #151b21;
-  --s3: #1c2430;
-  --s4: #232d3b;
-  --s5: #2a3544;
-  --card: #111a22;
-  --brd: #1e2a35;
-  --brd2: #2a3544;
-  --t1: #ffffff;
-  --t2: #8a949e;
-  --t3: #6b7280;
-  --t4: #4b5563;
+  --bg: #04251F;
+  --s1: #0F1A1F;
+  --s2: #1a2a28;
+  --s3: #243432;
+  --s4: #2e3e3c;
+  --s5: #384846;
+  --card: #0F1A1F;
+  --brd: #303030;
+  --brd2: #404040;
+  --t1: #F6FEFD;
+  --t2: #949E9C;
+  --t3: #878C8F;
+  --t4: #5a6260;
   --acc: #00d8c4;
   --grn: #23b879;
   --red: #e54d69;
@@ -31,23 +31,17 @@
 body {
   background: var(--bg);
   color: var(--t1);
-  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: system-ui, "Segoe UI", Roboto, Ubuntu, "Helvetica Neue", sans-serif;
   font-size: 13px;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
-/* Scrollbar */
+/* Scrollbar - hidden like real HL */
 ::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: var(--brd2);
-  border-radius: 2px;
+  display: none;
 }
 
 /* Form inputs */

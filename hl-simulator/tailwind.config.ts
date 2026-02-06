@@ -9,27 +9,27 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Backgrounds (exact Hyperliquid)
-        bg: "#0a0f14",
-        s1: "#0f1419",
-        s2: "#151b21",
-        s3: "#1c2430",
-        s4: "#232d3b",
-        s5: "#2a3544",
-        card: "#111a22",
+        // Backgrounds (exact from HL HTML source)
+        bg: "#04251F",       // rgb(4, 37, 31) green-tinted page bg
+        s1: "#0F1A1F",       // rgb(15, 26, 31) card/nav bg
+        s2: "#1a2a28",       // hover states, slightly lighter
+        s3: "#243432",       // active states
+        s4: "#2e3e3c",       // pressed states
+        s5: "#384846",       // elevated surfaces
+        card: "#0F1A1F",     // same as s1, card bg
         // Borders
-        brd: "#1e2a35",
-        brd2: "#2a3544",
+        brd: "#303030",      // rgb(48, 48, 48) exact from HL HTML
+        brd2: "#404040",     // secondary border
         // Text
-        t1: "#ffffff",
-        t2: "#8a949e",
-        t3: "#6b7280",
-        t4: "#4b5563",
+        t1: "#F6FEFD",       // rgb(246, 254, 253) slightly green-white
+        t2: "#949E9C",       // rgb(148, 158, 156) secondary text
+        t3: "#878C8F",       // rgb(135, 140, 143) label text
+        t4: "#5a6260",       // disabled text
         // Accent
-        acc: "#00d8c4",
-        grn: "#00c076",
-        red: "#ff4976",
-        blu: "#0066ff",
+        acc: "#00d8c4",      // teal accent
+        grn: "#23b879",      // soft green
+        red: "#e54d69",      // soft red
+        blu: "#0066ff",      // blue accent
       },
       fontFamily: {
         sans: ["Inter", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "sans-serif"],

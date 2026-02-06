@@ -124,130 +124,134 @@ export default function PortfolioPage() {
       <NotificationContainer />
       <Navigation balance={totalEquity} isConnected={true} onSignOut={signOut} />
 
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col" style={{ background: "url('/images/back_lines.svg') 0% 0% / cover no-repeat" }}>
         {/* Header: Portfolio title + buttons */}
-        <div className="flex items-center justify-between px-5 py-4">
-          <h1 className="text-[36px] font-semibold text-t1">Portfolio</h1>
-          <div className="flex items-center gap-3">
-            {HEADER_BUTTONS.map((btn) => (
-              <button
-                key={btn}
-                className="px-5 py-2 text-[13px] rounded-lg border border-brd text-acc hover:bg-s2 transition-colors"
-              >
-                {btn}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Main 3-column grid - FIX 5 & 7: grid with gap-4, cols [300px_300px_1fr] */}
-        <div className="grid grid-cols-[300px_300px_1fr] gap-4 px-6 mt-4">
-          {/* Left column - 14 Day Volume + Fees stacked with gap-4 */}
-          <div className="flex flex-col gap-4">
-            {/* FIX 1: 14 Day Volume card with border + cyan accent */}
-            <div className="bg-card border border-brd rounded-lg border-l-2 border-l-acc p-5">
-              <div className="text-[13px] text-t3 mb-1">14 Day Volume</div>
-              <div className="text-[40px] font-semibold text-t1 leading-none">$0</div>
-              <button className="text-[13px] text-acc mt-3 hover:underline">View Volume</button>
-            </div>
-
-            {/* FIX 1 & 2: Fees card with border + cyan accent + correct fees */}
-            <div className="bg-card border border-brd rounded-lg border-l-2 border-l-acc p-5">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-[13px] text-t3">Fees (Taker / Maker)</span>
-                <button className="flex items-center gap-1 text-[12px] text-t2 hover:text-t1">
-                  Perps <ChevronDown className="w-3 h-3" />
+        <div className="max-w-[1312px] mx-auto w-full px-4">
+          <div className="flex items-center justify-between py-4">
+            <h1 className="text-[36px] font-semibold text-t1">Portfolio</h1>
+            <div className="flex items-center gap-2">
+              {HEADER_BUTTONS.map((btn) => (
+                <button
+                  key={btn}
+                  className="px-4 py-[7px] text-[13px] rounded-[8px] border border-brd bg-s1 text-t2 hover:bg-s2 transition-colors"
+                >
+                  {btn}
                 </button>
-              </div>
-              <div className="text-[26px] font-semibold text-t1 leading-tight">0.0450% / 0.0150%</div>
-              <button className="text-[13px] text-acc mt-3 hover:underline">View Fee Schedule</button>
-            </div>
-          </div>
-
-          {/* FIX 1: Middle column - Stats card with border + cyan accent */}
-          <div className="bg-card border border-brd rounded-lg border-l-2 border-l-acc p-5">
-            {/* Row with dropdowns */}
-            <div className="flex items-center gap-6 mb-2">
-              <button className="flex items-center gap-1.5 text-[13px] text-t1 hover:text-acc">
-                Perps + Spot + Vaults <ChevronDown className="w-4 h-4" />
-              </button>
-              <button className="flex items-center gap-1.5 text-[13px] text-t1 hover:text-acc">
-                All-time <ChevronDown className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Stats rows */}
-            <div className="space-y-0.5">
-              {[
-                { label: "PNL", value: formatPnl(totalUnrealizedPnl), color: totalUnrealizedPnl >= 0 ? "text-grn" : "text-red" },
-                { label: "Volume", value: "$0.00" },
-                { label: "Max Drawdown", value: "0.00%" },
-                { label: "Total Equity", value: `$${formatNumber(totalEquity)}` },
-                { label: "Perps Account Equity", value: `$${formatNumber(totalEquity)}` },
-                { label: "Spot Account Equity", value: "$0.00" },
-                { label: "Earn Balance", value: "$0.00" },
-              ].map((row) => (
-                <div key={row.label} className="flex justify-between py-1.5 text-[13px]">
-                  <span className="text-t3">{row.label}</span>
-                  <span className={cn("font-tabular", row.color || "text-t1")}>{row.value}</span>
-                </div>
               ))}
             </div>
           </div>
+        </div>
 
-          {/* FIX C: Right column - Chart card WITHOUT cyan accent */}
-          <div className="bg-card border border-brd rounded-lg p-5">
-            {/* Chart tabs - no underlines, just text */}
-            <div className="flex items-center gap-6 mb-3">
-              <button
-                onClick={() => setChartTab("value")}
-                className={cn(
-                  "text-[13px] transition-colors",
-                  chartTab === "value" ? "text-t1" : "text-t3 hover:text-t2"
-                )}
-              >
-                Account Value
-              </button>
-              <button
-                onClick={() => setChartTab("pnl")}
-                className={cn(
-                  "text-[13px] transition-colors",
-                  chartTab === "pnl" ? "text-t1" : "text-t3 hover:text-t2"
-                )}
-              >
-                PNL
-              </button>
+        {/* Main 3-column grid */}
+        <div className="max-w-[1312px] mx-auto w-full px-4">
+          <div className="grid grid-cols-[1fr_1fr_2fr] gap-2">
+            {/* Left column - 14 Day Volume + Fees stacked */}
+            <div className="flex flex-col gap-2">
+              {/* 14 Day Volume card */}
+              <div className="bg-s1 rounded-[10px] p-3">
+                <div className="text-[13px] text-t3 mb-1">14 Day Volume</div>
+                <div className="text-[40px] font-semibold text-t1 leading-none">$0</div>
+                <button className="text-[13px] text-t3 mt-3 hover:text-t2">View Volume</button>
+              </div>
+
+              {/* Fees card */}
+              <div className="bg-s1 rounded-[10px] p-3">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[13px] text-t3">Fees (Taker / Maker)</span>
+                  <button className="flex items-center gap-1 text-[12px] text-t2 hover:text-t1">
+                    Perps <ChevronDown className="w-3 h-3" />
+                  </button>
+                </div>
+                <div className="text-[26px] font-semibold text-t1 leading-tight">0.0450% / 0.0150%</div>
+                <button className="text-[13px] text-t3 mt-3 hover:text-t2">View Fee Schedule</button>
+              </div>
             </div>
 
-            {/* FIX B: SVG Chart with smooth Bezier curve */}
-            <div className="h-[200px]">
-              <svg viewBox="0 0 400 200" className="w-full h-full" preserveAspectRatio="none">
-                <defs>
-                  <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#00d8c4" stopOpacity="0.15" />
-                    <stop offset="100%" stopColor="#00d8c4" stopOpacity="0" />
-                  </linearGradient>
-                </defs>
-                {/* Y axis labels */}
-                <text x="0" y="185" fill="#4b5563" fontSize="11">0</text>
-                <text x="0" y="135" fill="#4b5563" fontSize="11">1</text>
-                <text x="0" y="85" fill="#4b5563" fontSize="11">2</text>
-                <text x="0" y="35" fill="#4b5563" fontSize="11">3</text>
-                {/* Horizontal grid lines */}
-                <line x1="20" y1="180" x2="395" y2="180" stroke="#1e2a35" strokeWidth="1" />
-                <line x1="20" y1="130" x2="395" y2="130" stroke="#1e2a35" strokeWidth="0.5" strokeDasharray="4" />
-                <line x1="20" y1="80" x2="395" y2="80" stroke="#1e2a35" strokeWidth="0.5" strokeDasharray="4" />
-                <line x1="20" y1="30" x2="395" y2="30" stroke="#1e2a35" strokeWidth="0.5" strokeDasharray="4" />
-                {/* Smooth Bezier curve */}
-                <path d="M 30 185 C 60 180, 100 175, 140 160 C 180 145, 220 120, 260 100 C 300 80, 340 55, 395 35" fill="none" stroke="#00d8c4" strokeWidth="1.5" />
-                <path d="M 30 185 C 60 180, 100 175, 140 160 C 180 145, 220 120, 260 100 C 300 80, 340 55, 395 35 L 395 190 L 30 190 Z" fill="url(#areaGrad)" />
-              </svg>
+            {/* Middle column - Stats card */}
+            <div className="bg-s1 rounded-[10px] p-3">
+              {/* Row with dropdowns */}
+              <div className="flex items-center gap-6 mb-2">
+                <button className="flex items-center gap-1.5 text-[13px] text-t1 hover:text-t2">
+                  Perps + Spot + Vaults <ChevronDown className="w-4 h-4" />
+                </button>
+                <button className="flex items-center gap-1.5 text-[13px] text-t1 hover:text-t2">
+                  All-time <ChevronDown className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Stats rows */}
+              <div className="space-y-0.5">
+                {[
+                  { label: "PNL", value: formatPnl(totalUnrealizedPnl), color: totalUnrealizedPnl >= 0 ? "text-grn" : "text-red" },
+                  { label: "Volume", value: "$0.00" },
+                  { label: "Max Drawdown", value: "0.00%" },
+                  { label: "Total Equity", value: `$${formatNumber(totalEquity)}` },
+                  { label: "Perps Account Equity", value: `$${formatNumber(totalEquity)}` },
+                  { label: "Spot Account Equity", value: "$0.00" },
+                  { label: "Earn Balance", value: "$0.00" },
+                ].map((row) => (
+                  <div key={row.label} className="flex justify-between py-1.5 text-[13px]">
+                    <span className="text-t3">{row.label}</span>
+                    <span className={cn("font-tabular", row.color || "text-t1")}>{row.value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Right column - Chart card */}
+            <div className="bg-s1 rounded-[10px] p-3">
+              {/* Chart tabs - no underlines, just text */}
+              <div className="flex items-center gap-6 mb-3">
+                <button
+                  onClick={() => setChartTab("value")}
+                  className={cn(
+                    "text-[13px] transition-colors",
+                    chartTab === "value" ? "text-t1" : "text-t3 hover:text-t2"
+                  )}
+                >
+                  Account Value
+                </button>
+                <button
+                  onClick={() => setChartTab("pnl")}
+                  className={cn(
+                    "text-[13px] transition-colors",
+                    chartTab === "pnl" ? "text-t1" : "text-t3 hover:text-t2"
+                  )}
+                >
+                  PNL
+                </button>
+              </div>
+
+              {/* SVG Chart with smooth Bezier curve */}
+              <div className="h-[200px]">
+                <svg viewBox="0 0 400 200" className="w-full h-full" preserveAspectRatio="none">
+                  <defs>
+                    <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#00d8c4" stopOpacity="0.15" />
+                      <stop offset="100%" stopColor="#00d8c4" stopOpacity="0" />
+                    </linearGradient>
+                  </defs>
+                  {/* Y axis labels */}
+                  <text x="0" y="185" fill="#878C8F" fontSize="11">0</text>
+                  <text x="0" y="135" fill="#878C8F" fontSize="11">1</text>
+                  <text x="0" y="85" fill="#878C8F" fontSize="11">2</text>
+                  <text x="0" y="35" fill="#878C8F" fontSize="11">3</text>
+                  {/* Horizontal grid lines */}
+                  <line x1="20" y1="180" x2="395" y2="180" stroke="#303030" strokeWidth="1" />
+                  <line x1="20" y1="130" x2="395" y2="130" stroke="#303030" strokeWidth="0.5" strokeDasharray="4" />
+                  <line x1="20" y1="80" x2="395" y2="80" stroke="#303030" strokeWidth="0.5" strokeDasharray="4" />
+                  <line x1="20" y1="30" x2="395" y2="30" stroke="#303030" strokeWidth="0.5" strokeDasharray="4" />
+                  {/* Smooth Bezier curve */}
+                  <path d="M 30 185 C 60 180, 100 175, 140 160 C 180 145, 220 120, 260 100 C 300 80, 340 55, 395 35" fill="none" stroke="#00d8c4" strokeWidth="1.5" />
+                  <path d="M 30 185 C 60 180, 100 175, 140 160 C 180 145, 220 120, 260 100 C 300 80, 340 55, 395 35 L 395 190 L 30 190 Z" fill="url(#areaGrad)" />
+                </svg>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* FIX 3 & 6: Bottom tabs - WHITE underline on active, disabled tabs text-t4 */}
-        <div className="px-6 mt-4">
+        {/* Bottom tabs */}
+        <div className="max-w-[1312px] mx-auto w-full px-4 mt-4">
           <div className="flex items-center justify-between border-b border-brd">
             <div className="flex items-center">
               {BOTTOM_TABS.map((tab) => (
@@ -275,7 +279,7 @@ export default function PortfolioPage() {
         </div>
 
         {/* Tab Content */}
-        <div className="flex-1 px-5 py-4 pb-20">
+        <div className="flex-1 max-w-[1312px] mx-auto w-full px-4 py-4 pb-20">
           {/* Positions Tab */}
           {activeTab === "positions" && (
             <div>

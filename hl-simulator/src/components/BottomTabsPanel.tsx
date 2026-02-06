@@ -195,12 +195,6 @@ function PositionsContent({
   currentPrices: Record<string, number>;
   onMarketClose: (p: Position) => void;
 }) {
-  if (positions.length === 0) {
-    return (
-      <div className="text-center py-8 text-t3 text-[11px]">No open positions yet</div>
-    );
-  }
-
   return (
     <div className="px-3 overflow-x-auto">
       <table className="w-full text-[11px] min-w-[900px]">
@@ -220,6 +214,13 @@ function PositionsContent({
           </tr>
         </thead>
         <tbody>
+          {positions.length === 0 && (
+            <tr>
+              <td colSpan={11} className="py-6 text-center text-t3">
+                No open positions yet
+              </td>
+            </tr>
+          )}
           {positions.map((p) => {
             const decimals = COIN_DECIMALS[p.coin] || 2;
             const markPrice = currentPrices[p.coin] || p.entry_price;

@@ -130,8 +130,8 @@ export function OrderForm({
     }
   }, [price, orderType, decimals, limitPrice]);
 
-  // Slider steps for visual dots
-  const sliderSteps = [0, 25, 50, 75, 100];
+  // Slider steps for visual dots - 9 steps like real HL
+  const sliderSteps = [0, 12.5, 25, 37.5, 50, 62.5, 75, 87.5, 100];
 
   return (
     <>
@@ -359,7 +359,7 @@ export function OrderForm({
             )}
           </div>
 
-          {/* TP/SL Fields */}
+          {/* TP/SL Fields - matching real HL layout */}
           {tpsl && (
             <div className="space-y-2 pt-1">
               {/* TP Price */}
@@ -374,14 +374,18 @@ export function OrderForm({
                     className="flex-1 bg-transparent py-1 text-[12px] font-medium outline-none font-tabular text-t1 text-right min-w-0"
                   />
                 </div>
-                <div className="flex items-center bg-s2 border border-brd rounded px-2 py-1 min-w-[70px]">
-                  <span className="text-[10px] text-t3 mr-1">Gain</span>
-                  <span className={cn(
-                    "text-[11px] font-tabular",
-                    tpGainPercent > 0 ? "text-acc" : "text-t3"
-                  )}>
-                    {tpGainPercent > 0 ? `${tpGainPercent.toFixed(2)}` : ""} %
-                  </span>
+                <div className="flex items-center bg-s2 border border-brd rounded px-2 py-1 min-w-[80px] justify-between">
+                  <span className="text-[10px] text-t3">Gain</span>
+                  <div className="flex items-center gap-1">
+                    <span className={cn(
+                      "text-[11px] font-tabular",
+                      tpGainPercent > 0 ? "text-acc" : "text-t3"
+                    )}>
+                      {tpGainPercent > 0 ? tpGainPercent.toFixed(2) : ""}
+                    </span>
+                    <span className="text-[10px] text-t3">%</span>
+                    <ChevronDown className="w-3 h-3 text-t4" />
+                  </div>
                 </div>
               </div>
 
@@ -397,14 +401,18 @@ export function OrderForm({
                     className="flex-1 bg-transparent py-1 text-[12px] font-medium outline-none font-tabular text-t1 text-right min-w-0"
                   />
                 </div>
-                <div className="flex items-center bg-s2 border border-brd rounded px-2 py-1 min-w-[70px]">
-                  <span className="text-[10px] text-t3 mr-1">Loss</span>
-                  <span className={cn(
-                    "text-[11px] font-tabular",
-                    slLossPercent > 0 ? "text-red" : "text-t3"
-                  )}>
-                    {slLossPercent > 0 ? `${slLossPercent.toFixed(2)}` : ""} %
-                  </span>
+                <div className="flex items-center bg-s2 border border-brd rounded px-2 py-1 min-w-[80px] justify-between">
+                  <span className="text-[10px] text-t3">Loss</span>
+                  <div className="flex items-center gap-1">
+                    <span className={cn(
+                      "text-[11px] font-tabular",
+                      slLossPercent > 0 ? "text-red" : "text-t3"
+                    )}>
+                      {slLossPercent > 0 ? slLossPercent.toFixed(2) : ""}
+                    </span>
+                    <span className="text-[10px] text-t3">%</span>
+                    <ChevronDown className="w-3 h-3 text-t4" />
+                  </div>
                 </div>
               </div>
             </div>

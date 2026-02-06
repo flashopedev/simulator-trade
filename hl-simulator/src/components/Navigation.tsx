@@ -105,10 +105,10 @@ export function Navigation({
                 </div>
               )}
 
-              {/* FIX 17: Equity badge - "$10,000.00" format */}
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-s2 border border-brd rounded text-[12px]">
-                <span className="text-t3 font-medium">Equity</span>
-                <span className="font-bold text-acc font-tabular">${formatNumber(balance)}</span>
+              {/* D6: Equity badge - white text, not cyan */}
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-s2 border border-brd rounded text-[13px]">
+                <span className="text-t3 mr-1">Equity</span>
+                <span className="text-t1 font-medium font-tabular">${formatNumber(balance)}</span>
               </div>
 
               {/* Sign Out */}

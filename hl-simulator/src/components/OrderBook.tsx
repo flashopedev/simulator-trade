@@ -30,7 +30,7 @@ export function OrderBook({ asks, bids, midPrice, decimals }: OrderBookProps) {
 
   return (
     <div className="flex flex-col h-full">
-      {/* FIX 15: Simplified headers - not uppercase */}
+      {/* D2: Headers with (COIN) suffix */}
       <div className="grid grid-cols-3 px-2.5 py-1.5 text-[10px] text-t4 border-b border-brd">
         <span>Price</span>
         <span className="text-right">Size</span>

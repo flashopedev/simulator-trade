@@ -4,17 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { cn, type SupportedCoin } from "@/lib/utils";
 import { Search, Star, X, Settings, Maximize2 } from "lucide-react";
 
-// Category tag colors (matches real HL colored badges)
-const CATEGORY_COLORS: Record<string, string> = {
-  "L1": "bg-blue-500/20 text-blue-400 border-blue-500/30",
-  "DeFi": "bg-purple-500/20 text-purple-400 border-purple-500/30",
-  "Meme": "bg-pink-500/20 text-pink-400 border-pink-500/30",
-  "AI": "bg-cyan-500/20 text-cyan-400 border-cyan-500/30",
-  "L2": "bg-green-500/20 text-green-400 border-green-500/30",
-  "GameFi": "bg-orange-500/20 text-orange-400 border-orange-500/30",
-  "NFT": "bg-rose-500/20 text-rose-400 border-rose-500/30",
-  "Infra": "bg-indigo-500/20 text-indigo-400 border-indigo-500/30",
-};
+// Real HL doesn't use category color tags - removed
 
 interface CoinData {
   symbol: SupportedCoin;
@@ -55,24 +45,24 @@ const ALL_COINS: DisplayCoin[] = [
   { symbol: "BTC", displayName: "BTC-USDC", leverage: "50x", price: 98245, change24h: 1.50, funding8h: 0.0050, volume: "$1.2B", openInterest: "$890M", categories: ["L1"], tradeable: true },
   { symbol: "ETH", displayName: "ETH-USDC", leverage: "50x", price: 2756, change24h: -0.80, funding8h: 0.0080, volume: "$450M", openInterest: "$320M", categories: ["L1"], tradeable: true },
   { symbol: "SOL", displayName: "SOL-USDC", leverage: "25x", price: 206.5, change24h: 2.10, funding8h: 0.0120, volume: "$120M", openInterest: "$78M", categories: ["L1"], tradeable: true },
-  { symbol: "DOGE", displayName: "DOGE-USDC", leverage: "20x", price: 0.2634, change24h: 5.42, funding8h: 0.0085, volume: "$89M", openInterest: "$45M", categories: ["Meme"], tradeable: false },
-  { symbol: "AVAX", displayName: "AVAX-USDC", leverage: "20x", price: 37.82, change24h: -1.15, funding8h: 0.0065, volume: "$67M", openInterest: "$34M", categories: ["L1"], tradeable: false },
-  { symbol: "LINK", displayName: "LINK-USDC", leverage: "20x", price: 19.45, change24h: 3.78, funding8h: 0.0072, volume: "$58M", openInterest: "$29M", categories: ["DeFi", "Infra"], tradeable: false },
-  { symbol: "ARB", displayName: "ARB-USDC", leverage: "15x", price: 0.8234, change24h: -2.45, funding8h: 0.0045, volume: "$45M", openInterest: "$22M", categories: ["L2"], tradeable: false },
-  { symbol: "OP", displayName: "OP-USDC", leverage: "15x", price: 1.856, change24h: 1.22, funding8h: 0.0055, volume: "$38M", openInterest: "$19M", categories: ["L2"], tradeable: false },
-  { symbol: "SUI", displayName: "SUI-USDC", leverage: "15x", price: 3.542, change24h: 8.34, funding8h: 0.0150, volume: "$156M", openInterest: "$67M", categories: ["L1"], tradeable: false },
-  { symbol: "WIF", displayName: "WIF-USDC", leverage: "10x", price: 1.234, change24h: -6.78, funding8h: -0.0120, volume: "$78M", openInterest: "$34M", categories: ["Meme"], tradeable: false },
-  { symbol: "PEPE", displayName: "PEPE-USDC", leverage: "10x", price: 0.00001234, change24h: 12.45, funding8h: 0.0200, volume: "$134M", openInterest: "$56M", categories: ["Meme"], tradeable: false },
-  { symbol: "JUP", displayName: "JUP-USDC", leverage: "10x", price: 0.876, change24h: -1.56, funding8h: 0.0034, volume: "$23M", openInterest: "$11M", categories: ["DeFi"], tradeable: false },
-  { symbol: "TIA", displayName: "TIA-USDC", leverage: "15x", price: 4.567, change24h: -3.21, funding8h: 0.0089, volume: "$45M", openInterest: "$23M", categories: ["Infra", "L1"], tradeable: false },
-  { symbol: "SEI", displayName: "SEI-USDC", leverage: "10x", price: 0.3421, change24h: 4.56, funding8h: 0.0067, volume: "$34M", openInterest: "$16M", categories: ["L1"], tradeable: false },
-  { symbol: "INJ", displayName: "INJ-USDC", leverage: "15x", price: 24.56, change24h: 2.34, funding8h: 0.0078, volume: "$56M", openInterest: "$28M", categories: ["DeFi", "L1"], tradeable: false },
-  { symbol: "RENDER", displayName: "RENDER-USDC", leverage: "10x", price: 7.234, change24h: -4.12, funding8h: 0.0056, volume: "$34M", openInterest: "$17M", categories: ["AI"], tradeable: false },
-  { symbol: "FET", displayName: "FET-USDC", leverage: "10x", price: 1.567, change24h: 6.78, funding8h: 0.0123, volume: "$45M", openInterest: "$22M", categories: ["AI"], tradeable: false },
-  { symbol: "ONDO", displayName: "ONDO-USDC", leverage: "10x", price: 1.234, change24h: 3.45, funding8h: 0.0067, volume: "$28M", openInterest: "$14M", categories: ["DeFi"], tradeable: false },
-  { symbol: "STX", displayName: "STX-USDC", leverage: "10x", price: 1.876, change24h: -1.23, funding8h: 0.0045, volume: "$19M", openInterest: "$9M", categories: ["L2"], tradeable: false },
-  { symbol: "NEAR", displayName: "NEAR-USDC", leverage: "15x", price: 5.234, change24h: 1.89, funding8h: 0.0056, volume: "$34M", openInterest: "$17M", categories: ["L1", "AI"], tradeable: false },
-  { symbol: "BONK", displayName: "BONK-USDC", leverage: "5x", price: 0.00002345, change24h: -8.45, funding8h: -0.0089, volume: "$67M", openInterest: "$28M", categories: ["Meme"], tradeable: false },
+  { symbol: "DOGE", displayName: "DOGE-USDC", leverage: "20x", price: 0.2634, change24h: 5.42, funding8h: 0.0085, volume: "$89M", openInterest: "$45M", categories: [], tradeable: true },
+  { symbol: "AVAX", displayName: "AVAX-USDC", leverage: "20x", price: 37.82, change24h: -1.15, funding8h: 0.0065, volume: "$67M", openInterest: "$34M", categories: [], tradeable: true },
+  { symbol: "LINK", displayName: "LINK-USDC", leverage: "20x", price: 19.45, change24h: 3.78, funding8h: 0.0072, volume: "$58M", openInterest: "$29M", categories: [], tradeable: true },
+  { symbol: "ARB", displayName: "ARB-USDC", leverage: "15x", price: 0.8234, change24h: -2.45, funding8h: 0.0045, volume: "$45M", openInterest: "$22M", categories: [], tradeable: true },
+  { symbol: "OP", displayName: "OP-USDC", leverage: "15x", price: 1.856, change24h: 1.22, funding8h: 0.0055, volume: "$38M", openInterest: "$19M", categories: [], tradeable: true },
+  { symbol: "SUI", displayName: "SUI-USDC", leverage: "15x", price: 3.542, change24h: 8.34, funding8h: 0.0150, volume: "$156M", openInterest: "$67M", categories: [], tradeable: true },
+  { symbol: "WIF", displayName: "WIF-USDC", leverage: "10x", price: 1.234, change24h: -6.78, funding8h: -0.0120, volume: "$78M", openInterest: "$34M", categories: [], tradeable: true },
+  { symbol: "PEPE", displayName: "PEPE-USDC", leverage: "10x", price: 0.00001234, change24h: 12.45, funding8h: 0.0200, volume: "$134M", openInterest: "$56M", categories: [], tradeable: true },
+  { symbol: "JUP", displayName: "JUP-USDC", leverage: "10x", price: 0.876, change24h: -1.56, funding8h: 0.0034, volume: "$23M", openInterest: "$11M", categories: [], tradeable: true },
+  { symbol: "TIA", displayName: "TIA-USDC", leverage: "15x", price: 4.567, change24h: -3.21, funding8h: 0.0089, volume: "$45M", openInterest: "$23M", categories: [], tradeable: true },
+  { symbol: "SEI", displayName: "SEI-USDC", leverage: "10x", price: 0.3421, change24h: 4.56, funding8h: 0.0067, volume: "$34M", openInterest: "$16M", categories: [], tradeable: true },
+  { symbol: "INJ", displayName: "INJ-USDC", leverage: "15x", price: 24.56, change24h: 2.34, funding8h: 0.0078, volume: "$56M", openInterest: "$28M", categories: [], tradeable: true },
+  { symbol: "RENDER", displayName: "RENDER-USDC", leverage: "10x", price: 7.234, change24h: -4.12, funding8h: 0.0056, volume: "$34M", openInterest: "$17M", categories: [], tradeable: true },
+  { symbol: "FET", displayName: "FET-USDC", leverage: "10x", price: 1.567, change24h: 6.78, funding8h: 0.0123, volume: "$45M", openInterest: "$22M", categories: [], tradeable: true },
+  { symbol: "ONDO", displayName: "ONDO-USDC", leverage: "10x", price: 1.234, change24h: 3.45, funding8h: 0.0067, volume: "$28M", openInterest: "$14M", categories: [], tradeable: true },
+  { symbol: "STX", displayName: "STX-USDC", leverage: "10x", price: 1.876, change24h: -1.23, funding8h: 0.0045, volume: "$19M", openInterest: "$9M", categories: [], tradeable: true },
+  { symbol: "NEAR", displayName: "NEAR-USDC", leverage: "15x", price: 5.234, change24h: 1.89, funding8h: 0.0056, volume: "$34M", openInterest: "$17M", categories: [], tradeable: true },
+  { symbol: "BONK", displayName: "BONK-USDC", leverage: "5x", price: 0.00002345, change24h: -8.45, funding8h: -0.0089, volume: "$67M", openInterest: "$28M", categories: [], tradeable: true },
 ];
 
 interface CoinSelectorModalProps {
@@ -268,27 +258,12 @@ export function CoinSelectorModal({
                 />
               </button>
 
-              {/* Symbol with leverage badge + category tags */}
+              {/* Symbol with leverage badge - matching real HL (no category tags) */}
               <div className="flex items-center gap-2">
                 <span className="text-[13px] font-medium text-t1">{coin.displayName}</span>
-                <span className="px-1 py-0.5 bg-acc/15 text-acc text-[9px] font-bold rounded border border-acc/20">
+                <span className="px-1.5 py-0.5 bg-acc/20 text-acc text-[10px] font-medium rounded">
                   {coin.leverage}
                 </span>
-                {/* Category tags */}
-                {coin.categories?.map(cat => (
-                  <span
-                    key={cat}
-                    className={cn(
-                      "px-1.5 py-0.5 text-[9px] font-medium rounded border",
-                      CATEGORY_COLORS[cat] || "bg-gray-500/20 text-gray-400 border-gray-500/30"
-                    )}
-                  >
-                    {cat}
-                  </span>
-                ))}
-                {!coin.tradeable && (
-                  <span className="text-[9px] text-t4">(view only)</span>
-                )}
               </div>
 
               {/* Last Price */}

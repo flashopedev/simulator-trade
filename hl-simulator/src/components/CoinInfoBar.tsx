@@ -6,19 +6,55 @@ import { Star, ChevronDown } from "lucide-react";
 import { CoinSelectorModal } from "./CoinSelectorModal";
 
 // Leverage per coin
-const COIN_LEVERAGE: Record<SupportedCoin, string> = {
+const COIN_LEVERAGE: Record<string, string> = {
   HYPE: "10x",
   BTC: "50x",
   ETH: "50x",
   SOL: "25x",
+  DOGE: "20x",
+  AVAX: "20x",
+  LINK: "20x",
+  ARB: "15x",
+  OP: "15x",
+  SUI: "15x",
+  WIF: "10x",
+  PEPE: "10x",
+  JUP: "10x",
+  TIA: "15x",
+  SEI: "10x",
+  INJ: "15x",
+  RENDER: "10x",
+  FET: "10x",
+  ONDO: "10x",
+  STX: "10x",
+  NEAR: "15x",
+  BONK: "5x",
 };
 
-// Coin gradient colors
-const COIN_COLORS: Record<SupportedCoin, string> = {
+// Coin gradient colors (just first letter, no fancy gradients to match real HL)
+const COIN_COLORS: Record<string, string> = {
   HYPE: "from-emerald-400 to-cyan-500",
   BTC: "from-orange-400 to-yellow-500",
   ETH: "from-blue-400 to-indigo-500",
   SOL: "from-purple-400 to-fuchsia-500",
+  DOGE: "from-yellow-400 to-amber-500",
+  AVAX: "from-red-400 to-rose-500",
+  LINK: "from-blue-400 to-cyan-500",
+  ARB: "from-blue-400 to-indigo-500",
+  OP: "from-red-400 to-pink-500",
+  SUI: "from-cyan-400 to-blue-500",
+  WIF: "from-amber-400 to-orange-500",
+  PEPE: "from-green-400 to-emerald-500",
+  JUP: "from-lime-400 to-green-500",
+  TIA: "from-purple-400 to-violet-500",
+  SEI: "from-red-400 to-rose-500",
+  INJ: "from-blue-400 to-indigo-500",
+  RENDER: "from-cyan-400 to-teal-500",
+  FET: "from-purple-400 to-pink-500",
+  ONDO: "from-blue-400 to-cyan-500",
+  STX: "from-orange-400 to-amber-500",
+  NEAR: "from-green-400 to-teal-500",
+  BONK: "from-yellow-400 to-amber-500",
 };
 
 interface CoinInfoBarProps {

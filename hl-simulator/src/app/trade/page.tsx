@@ -147,6 +147,7 @@ export default function TradePage() {
               coin={coin}
               price={price}
               availableBalance={getAvailableBalance()}
+              currentPositionSize={currentPosition?.size ?? 0}
               onPlaceOrder={handlePlaceOrder}
             />
           </div>

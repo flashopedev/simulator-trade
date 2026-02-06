@@ -46,7 +46,7 @@ export function Navigation({
             <circle cx="8" cy="12" r="6" fill="#00d8c4" />
             <circle cx="16" cy="12" r="6" fill="#00d8c4" />
           </svg>
-          <span className="font-bold text-[15px] tracking-tight text-t1 italic">Hyperliquid</span>
+          <span className="font-light text-[15px] tracking-tight text-t1 italic">Hyperliquid</span>
           <span className="bg-acc/10 text-acc text-[8px] px-1.5 py-0.5 rounded font-bold tracking-wider border border-acc/15">
             SIM
           </span>
@@ -105,10 +105,10 @@ export function Navigation({
                 </div>
               )}
 
-              {/* Equity badge */}
+              {/* FIX 17: Equity badge - "$10,000.00" format */}
               <div className="flex items-center gap-2 px-3 py-1.5 bg-s2 border border-brd rounded text-[12px]">
                 <span className="text-t3 font-medium">Equity</span>
-                <span className="font-bold text-acc font-tabular">{formatNumber(balance)}</span>
+                <span className="font-bold text-acc font-tabular">${formatNumber(balance)}</span>
               </div>
 
               {/* Sign Out */}

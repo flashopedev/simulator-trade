@@ -6,12 +6,12 @@ interface TradingViewChartProps {
   coin: string;
 }
 
-// Map our coins to TradingView symbols
+// Map our coins to TradingView PERP symbols (FIX 10)
 const SYMBOL_MAP: Record<string, string> = {
-  HYPE: "BYBIT:HYPEUSDT",
-  BTC: "BINANCE:BTCUSDT",
-  ETH: "BINANCE:ETHUSDT",
-  SOL: "BINANCE:SOLUSDT",
+  HYPE: "BYBIT:HYPEUSDT.P",
+  BTC: "BINANCE:BTCUSDT.P",
+  ETH: "BINANCE:ETHUSDT.P",
+  SOL: "BINANCE:SOLUSDT.P",
 };
 
 function TradingViewChartComponent({ coin }: TradingViewChartProps) {
@@ -43,9 +43,10 @@ function TradingViewChartComponent({ coin }: TradingViewChartProps) {
     script.type = "text/javascript";
     script.async = true;
 
+    // FIX 9: Show drawing tools (hide_side_toolbar: false)
     script.innerHTML = JSON.stringify({
       autosize: true,
-      symbol: SYMBOL_MAP[coin] || "BINANCE:BTCUSDT",
+      symbol: SYMBOL_MAP[coin] || "BINANCE:BTCUSDT.P",
       interval: "15",
       timezone: "Etc/UTC",
       theme: "dark",
@@ -54,6 +55,7 @@ function TradingViewChartComponent({ coin }: TradingViewChartProps) {
       backgroundColor: "#0a0f14",
       gridColor: "#1a1f2e",
       hide_top_toolbar: false,
+      hide_side_toolbar: false,
       hide_legend: false,
       allow_symbol_change: false,
       save_image: false,

@@ -126,15 +126,15 @@ export default function PortfolioPage() {
       <NotificationContainer />
       <Navigation balance={totalEquity} isConnected={true} onSignOut={signOut} />
 
-      <div className="flex-1 flex flex-col pb-16">
-        {/* Header with title and buttons */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-brd">
+      <div className="flex-1 flex flex-col">
+        {/* Header with title and buttons - NO border-b */}
+        <div className="flex items-center justify-between px-6 py-5">
           <h1 className="text-[28px] font-medium text-t1">Portfolio</h1>
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-3">
             {HEADER_BUTTONS.map((btn) => (
               <button
                 key={btn}
-                className="px-4 py-2 text-[13px] rounded-lg border border-brd text-acc hover:bg-s2 transition-colors"
+                className="px-5 py-2.5 text-[13px] rounded-lg border border-brd text-acc hover:bg-s2 transition-colors"
               >
                 {btn}
               </button>
@@ -142,40 +142,42 @@ export default function PortfolioPage() {
           </div>
         </div>
 
-        {/* 3-column grid section */}
-        <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr_1fr] gap-4 px-6 py-4">
-          {/* Left column - two cards */}
-          <div className="flex flex-col gap-4">
+        {/* 3-column grid section - NO borders on cards, just bg slightly different */}
+        <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr_1fr] gap-0 px-6">
+          {/* Left column - two cards stacked */}
+          <div className="flex flex-col pr-4 border-r border-brd">
             {/* 14 Day Volume */}
-            <div className="border border-brd rounded-lg p-5">
-              <div className="text-[13px] text-t3">14 Day Volume</div>
-              <div className="text-[32px] font-medium text-t1 mt-2">$0</div>
-              <button className="text-[13px] text-acc mt-2 hover:underline">View Volume</button>
+            <div className="py-4">
+              <div className="text-[13px] text-t3 mb-1">14 Day Volume</div>
+              <div className="text-[36px] font-medium text-t1">$0</div>
+              <button className="text-[13px] text-acc mt-3 hover:underline">View Volume</button>
             </div>
 
             {/* Fees */}
-            <div className="border border-brd rounded-lg p-5">
-              <div className="flex items-center justify-between">
+            <div className="py-4 border-t border-brd">
+              <div className="flex items-center justify-between mb-1">
                 <span className="text-[13px] text-t3">Fees (Taker / Maker)</span>
-                <button className="flex items-center gap-1 text-[12px] text-t2">
+                <button className="flex items-center gap-1 text-[12px] text-t2 hover:text-t1">
                   Perps <ChevronDown className="w-3 h-3" />
                 </button>
               </div>
               <div className="text-[28px] font-medium text-t1 mt-2">0.0350% / 0.0100%</div>
-              <button className="text-[13px] text-acc mt-2 hover:underline">View Fee Schedule</button>
+              <button className="text-[13px] text-acc mt-3 hover:underline">View Fee Schedule</button>
             </div>
           </div>
 
           {/* Middle column - stats table */}
-          <div className="border border-brd rounded-lg p-5">
-            <div className="flex items-center gap-4 mb-4">
-              <button className="flex items-center gap-1 text-[13px] text-t1">
-                Perps + Spot + Vaults <ChevronDown className="w-3 h-3" />
+          <div className="px-4 border-r border-brd py-4">
+            {/* Dropdowns row */}
+            <div className="flex items-center gap-4 mb-3">
+              <button className="flex items-center gap-1.5 text-[13px] text-t1 hover:text-acc">
+                Perps + Spot + Vaults <ChevronDown className="w-3.5 h-3.5" />
               </button>
-              <button className="flex items-center gap-1 text-[13px] text-t1">
-                All-time <ChevronDown className="w-3 h-3" />
+              <button className="flex items-center gap-1.5 text-[13px] text-t1 hover:text-acc">
+                All-time <ChevronDown className="w-3.5 h-3.5" />
               </button>
             </div>
+            {/* Stats rows */}
             <div className="space-y-0">
               {[
                 { label: "PNL", value: formatPnl(totalUnrealizedPnl), color: totalUnrealizedPnl >= 0 ? "text-grn" : "text-red" },
@@ -186,7 +188,7 @@ export default function PortfolioPage() {
                 { label: "Spot Account Equity", value: "$0.00" },
                 { label: "Earn Balance", value: "$0.00" },
               ].map((row) => (
-                <div key={row.label} className="flex justify-between py-1.5 text-[13px]">
+                <div key={row.label} className="flex justify-between py-2 text-[13px]">
                   <span className="text-t3">{row.label}</span>
                   <span className={cn("font-tabular", row.color || "text-t1")}>{row.value}</span>
                 </div>
@@ -195,13 +197,14 @@ export default function PortfolioPage() {
           </div>
 
           {/* Right column - chart */}
-          <div className="border border-brd rounded-lg p-5">
-            <div className="flex items-center gap-4 mb-4 border-b border-brd">
+          <div className="pl-4 py-4">
+            {/* Chart tabs */}
+            <div className="flex items-center gap-6 mb-4">
               <button
                 onClick={() => setChartTab("value")}
                 className={cn(
-                  "pb-2 text-[13px] border-b-2 -mb-[1px] transition-colors",
-                  chartTab === "value" ? "text-t1 border-t1" : "text-t3 border-transparent"
+                  "text-[13px] pb-1 transition-colors",
+                  chartTab === "value" ? "text-t1" : "text-t3 hover:text-t2"
                 )}
               >
                 Account Value
@@ -209,47 +212,52 @@ export default function PortfolioPage() {
               <button
                 onClick={() => setChartTab("pnl")}
                 className={cn(
-                  "pb-2 text-[13px] border-b-2 -mb-[1px] transition-colors",
-                  chartTab === "pnl" ? "text-t1 border-t1" : "text-t3 border-transparent"
+                  "text-[13px] pb-1 transition-colors",
+                  chartTab === "pnl" ? "text-t1" : "text-t3 hover:text-t2"
                 )}
               >
                 PNL
               </button>
             </div>
-            {/* SVG chart placeholder */}
-            <div className="h-[180px] rounded">
-              <svg viewBox="0 0 300 150" className="w-full h-full">
+            {/* SVG chart */}
+            <div className="h-[220px]">
+              <svg viewBox="0 0 350 180" className="w-full h-full" preserveAspectRatio="none">
                 {/* Y axis labels */}
-                <text x="5" y="140" fill="#6b7280" fontSize="10">0</text>
-                <text x="5" y="100" fill="#6b7280" fontSize="10">1</text>
-                <text x="5" y="60" fill="#6b7280" fontSize="10">2</text>
-                <text x="5" y="20" fill="#6b7280" fontSize="10">3</text>
-                {/* Grid lines */}
-                <line x1="25" y1="140" x2="290" y2="140" stroke="#1a1f2e" strokeWidth="1" />
-                <line x1="25" y1="100" x2="290" y2="100" stroke="#1a1f2e" strokeWidth="0.5" strokeDasharray="4" />
-                <line x1="25" y1="60" x2="290" y2="60" stroke="#1a1f2e" strokeWidth="0.5" strokeDasharray="4" />
-                <line x1="25" y1="20" x2="290" y2="20" stroke="#1a1f2e" strokeWidth="0.5" strokeDasharray="4" />
-                {/* Accent line chart */}
-                <polyline points="30,135 80,130 130,100 180,80 230,60 280,45" fill="none" stroke="#00d8c4" strokeWidth="2" />
+                <text x="8" y="170" fill="#4b5563" fontSize="11">0</text>
+                <text x="8" y="125" fill="#4b5563" fontSize="11">1</text>
+                <text x="8" y="80" fill="#4b5563" fontSize="11">2</text>
+                <text x="8" y="35" fill="#4b5563" fontSize="11">3</text>
+                {/* Horizontal grid lines */}
+                <line x1="30" y1="165" x2="345" y2="165" stroke="#1a1f2e" strokeWidth="1" />
+                <line x1="30" y1="120" x2="345" y2="120" stroke="#1a1f2e" strokeWidth="0.5" strokeDasharray="4" />
+                <line x1="30" y1="75" x2="345" y2="75" stroke="#1a1f2e" strokeWidth="0.5" strokeDasharray="4" />
+                <line x1="30" y1="30" x2="345" y2="30" stroke="#1a1f2e" strokeWidth="0.5" strokeDasharray="4" />
+                {/* Chart line */}
+                <polyline
+                  points="35,160 70,155 105,140 140,120 175,100 210,85 245,70 280,55 315,45 340,40"
+                  fill="none"
+                  stroke="#00d8c4"
+                  strokeWidth="2"
+                />
               </svg>
             </div>
           </div>
         </div>
 
         {/* Bottom tabs section */}
-        <div className="flex-1 flex flex-col px-6">
-          {/* Tabs */}
+        <div className="flex-1 flex flex-col px-6 mt-4">
+          {/* Tabs row */}
           <div className="flex items-center justify-between border-b border-brd">
-            <div className="flex items-center gap-1 overflow-x-auto">
+            <div className="flex items-center overflow-x-auto">
               {BOTTOM_TABS.map((tab) => (
                 <button
                   key={tab.key}
                   onClick={() => !tab.disabled && setActiveTab(tab.key)}
                   disabled={tab.disabled}
                   className={cn(
-                    "px-3 py-2.5 text-[13px] font-medium whitespace-nowrap border-b-2 -mb-[1px] transition-colors",
+                    "px-4 py-3 text-[13px] font-medium whitespace-nowrap border-b-2 -mb-[1px] transition-colors",
                     activeTab === tab.key
-                      ? "text-t1 border-t1"
+                      ? "text-t1 border-grn"
                       : tab.disabled
                       ? "text-t4 border-transparent cursor-default"
                       : "text-t3 border-transparent hover:text-t2"
@@ -259,13 +267,13 @@ export default function PortfolioPage() {
                 </button>
               ))}
             </div>
-            <button className="flex items-center gap-1 text-[12px] text-t3 hover:text-t2">
-              Filter <ChevronDown className="w-3 h-3" />
+            <button className="flex items-center gap-1.5 text-[13px] text-t2 hover:text-t1">
+              Filter <ChevronDown className="w-3.5 h-3.5" />
             </button>
           </div>
 
           {/* Tab Content */}
-          <div className="flex-1 py-4">
+          <div className="flex-1 py-4 pb-20">
             {/* Positions Tab */}
             {activeTab === "positions" && (
               <div>
@@ -275,19 +283,21 @@ export default function PortfolioPage() {
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
-                    <table className="w-full text-[12px]">
+                    <table className="w-full text-[13px]">
                       <thead>
-                        <tr className="text-t3 text-left border-b border-brd">
-                          <th className="py-2 font-medium">Coin</th>
-                          <th className="py-2 font-medium">Size</th>
-                          <th className="py-2 font-medium">Position Value ▾</th>
-                          <th className="py-2 font-medium">Entry Price</th>
-                          <th className="py-2 font-medium">Mark Price</th>
-                          <th className="py-2 font-medium">PNL (ROE %)</th>
-                          <th className="py-2 font-medium">Liq. Price</th>
-                          <th className="py-2 font-medium">Margin</th>
-                          <th className="py-2 font-medium">Funding</th>
-                          <th className="py-2"></th>
+                        <tr className="text-t3 text-left">
+                          <th className="py-3 font-medium">Coin</th>
+                          <th className="py-3 font-medium">Size</th>
+                          <th className="py-3 font-medium">
+                            Position Value <span className="text-t4">▾</span>
+                          </th>
+                          <th className="py-3 font-medium">Entry Price</th>
+                          <th className="py-3 font-medium">Mark Price</th>
+                          <th className="py-3 font-medium">PNL (ROE %)</th>
+                          <th className="py-3 font-medium">Liq. Price</th>
+                          <th className="py-3 font-medium">Margin</th>
+                          <th className="py-3 font-medium">Funding</th>
+                          <th className="py-3"></th>
                         </tr>
                       </thead>
                       <tbody>
@@ -302,9 +312,9 @@ export default function PortfolioPage() {
                           return (
                             <tr
                               key={p.id}
-                              className="border-b border-brd hover:bg-s2/50 transition-colors"
+                              className="border-t border-brd hover:bg-s2/30 transition-colors"
                             >
-                              <td className="py-2.5">
+                              <td className="py-3">
                                 <span className={cn(
                                   "font-medium",
                                   p.side === "Long" ? "text-grn" : "text-red"
@@ -312,20 +322,20 @@ export default function PortfolioPage() {
                                   {p.coin} {p.leverage}x {p.side === "Long" ? "L" : "S"}
                                 </span>
                               </td>
-                              <td className="py-2.5 font-tabular text-t1">{p.size.toFixed(2)}</td>
-                              <td className="py-2.5 font-tabular text-t1">${formatNumber(positionValue)}</td>
-                              <td className="py-2.5 font-tabular text-t2">{p.entry_price.toFixed(decimals)}</td>
-                              <td className="py-2.5 font-tabular text-t2">{markPrice.toFixed(decimals)}</td>
-                              <td className={cn("py-2.5 font-tabular", pnl >= 0 ? "text-grn" : "text-red")}>
+                              <td className="py-3 font-tabular text-t1">{p.size.toFixed(2)}</td>
+                              <td className="py-3 font-tabular text-t1">${formatNumber(positionValue)}</td>
+                              <td className="py-3 font-tabular text-t2">{p.entry_price.toFixed(decimals)}</td>
+                              <td className="py-3 font-tabular text-t2">{markPrice.toFixed(decimals)}</td>
+                              <td className={cn("py-3 font-tabular", pnl >= 0 ? "text-grn" : "text-red")}>
                                 {formatPnl(pnl)} ({roe >= 0 ? "+" : ""}{roe.toFixed(1)}%)
                               </td>
-                              <td className="py-2.5 font-tabular text-red">{p.liquidation_price.toFixed(decimals)}</td>
-                              <td className="py-2.5 font-tabular text-t2">${formatNumber(margin)}</td>
-                              <td className="py-2.5 text-t3">—</td>
-                              <td className="py-2.5">
+                              <td className="py-3 font-tabular text-red">{p.liquidation_price.toFixed(decimals)}</td>
+                              <td className="py-3 font-tabular text-t2">${formatNumber(margin)}</td>
+                              <td className="py-3 text-t3">—</td>
+                              <td className="py-3">
                                 <button
                                   onClick={() => handleClosePosition(p)}
-                                  className="px-3 py-1 bg-s3 border border-brd rounded text-[11px] font-medium hover:bg-red/10 hover:border-red/25 hover:text-red transition-colors"
+                                  className="px-4 py-1.5 bg-s3 border border-brd rounded text-[12px] font-medium text-t1 hover:bg-s4 transition-colors"
                                 >
                                   Close
                                 </button>
@@ -343,21 +353,21 @@ export default function PortfolioPage() {
             {/* Balances Tab */}
             {activeTab === "balances" && (
               <div className="overflow-x-auto">
-                <table className="w-full text-[12px]">
+                <table className="w-full text-[13px]">
                   <thead>
-                    <tr className="text-t3 text-left border-b border-brd">
-                      <th className="py-2 font-medium">Coin</th>
-                      <th className="py-2 font-medium">Total Balance</th>
-                      <th className="py-2 font-medium">Available Balance</th>
-                      <th className="py-2 font-medium">In Orders</th>
+                    <tr className="text-t3 text-left">
+                      <th className="py-3 font-medium">Coin</th>
+                      <th className="py-3 font-medium">Total Balance</th>
+                      <th className="py-3 font-medium">Available Balance</th>
+                      <th className="py-3 font-medium">In Orders</th>
                     </tr>
                   </thead>
                   <tbody>
-                    <tr className="border-b border-brd">
-                      <td className="py-2.5 font-medium text-t1">USDC</td>
-                      <td className="py-2.5 font-tabular text-t1">${formatNumber(account?.balance ?? 10000)}</td>
-                      <td className="py-2.5 font-tabular text-t2">${formatNumber(availableBalance)}</td>
-                      <td className="py-2.5 font-tabular text-t2">$0.00</td>
+                    <tr className="border-t border-brd">
+                      <td className="py-3 font-medium text-t1">USDC</td>
+                      <td className="py-3 font-tabular text-t1">${formatNumber(account?.balance ?? 10000)}</td>
+                      <td className="py-3 font-tabular text-t2">${formatNumber(availableBalance)}</td>
+                      <td className="py-3 font-tabular text-t2">$0.00</td>
                     </tr>
                   </tbody>
                 </table>
@@ -367,67 +377,50 @@ export default function PortfolioPage() {
             {/* Open Orders Tab */}
             {activeTab === "openOrders" && (
               <div>
-                {orders.length === 0 ? (
-                  <>
-                    <table className="w-full text-[12px]">
-                      <thead>
-                        <tr className="text-t3 text-left border-b border-brd">
-                          <th className="py-2 font-medium">Time</th>
-                          <th className="py-2 font-medium">Type</th>
-                          <th className="py-2 font-medium">Coin</th>
-                          <th className="py-2 font-medium">Direction</th>
-                          <th className="py-2 font-medium">Size</th>
-                          <th className="py-2 font-medium">Original Size</th>
-                          <th className="py-2 font-medium">Order Value <ChevronDown className="w-3 h-3 inline" /></th>
-                          <th className="py-2 font-medium">Price</th>
-                          <th className="py-2 font-medium">Reduce Only</th>
-                          <th className="py-2 font-medium">Trigger Conditions</th>
-                          <th className="py-2 font-medium">TP/SL</th>
+                <table className="w-full text-[13px]">
+                  <thead>
+                    <tr className="text-t3 text-left">
+                      <th className="py-3 font-medium">Time</th>
+                      <th className="py-3 font-medium">Type</th>
+                      <th className="py-3 font-medium">Coin</th>
+                      <th className="py-3 font-medium">Direction</th>
+                      <th className="py-3 font-medium">Size</th>
+                      <th className="py-3 font-medium">Original Size</th>
+                      <th className="py-3 font-medium">
+                        Order Value <ChevronDown className="w-3 h-3 inline" />
+                      </th>
+                      <th className="py-3 font-medium">Price</th>
+                      <th className="py-3 font-medium">Reduce Only</th>
+                      <th className="py-3 font-medium">Trigger Conditions</th>
+                      <th className="py-3 font-medium">TP/SL</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {orders.length === 0 ? (
+                      <tr>
+                        <td colSpan={11} className="py-4 text-t3 text-[13px]">
+                          No open orders yet
+                        </td>
+                      </tr>
+                    ) : (
+                      orders.map((o) => (
+                        <tr key={o.id} className="border-t border-brd hover:bg-s2/30 transition-colors">
+                          <td className="py-3 text-t3">{new Date(o.created_at).toLocaleString()}</td>
+                          <td className="py-3 text-t2">{o.order_type}</td>
+                          <td className="py-3 text-t1">{o.coin}</td>
+                          <td className={cn("py-3", o.side === "Long" ? "text-grn" : "text-red")}>{o.side}</td>
+                          <td className="py-3 font-tabular text-t2">{o.size.toFixed(4)}</td>
+                          <td className="py-3 font-tabular text-t2">{o.size.toFixed(4)}</td>
+                          <td className="py-3 font-tabular text-t2">${formatNumber(o.size * o.price)}</td>
+                          <td className="py-3 font-tabular text-t2">{o.price.toFixed(2)}</td>
+                          <td className="py-3 text-t3">—</td>
+                          <td className="py-3 text-t3">—</td>
+                          <td className="py-3 text-t3">—</td>
                         </tr>
-                      </thead>
-                    </table>
-                    <div className="text-t3 text-[13px] py-4">
-                      No open orders yet
-                    </div>
-                  </>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-[12px]">
-                      <thead>
-                        <tr className="text-t3 text-left border-b border-brd">
-                          <th className="py-2 font-medium">Time</th>
-                          <th className="py-2 font-medium">Type</th>
-                          <th className="py-2 font-medium">Coin</th>
-                          <th className="py-2 font-medium">Direction</th>
-                          <th className="py-2 font-medium">Size</th>
-                          <th className="py-2 font-medium">Original Size</th>
-                          <th className="py-2 font-medium">Order Value <ChevronDown className="w-3 h-3 inline" /></th>
-                          <th className="py-2 font-medium">Price</th>
-                          <th className="py-2 font-medium">Reduce Only</th>
-                          <th className="py-2 font-medium">Trigger Conditions</th>
-                          <th className="py-2 font-medium">TP/SL</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {orders.map((o) => (
-                          <tr key={o.id} className="border-b border-brd hover:bg-s2/50 transition-colors">
-                            <td className="py-2.5 text-t3">{new Date(o.created_at).toLocaleString()}</td>
-                            <td className="py-2.5 text-t2">{o.order_type}</td>
-                            <td className="py-2.5 text-t1">{o.coin}</td>
-                            <td className={cn("py-2.5", o.side === "Long" ? "text-grn" : "text-red")}>{o.side}</td>
-                            <td className="py-2.5 font-tabular text-t2">{o.size.toFixed(4)}</td>
-                            <td className="py-2.5 font-tabular text-t2">{o.size.toFixed(4)}</td>
-                            <td className="py-2.5 font-tabular text-t2">${formatNumber(o.size * o.price)}</td>
-                            <td className="py-2.5 font-tabular text-t2">{o.price.toFixed(2)}</td>
-                            <td className="py-2.5 text-t3">—</td>
-                            <td className="py-2.5 text-t3">—</td>
-                            <td className="py-2.5 text-t3">—</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
+                      ))
+                    )}
+                  </tbody>
+                </table>
               </div>
             )}
 
@@ -440,16 +433,16 @@ export default function PortfolioPage() {
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
-                    <table className="w-full text-[12px]">
+                    <table className="w-full text-[13px]">
                       <thead>
-                        <tr className="text-t3 text-left border-b border-brd">
-                          <th className="py-2 font-medium">Time</th>
-                          <th className="py-2 font-medium">Coin</th>
-                          <th className="py-2 font-medium">Side</th>
-                          <th className="py-2 font-medium">Size</th>
-                          <th className="py-2 font-medium">Entry</th>
-                          <th className="py-2 font-medium">Exit</th>
-                          <th className="py-2 font-medium">PNL</th>
+                        <tr className="text-t3 text-left">
+                          <th className="py-3 font-medium">Time</th>
+                          <th className="py-3 font-medium">Coin</th>
+                          <th className="py-3 font-medium">Side</th>
+                          <th className="py-3 font-medium">Size</th>
+                          <th className="py-3 font-medium">Entry</th>
+                          <th className="py-3 font-medium">Exit</th>
+                          <th className="py-3 font-medium">PNL</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -458,17 +451,17 @@ export default function PortfolioPage() {
                           return (
                             <tr
                               key={h.id}
-                              className="border-b border-brd hover:bg-s2/50 transition-colors"
+                              className="border-t border-brd hover:bg-s2/30 transition-colors"
                             >
-                              <td className="py-2.5 text-t3">{new Date(h.closed_at).toLocaleString()}</td>
-                              <td className="py-2.5 font-medium text-t1">{h.coin}{h.liquidated && " 💀"}</td>
-                              <td className={cn("py-2.5", h.side === "Long" ? "text-grn" : "text-red")}>
+                              <td className="py-3 text-t3">{new Date(h.closed_at).toLocaleString()}</td>
+                              <td className="py-3 font-medium text-t1">{h.coin}{h.liquidated && " 💀"}</td>
+                              <td className={cn("py-3", h.side === "Long" ? "text-grn" : "text-red")}>
                                 {h.leverage}x {h.side}
                               </td>
-                              <td className="py-2.5 font-tabular text-t2">{h.size.toFixed(4)}</td>
-                              <td className="py-2.5 font-tabular text-t2">{h.entry_price.toFixed(decimals)}</td>
-                              <td className="py-2.5 font-tabular text-t2">{h.exit_price.toFixed(decimals)}</td>
-                              <td className={cn("py-2.5 font-tabular font-medium", h.pnl >= 0 ? "text-grn" : "text-red")}>
+                              <td className="py-3 font-tabular text-t2">{h.size.toFixed(4)}</td>
+                              <td className="py-3 font-tabular text-t2">{h.entry_price.toFixed(decimals)}</td>
+                              <td className="py-3 font-tabular text-t2">{h.exit_price.toFixed(decimals)}</td>
+                              <td className={cn("py-3 font-tabular font-medium", h.pnl >= 0 ? "text-grn" : "text-red")}>
                                 {formatPnl(h.pnl)}
                               </td>
                             </tr>

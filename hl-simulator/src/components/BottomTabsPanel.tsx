@@ -4,6 +4,7 @@ import { useState } from "react";
 import { cn, formatPnl, formatNumber, calculatePnl, calculateRoe, COIN_DECIMALS } from "@/lib/utils";
 import type { Position, TradeHistory, OrderHistory } from "@/lib/supabase/types";
 import { ChevronDown } from "lucide-react";
+import { MarketCloseModal } from "./MarketCloseModal";
 
 type BottomTab =
   | "balances"
@@ -33,7 +34,6 @@ export function BottomTabsPanel({
 }: BottomTabsPanelProps) {
   const [activeTab, setActiveTab] = useState<BottomTab>("balances");
   const [closeModal, setCloseModal] = useState<Position | null>(null);
-  const [closeSize, setCloseSize] = useState("");
   const [hideSmallBalances, setHideSmallBalances] = useState(false);
 
   const tabs: { key: BottomTab; label: string; count?: number; disabled?: boolean }[] = [
@@ -46,17 +46,20 @@ export function BottomTabsPanel({
     { key: "order-history", label: "Order History" },
   ];
 
-  const handleClose = (p: Position) => {
-    setCloseModal(p);
-    setCloseSize(p.size.toString());
+  const handleMarketClose = (p: Position) => {
+    // Check if we should skip confirmation
+    const skipConfirm = localStorage.getItem("skipCloseConfirm") === "true";
+    if (skipConfirm) {
+      onClosePosition(p);
+    } else {
+      setCloseModal(p);
+    }
   };
 
-  const handleConfirmClose = () => {
+  const handleConfirmClose = (size: number) => {
     if (!closeModal) return;
-    const sz = parseFloat(closeSize) || closeModal.size;
-    onClosePosition(closeModal, sz);
+    onClosePosition(closeModal, size);
     setCloseModal(null);
-    setCloseSize("");
   };
 
   return (
@@ -113,7 +116,7 @@ export function BottomTabsPanel({
           <PositionsContent
             positions={positions}
             currentPrices={currentPrices}
-            onClose={handleClose}
+            onMarketClose={handleMarketClose}
           />
         )}
         {activeTab === "orders" && (
@@ -130,52 +133,14 @@ export function BottomTabsPanel({
         )}
       </div>
 
-      {/* Close Position Modal */}
-      {closeModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-          <div className="bg-s2 border border-brd rounded-lg p-5 w-[340px]">
-            <h3 className="text-[15px] font-bold mb-4">Close Position</h3>
-
-            <div className="text-[12px] text-t2 mb-3">
-              {closeModal.side} {closeModal.coin}/USDC | Size: {closeModal.size}
-            </div>
-
-            <div className="mb-3">
-              <label className="text-[11px] text-t3 mb-1 block">Close Size</label>
-              <input
-                type="number"
-                value={closeSize}
-                onChange={(e) => setCloseSize(e.target.value)}
-                max={closeModal.size}
-                step="0.01"
-                className="w-full bg-s3 border border-brd rounded px-3 py-2 text-[13px] font-tabular outline-none focus:border-acc"
-              />
-            </div>
-
-            <div className="flex gap-2">
-              <button
-                onClick={() => { setCloseSize(closeModal.size.toString()); handleConfirmClose(); }}
-                className="flex-1 py-2.5 bg-red/10 border border-red/25 rounded text-[12px] font-semibold text-red hover:bg-red/20 transition-colors"
-              >
-                Close All
-              </button>
-              <button
-                onClick={handleConfirmClose}
-                className="flex-1 py-2.5 bg-acc/10 border border-acc/25 rounded text-[12px] font-semibold text-acc hover:bg-acc/20 transition-colors"
-              >
-                Close Partial
-              </button>
-            </div>
-
-            <button
-              onClick={() => setCloseModal(null)}
-              className="w-full mt-2 py-2 text-[11px] text-t3 hover:text-t2 transition-colors"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
+      {/* Market Close Modal */}
+      <MarketCloseModal
+        isOpen={!!closeModal}
+        onClose={() => setCloseModal(null)}
+        onConfirm={handleConfirmClose}
+        position={closeModal}
+        currentPrice={closeModal ? (currentPrices[closeModal.coin] || closeModal.entry_price) : 0}
+      />
     </div>
   );
 }
@@ -224,21 +189,21 @@ function BalancesContent({ balance, hideSmall }: { balance: number; hideSmall: b
 function PositionsContent({
   positions,
   currentPrices,
-  onClose,
+  onMarketClose,
 }: {
   positions: Position[];
   currentPrices: Record<string, number>;
-  onClose: (p: Position) => void;
+  onMarketClose: (p: Position) => void;
 }) {
   if (positions.length === 0) {
     return (
-      <div className="text-center py-8 text-t3 text-[11px]">No open positions</div>
+      <div className="text-center py-8 text-t3 text-[11px]">No open positions yet</div>
     );
   }
 
   return (
     <div className="px-3 overflow-x-auto">
-      <table className="w-full text-[11px] min-w-[800px]">
+      <table className="w-full text-[11px] min-w-[900px]">
         <thead>
           <tr className="text-t3 text-left">
             <th className="py-2 font-medium">Coin</th>
@@ -249,7 +214,9 @@ function PositionsContent({
             <th className="py-2 font-medium">PNL (ROE %)</th>
             <th className="py-2 font-medium">Liq. Price</th>
             <th className="py-2 font-medium">Margin</th>
-            <th className="py-2 font-medium"></th>
+            <th className="py-2 font-medium">Funding</th>
+            <th className="py-2 font-medium">Close All</th>
+            <th className="py-2 font-medium">TP/SL</th>
           </tr>
         </thead>
         <tbody>
@@ -260,31 +227,64 @@ function PositionsContent({
             const roe = calculateRoe(pnl, p.entry_price, p.size, p.leverage);
             const margin = (p.size * p.entry_price) / p.leverage;
             const posValue = p.size * markPrice;
+            const isLong = p.side === "Long";
 
             return (
               <tr key={`${p.id}-${markPrice.toFixed(decimals)}`} className="border-t border-brd hover:bg-s2 pnl-row">
+                {/* Coin with leverage badge like real HL */}
                 <td className="py-2 font-medium">
-                  <span className={cn(p.side === "Long" ? "text-grn" : "text-red")}>
-                    {p.coin} {p.leverage}x {p.side[0]}
+                  <span className={cn(isLong ? "text-acc" : "text-red")}>
+                    {p.coin}
                   </span>
+                  <span className="ml-1.5 text-[10px] text-t3">{p.leverage}x</span>
                 </td>
-                <td className="py-2 font-tabular">{p.size.toFixed(2)}</td>
-                <td className="py-2 font-tabular">${formatNumber(posValue)}</td>
-                <td className="py-2 font-tabular">{p.entry_price.toFixed(decimals)}</td>
-                <td className="py-2 font-tabular">{markPrice.toFixed(decimals)}</td>
-                <td className={cn("py-2 font-semibold font-tabular", pnl >= 0 ? "text-grn" : "text-red")}>
+                {/* Size - colored based on side */}
+                <td className={cn("py-2 font-tabular", isLong ? "text-acc" : "text-red")}>
+                  {p.size.toFixed(5)} {p.coin}
+                </td>
+                {/* Position Value */}
+                <td className="py-2 font-tabular">{formatNumber(posValue)} USDC</td>
+                {/* Entry Price */}
+                <td className="py-2 font-tabular">{formatNumber(p.entry_price)}</td>
+                {/* Mark Price */}
+                <td className="py-2 font-tabular">{formatNumber(markPrice)}</td>
+                {/* PNL (ROE %) */}
+                <td className={cn("py-2 font-semibold font-tabular", pnl >= 0 ? "text-acc" : "text-red")}>
                   {formatPnl(pnl)} ({roe >= 0 ? "+" : ""}{roe.toFixed(1)}%)
                 </td>
-                <td className="py-2 font-tabular text-red">{p.liquidation_price.toFixed(decimals)}</td>
-                <td className="py-2 font-tabular">${formatNumber(margin)}</td>
-                <td className="py-2">
-                  <button
-                    onClick={() => onClose(p)}
-                    className="px-2 py-1 bg-s3 border border-brd rounded text-[10px] font-semibold text-t2 hover:bg-red/10 hover:border-red/25 hover:text-red transition-colors"
-                  >
-                    Close
-                  </button>
+                {/* Liquidation Price */}
+                <td className="py-2 font-tabular text-t2">
+                  {p.liquidation_price ? formatNumber(p.liquidation_price) : "N/A"}
                 </td>
+                {/* Margin */}
+                <td className="py-2 font-tabular">
+                  ${formatNumber(margin)} <span className="text-t4">(Cross)</span>
+                </td>
+                {/* Funding */}
+                <td className="py-2 font-tabular text-t3">$0.00</td>
+                {/* Close All - buttons like real HL */}
+                <td className="py-2">
+                  <div className="flex items-center gap-1">
+                    <button
+                      className="px-1.5 py-0.5 text-[10px] font-medium text-acc hover:underline transition-colors"
+                    >
+                      Limit
+                    </button>
+                    <button
+                      onClick={() => onMarketClose(p)}
+                      className="px-1.5 py-0.5 text-[10px] font-medium text-acc hover:underline transition-colors"
+                    >
+                      Market
+                    </button>
+                    <button
+                      className="px-1.5 py-0.5 text-[10px] font-medium text-acc hover:underline transition-colors"
+                    >
+                      Reverse
+                    </button>
+                  </div>
+                </td>
+                {/* TP/SL */}
+                <td className="py-2 text-t4 text-[10px]">-- / --</td>
               </tr>
             );
           })}
@@ -299,13 +299,13 @@ function OrdersContent({ orders }: { orders: OrderHistory[] }) {
 
   if (pendingOrders.length === 0) {
     return (
-      <div className="text-center py-8 text-t3 text-[11px]">No open orders</div>
+      <div className="text-center py-8 text-t3 text-[11px]">No open orders yet</div>
     );
   }
 
   return (
     <div className="px-3 overflow-x-auto">
-      <table className="w-full text-[11px] min-w-[700px]">
+      <table className="w-full text-[11px] min-w-[900px]">
         <thead>
           <tr className="text-t3 text-left">
             <th className="py-2 font-medium">Time</th>
@@ -313,22 +313,39 @@ function OrdersContent({ orders }: { orders: OrderHistory[] }) {
             <th className="py-2 font-medium">Coin</th>
             <th className="py-2 font-medium">Direction</th>
             <th className="py-2 font-medium">Size</th>
+            <th className="py-2 font-medium">Original Size</th>
+            <th className="py-2 font-medium">Order Value</th>
             <th className="py-2 font-medium">Price</th>
-            <th className="py-2 font-medium">Status</th>
+            <th className="py-2 font-medium">Reduce Only</th>
+            <th className="py-2 font-medium">Trigger Conditions</th>
+            <th className="py-2 font-medium">Cancel All</th>
           </tr>
         </thead>
         <tbody>
-          {pendingOrders.map((o) => (
-            <tr key={o.id} className="border-t border-brd">
-              <td className="py-2 text-t3">{new Date(o.created_at).toLocaleTimeString()}</td>
-              <td className="py-2">{o.order_type}</td>
-              <td className="py-2 font-medium">{o.coin}</td>
-              <td className={cn("py-2", o.side === "Long" ? "text-grn" : "text-red")}>{o.side}</td>
-              <td className="py-2 font-tabular">{o.size.toFixed(2)}</td>
-              <td className="py-2 font-tabular">{o.price.toFixed(2)}</td>
-              <td className="py-2 text-t3">{o.status}</td>
-            </tr>
-          ))}
+          {pendingOrders.map((o) => {
+            const orderValue = o.size * o.price;
+            return (
+              <tr key={o.id} className="border-t border-brd hover:bg-s2">
+                <td className="py-2 text-t3">
+                  {new Date(o.created_at).toLocaleDateString()} - {new Date(o.created_at).toLocaleTimeString()}
+                </td>
+                <td className="py-2 capitalize">{o.order_type}</td>
+                <td className="py-2 font-medium">{o.coin}</td>
+                <td className={cn("py-2", o.side === "Long" ? "text-acc" : "text-red")}>{o.side}</td>
+                <td className="py-2 font-tabular">{o.size.toFixed(5)}</td>
+                <td className="py-2 font-tabular">{o.size.toFixed(5)}</td>
+                <td className="py-2 font-tabular">{formatNumber(orderValue)} USDC</td>
+                <td className="py-2 font-tabular">{formatNumber(o.price)}</td>
+                <td className="py-2 text-t3">No</td>
+                <td className="py-2 text-t3">N/A</td>
+                <td className="py-2">
+                  <button className="text-[10px] font-medium text-red hover:underline">
+                    Cancel
+                  </button>
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>
@@ -362,18 +379,18 @@ function HistoryContent({ history }: { history: TradeHistory[] }) {
             const roe = calculateRoe(h.pnl, h.entry_price, h.size, h.leverage);
 
             return (
-              <tr key={h.id} className="border-t border-brd">
+              <tr key={h.id} className="border-t border-brd hover:bg-s2">
                 <td className="py-2 text-t3">{new Date(h.closed_at).toLocaleTimeString()}</td>
                 <td className="py-2 font-medium">
                   {h.coin}{h.liquidated ? " 💀" : ""}
                 </td>
-                <td className={cn("py-2", h.side === "Long" ? "text-grn" : "text-red")}>
+                <td className={cn("py-2", h.side === "Long" ? "text-acc" : "text-red")}>
                   {h.leverage}x {h.side}
                 </td>
-                <td className="py-2 font-tabular">{h.size.toFixed(2)}</td>
+                <td className="py-2 font-tabular">{h.size.toFixed(5)}</td>
                 <td className="py-2 font-tabular">{h.entry_price.toFixed(decimals)}</td>
                 <td className="py-2 font-tabular">{h.exit_price.toFixed(decimals)}</td>
-                <td className={cn("py-2 font-semibold font-tabular", h.pnl >= 0 ? "text-grn" : "text-red")}>
+                <td className={cn("py-2 font-semibold font-tabular", h.pnl >= 0 ? "text-acc" : "text-red")}>
                   {formatPnl(h.pnl)} ({roe >= 0 ? "+" : ""}{roe.toFixed(1)}%)
                 </td>
               </tr>
@@ -408,16 +425,16 @@ function OrderHistoryContent({ orders }: { orders: OrderHistory[] }) {
         </thead>
         <tbody>
           {orders.slice(0, 50).map((o) => (
-            <tr key={o.id} className="border-t border-brd">
+            <tr key={o.id} className="border-t border-brd hover:bg-s2">
               <td className="py-2 text-t3">{new Date(o.created_at).toLocaleTimeString()}</td>
-              <td className="py-2">{o.order_type}</td>
+              <td className="py-2 capitalize">{o.order_type}</td>
               <td className="py-2 font-medium">{o.coin}</td>
-              <td className={cn("py-2", o.side === "Long" ? "text-grn" : "text-red")}>{o.side}</td>
-              <td className="py-2 font-tabular">{o.size.toFixed(2)}</td>
+              <td className={cn("py-2", o.side === "Long" ? "text-acc" : "text-red")}>{o.side}</td>
+              <td className="py-2 font-tabular">{o.size.toFixed(5)}</td>
               <td className="py-2 font-tabular">{o.price.toFixed(2)}</td>
               <td className={cn(
-                "py-2",
-                o.status === "filled" ? "text-grn" : o.status === "cancelled" ? "text-red" : "text-t3"
+                "py-2 capitalize",
+                o.status === "filled" ? "text-acc" : o.status === "cancelled" ? "text-red" : "text-t3"
               )}>
                 {o.status}
               </td>

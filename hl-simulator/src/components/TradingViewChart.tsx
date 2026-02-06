@@ -52,12 +52,12 @@ function TradingViewChartComponent({ coin }: TradingViewChartProps) {
   }, [coin]);
 
   // TradingView widget embed URL - candlestick style (style=1)
-  // Using #131722 background - standard TradingView dark theme like real HL
+  // Using #0f1a1f background to match real Hyperliquid exactly
   // hide_top_toolbar=1 hides the timeframe selector bar
-  const iframeSrc = `https://s.tradingview.com/widgetembed/?frameElementId=tradingview_chart&symbol=${encodeURIComponent(symbol)}&interval=60&hidesidetoolbar=0&symboledit=0&saveimage=0&toolbarbg=131722&theme=dark&style=1&timezone=Etc%2FUTC&withdateranges=0&showpopupbutton=0&studies=Volume%40tv-basicstudies&locale=en&hide_legend=0&hide_top_toolbar=1&backgroundColor=131722`;
+  const iframeSrc = `https://s.tradingview.com/widgetembed/?frameElementId=tradingview_chart&symbol=${encodeURIComponent(symbol)}&interval=60&hidesidetoolbar=0&symboledit=0&saveimage=0&toolbarbg=0f1a1f&theme=dark&style=1&timezone=Etc%2FUTC&withdateranges=0&showpopupbutton=0&studies=Volume%40tv-basicstudies&locale=en&hide_legend=0&hide_top_toolbar=1`;
 
   return (
-    <div className="w-full h-full relative" style={{ minHeight: "300px", backgroundColor: "#131722" }}>
+    <div className="w-full h-full relative" style={{ minHeight: "300px", backgroundColor: "#0f1a1f" }}>
       {/* Custom header overlay to match real HL - covers original symbol text and OHLC data */}
       {/* Position at top:6px, width covers full TradingView header */}
       <div
@@ -67,7 +67,7 @@ function TradingViewChartComponent({ coin }: TradingViewChartProps) {
           left: "8px",
           width: "700px",
           height: "22px",
-          backgroundColor: "#131722",
+          backgroundColor: "#0f1a1f",
           paddingLeft: "4px",
           paddingTop: "2px",
           paddingBottom: "2px"

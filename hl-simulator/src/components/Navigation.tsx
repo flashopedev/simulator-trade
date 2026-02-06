@@ -81,20 +81,35 @@ export function Navigation({
           ))}
         </div>
 
-        {/* Right side */}
-        <div className="ml-auto flex items-center gap-3">
-          {/* Connect button - always shown like real HL */}
+        {/* Right side - matching real HL exactly */}
+        <div className="ml-auto flex items-center gap-2">
+          {/* Deposit button - matches real HL style */}
           <button className="bg-[#50D2C1] text-[#04060c] px-4 h-[33px] rounded-[8px] text-[12px] font-medium hover:brightness-110 transition-all">
-            Connect
+            Deposit
           </button>
 
+          {/* Wallet address dropdown - like real HL when connected */}
+          <button className="flex items-center gap-1.5 bg-s2 border border-brd px-3 h-[33px] rounded-[8px] text-[12px] text-t1 hover:bg-s3 transition-colors">
+            <span>0x2389...9b54</span>
+            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          {/* Notifications icon */}
+          <div className="w-8 h-8 flex items-center justify-center border border-[#273035] rounded cursor-pointer hover:border-t3 transition-colors">
+            <svg className="w-5 h-5 text-t3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
+              <path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            </svg>
+          </div>
+
           {/* Globe icon with border */}
-          <div className="w-8 h-8 flex items-center justify-center border border-[#273035] rounded">
+          <div className="w-8 h-8 flex items-center justify-center border border-[#273035] rounded cursor-pointer hover:border-t3 transition-colors">
             <Globe className="w-5 h-5 text-t3" />
           </div>
 
           {/* Settings icon with border */}
-          <div className="w-8 h-8 flex items-center justify-center border border-[#273035] rounded">
+          <div className="w-8 h-8 flex items-center justify-center border border-[#273035] rounded cursor-pointer hover:border-t3 transition-colors">
             <Settings className="w-5 h-5 text-t3" />
           </div>
         </div>

@@ -162,7 +162,7 @@ export default function PortfolioPage() {
                     Perps <ChevronDown className="w-3 h-3" />
                   </button>
                 </div>
-                <div className="text-[20px] font-normal text-white leading-tight">0.0450% / 0.0150%</div>
+                <div className="text-[28px] font-normal text-white leading-[30px]">0.0450% / 0.0150%</div>
                 <button className="text-[12px] text-[#50D2C1] mt-3 hover:text-[#50D2C1]/80">View Fee Schedule</button>
               </div>
             </div>
@@ -190,7 +190,7 @@ export default function PortfolioPage() {
                   { label: "Spot Account Equity", value: "$0.00" },
                   { label: "Earn Balance", value: "$0.00" },
                 ].map((row) => (
-                  <div key={row.label} className="flex justify-between py-[7px] text-[12px]">
+                  <div key={row.label} className="flex justify-between py-[5px] text-[12px]">
                     <span className="text-t2">{row.label}</span>
                     <span className={cn("font-tabular", row.color || "text-t1")}>{row.value}</span>
                   </div>
@@ -223,7 +223,7 @@ export default function PortfolioPage() {
               </div>
 
               {/* SVG Chart with smooth Bezier curve */}
-              <div className="h-[200px]">
+              <div className="h-[170px]">
                 <svg viewBox="0 0 400 200" className="w-full h-full" preserveAspectRatio="none">
                   <defs>
                     <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">

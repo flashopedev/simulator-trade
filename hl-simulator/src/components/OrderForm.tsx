@@ -381,6 +381,10 @@ export function OrderForm({
               <span className="text-t3 border-b border-dotted border-t4">Slippage</span>
               <span className="text-acc font-tabular">Est: 0% / Max: 8,00%</span>
             </div>
+            <div className="flex justify-between text-[11px]">
+              <span className="text-t3 border-b border-dotted border-t4">Fees</span>
+              <span className="text-t1 font-tabular">0,0450% / 0,0150%</span>
+            </div>
           </div>
         </div>
       </div>

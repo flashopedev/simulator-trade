@@ -134,7 +134,12 @@ export default function PortfolioPage() {
               {HEADER_BUTTONS.map((btn) => (
                 <button
                   key={btn}
-                  className="h-[40px] px-4 text-[12px] font-normal rounded-[8px] border border-[#50D2C1] text-[#50D2C1] hover:bg-s1 transition-colors"
+                  className={cn(
+                    "h-[40px] px-4 text-[12px] font-normal rounded-[8px] transition-colors",
+                    btn === "Deposit"
+                      ? "bg-[#17453f] text-[#50D2C1] hover:bg-[#1d5550]"
+                      : "border border-[#50D2C1] text-[#50D2C1] hover:bg-s1"
+                  )}
                 >
                   {btn}
                 </button>
@@ -146,17 +151,17 @@ export default function PortfolioPage() {
         {/* Main 3-column grid */}
         <div className="max-w-[1312px] mx-auto w-full px-4">
           <div className="grid grid-cols-[1fr_1fr_2fr] gap-2">
-            {/* Left column - 14 Day Volume + Fees stacked */}
+            {/* Left column - 14 Day Volume + Fees stacked - must equal height of middle/right */}
             <div className="flex flex-col gap-2">
-              {/* 14 Day Volume card */}
-              <div className="bg-s1 rounded-[10px] p-3">
+              {/* 14 Day Volume card - flex-1 to share height equally */}
+              <div className="bg-s1 rounded-[10px] p-3 flex-1 flex flex-col">
                 <div className="text-[14px] text-t3 mb-1">14 Day Volume</div>
                 <div className="text-[28px] font-normal text-white leading-[30px]">$0</div>
-                <button className="text-[12px] text-[#50D2C1] mt-3 hover:text-[#50D2C1]/80">View Volume</button>
+                <button className="text-[12px] text-[#50D2C1] mt-auto hover:text-[#50D2C1]/80">View Volume</button>
               </div>
 
-              {/* Fees card */}
-              <div className="bg-s1 rounded-[10px] p-3">
+              {/* Fees card - flex-1 to share height equally */}
+              <div className="bg-s1 rounded-[10px] p-3 flex-1 flex flex-col">
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-[14px] text-t3">Fees (Taker / Maker)</span>
                   <button className="flex items-center gap-1 text-[12px] text-t1 hover:text-t2">
@@ -164,7 +169,7 @@ export default function PortfolioPage() {
                   </button>
                 </div>
                 <div className="text-[28px] font-normal text-white leading-[30px]">0.0450% / 0.0150%</div>
-                <button className="text-[12px] text-[#50D2C1] mt-3 hover:text-[#50D2C1]/80">View Fee Schedule</button>
+                <button className="text-[12px] text-[#50D2C1] mt-auto hover:text-[#50D2C1]/80">View Fee Schedule</button>
               </div>
             </div>
 
@@ -251,44 +256,45 @@ export default function PortfolioPage() {
           </div>
         </div>
 
-        {/* Bottom tabs */}
-        <div className="max-w-[1312px] mx-auto w-full px-4 mt-4">
-          <div className="flex items-center justify-between border-b border-brd">
-            <div className="flex items-center">
-              {BOTTOM_TABS.map((tab) => (
-                <button
-                  key={tab.key}
-                  onClick={() => setActiveTab(tab.key)}
-                  className={cn(
-                    "px-4 py-3 text-[12px] font-normal whitespace-nowrap border-b-2 -mb-[1px] transition-colors",
-                    activeTab === tab.key
-                      ? "text-t1 border-t1"
-                      : "text-t2 border-transparent hover:text-t1"
-                  )}
-                >
-                  {tab.label}
+        {/* Bottom tabs - in a card container like real HL */}
+        <div className="max-w-[1312px] mx-auto w-full px-4 mt-2">
+          <div className="bg-s1 rounded-[10px] pb-2">
+            {/* Tabs row */}
+            <div className="flex items-center justify-between px-4 border-b border-brd">
+              <div className="flex items-center">
+                {BOTTOM_TABS.map((tab) => (
+                  <button
+                    key={tab.key}
+                    onClick={() => setActiveTab(tab.key)}
+                    className={cn(
+                      "px-4 py-3 text-[12px] font-normal whitespace-nowrap border-b-2 -mb-[1px] transition-colors",
+                      activeTab === tab.key
+                        ? "text-t1 border-white"
+                        : "text-t2 border-transparent hover:text-t1"
+                    )}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+              <div className="flex items-center gap-4">
+                <button className="flex items-center gap-1.5 text-[12px] text-t1 hover:text-t2">
+                  Filter <ChevronDown className="w-4 h-4" />
                 </button>
-              ))}
+                <label className="flex items-center gap-2 text-[12px] text-t1 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={hideSmallBalances}
+                    onChange={(e) => setHideSmallBalances(e.target.checked)}
+                    className="w-4 h-4 rounded border-brd bg-transparent accent-acc"
+                  />
+                  Hide Small Balances
+                </label>
+              </div>
             </div>
-            <div className="flex items-center gap-4">
-              <button className="flex items-center gap-1.5 text-[12px] text-t1 hover:text-t2">
-                Filter <ChevronDown className="w-4 h-4" />
-              </button>
-              <label className="flex items-center gap-2 text-[12px] text-t1 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={hideSmallBalances}
-                  onChange={(e) => setHideSmallBalances(e.target.checked)}
-                  className="w-4 h-4 rounded border-brd bg-transparent accent-acc"
-                />
-                Hide Small Balances
-              </label>
-            </div>
-          </div>
-        </div>
 
-        {/* Tab Content */}
-        <div className="flex-1 max-w-[1312px] mx-auto w-full px-4 py-4 pb-20">
+            {/* Tab Content - inside the card */}
+            <div className="px-4 py-4">
           {/* Positions Tab */}
           {activeTab === "positions" && (
             <div>
@@ -477,6 +483,8 @@ export default function PortfolioPage() {
           {activeTab === "deposits" && (
             <div className="text-t3 text-[12px]">No deposits or withdrawals</div>
           )}
+            </div>
+          </div>
         </div>
       </div>
 

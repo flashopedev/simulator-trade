@@ -40,17 +40,14 @@ export function Navigation({
     <>
       <nav className="flex items-center h-[56px] px-4 border-b border-brd bg-s1 sticky top-0 z-50">
         {/* Logo */}
-        <div className="flex items-center gap-1.5 pr-4 border-r border-brd mr-3 h-full">
+        <Link href="/trade" className="flex items-center gap-1.5 mr-6">
           {/* Two circles logo like Hyperliquid */}
           <svg width="20" height="20" viewBox="0 0 20 20" className="flex-shrink-0">
             <circle cx="6.5" cy="10" r="3.5" fill="#00d8c4" />
             <circle cx="13.5" cy="10" r="3.5" fill="#00d8c4" />
           </svg>
           <span className="font-extralight text-[15px] tracking-tight text-t1 italic leading-none">Hyperliquid</span>
-          <span className="bg-acc/10 text-acc text-[8px] px-1.5 py-0.5 rounded font-bold tracking-wider border border-acc/15">
-            SIM
-          </span>
-        </div>
+        </Link>
 
         {/* Navigation Links */}
         <div className="hidden md:flex h-full items-stretch">
@@ -85,54 +82,21 @@ export function Navigation({
         </div>
 
         {/* Right side */}
-        <div className="ml-auto flex items-center gap-2">
-          {isLoggedIn ? (
-            <>
-              {/* Connection indicator */}
-              {isConnected !== undefined && (
-                <div className="flex items-center gap-1.5 mr-1">
-                  <div
-                    className={cn(
-                      "w-[7px] h-[7px] rounded-full",
-                      isConnected
-                        ? "bg-grn shadow-[0_0_4px_rgba(0,192,118,0.5)] animate-pulse-dot"
-                        : connectionMode === "polling"
-                        ? "bg-yellow-500 animate-pulse-dot"
-                        : "bg-red"
-                    )}
-                  />
-                  <span className="text-[10px] text-t3 hidden sm:inline">{statusLabel}</span>
-                </div>
-              )}
+        <div className="ml-auto flex items-center gap-3">
+          {/* Connect button - always shown like real HL */}
+          <button className="bg-[#50D2C1] text-[#04060c] px-4 h-[33px] rounded-[8px] text-[12px] font-medium hover:brightness-110 transition-all">
+            Connect
+          </button>
 
-              {/* D6: Equity badge - white text, not cyan */}
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-s2 border border-brd rounded text-[13px]">
-                <span className="text-t3 mr-1">Equity</span>
-                <span className="text-t1 font-medium font-tabular">${formatNumber(balance)}</span>
-              </div>
+          {/* Globe icon with border */}
+          <div className="w-8 h-8 flex items-center justify-center border border-[#273035] rounded">
+            <Globe className="w-5 h-5 text-t3" />
+          </div>
 
-              {/* Sign Out */}
-              {onSignOut && (
-                <button
-                  onClick={onSignOut}
-                  className="px-2.5 py-1.5 text-[11px] text-t3 hover:text-t2 border border-brd rounded transition-colors"
-                >
-                  Sign Out
-                </button>
-              )}
-            </>
-          ) : (
-            /* Connect button when not logged in */
-            <button className="bg-acc text-black px-4 py-1.5 rounded-full text-[13px] font-medium hover:brightness-110 transition-all">
-              Connect
-            </button>
-          )}
-
-          {/* Globe icon */}
-          <Globe className="w-5 h-5 text-t3 hidden lg:block" />
-
-          {/* Settings icon */}
-          <Settings className="w-5 h-5 text-t3 hidden lg:block" />
+          {/* Settings icon with border */}
+          <div className="w-8 h-8 flex items-center justify-center border border-[#273035] rounded">
+            <Settings className="w-5 h-5 text-t3" />
+          </div>
         </div>
       </nav>
 

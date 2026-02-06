@@ -8,7 +8,7 @@ import { TradingViewChart } from "@/components/TradingViewChart";
 import { OrderForm } from "@/components/OrderForm";
 import { OrderBook } from "@/components/OrderBook";
 import { BottomTabsPanel } from "@/components/BottomTabsPanel";
-// ChartToolbar not needed - TradingView has built-in toolbar
+import { ChartToolbar } from "@/components/ChartToolbar";
 import { AuthForm } from "@/components/AuthForm";
 import { NotificationContainer } from "@/components/Notification";
 import { useAuth } from "@/hooks/useAuth";
@@ -136,11 +136,16 @@ export default function TradePage() {
 
       {/* Main Layout: 2-column grid (chart + sidebar) - sidebar 396px like real HL */}
       <div className="flex-1 flex flex-col md:grid md:grid-cols-[1fr_396px]">
-        {/* Left column: Chart + Bottom Panel */}
+        {/* Left column: ChartToolbar + Chart + Bottom Panel */}
         <div className="flex flex-col">
-          {/* Chart area */}
-          <div className="h-[500px] md:h-[calc(100vh-350px)] min-h-[400px]">
-            <TradingViewChart coin={coin} />
+          {/* Chart area with toolbar */}
+          <div className="h-[500px] md:h-[calc(100vh-350px)] min-h-[400px] flex">
+            {/* Left toolbar */}
+            <ChartToolbar />
+            {/* Chart */}
+            <div className="flex-1">
+              <TradingViewChart coin={coin} />
+            </div>
           </div>
 
           {/* Bottom Panel */}

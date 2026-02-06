@@ -48,7 +48,8 @@ const BOTTOM_TABS: { key: BottomTab; label: string }[] = [
 export default function PortfolioPage() {
   const { user, account, loading: authLoading, signOut, updateBalance } = useAuth();
   const [prices, setPrices] = useState<Record<string, number>>(FALLBACK_PRICES);
-  const [activeTab, setActiveTab] = useState<BottomTab>("positions");
+  const [activeTab, setActiveTab] = useState<BottomTab>("balances");
+  const [hideSmallBalances, setHideSmallBalances] = useState(false);
   const [chartTab, setChartTab] = useState<"value" | "pnl">("value");
 
   const {
@@ -175,7 +176,7 @@ export default function PortfolioPage() {
                   Perps + Spot + Vaults <ChevronDown className="w-4 h-4 text-t3" />
                 </button>
                 <button className="flex items-center gap-1.5 text-[12px] text-t1 hover:text-t2">
-                  All-time <ChevronDown className="w-4 h-4 text-t3" />
+                  30D <ChevronDown className="w-4 h-4 text-t3" />
                 </button>
               </div>
 
@@ -269,9 +270,20 @@ export default function PortfolioPage() {
                 </button>
               ))}
             </div>
-            <button className="flex items-center gap-1.5 text-[12px] text-t1 hover:text-t2">
-              Filter <ChevronDown className="w-4 h-4" />
-            </button>
+            <div className="flex items-center gap-4">
+              <button className="flex items-center gap-1.5 text-[12px] text-t1 hover:text-t2">
+                Filter <ChevronDown className="w-4 h-4" />
+              </button>
+              <label className="flex items-center gap-2 text-[12px] text-t1 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={hideSmallBalances}
+                  onChange={(e) => setHideSmallBalances(e.target.checked)}
+                  className="w-4 h-4 rounded border-brd bg-transparent accent-acc"
+                />
+                Hide Small Balances
+              </label>
+            </div>
           </div>
         </div>
 
@@ -345,24 +357,34 @@ export default function PortfolioPage() {
 
           {/* Balances Tab */}
           {activeTab === "balances" && (
-            <table className="w-full text-[12px]">
-              <thead>
-                <tr className="text-t2 text-left text-[12px]">
-                  <th className="py-2 font-normal">Coin</th>
-                  <th className="py-2 font-normal">Total Balance</th>
-                  <th className="py-2 font-normal">Available Balance</th>
-                  <th className="py-2 font-normal">In Orders</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr className="border-t border-brd">
-                  <td className="py-3 font-medium text-t1">USDC</td>
-                  <td className="py-3 font-tabular text-t1">${formatNumber(account?.balance ?? 10000)}</td>
-                  <td className="py-3 font-tabular text-t2">${formatNumber(availableBalance)}</td>
-                  <td className="py-3 font-tabular text-t2">$0.00</td>
-                </tr>
-              </tbody>
-            </table>
+            <>
+              {(account?.balance ?? 10000) > 0 || !hideSmallBalances ? (
+                <table className="w-full text-[12px]">
+                  <thead>
+                    <tr className="text-t2 text-left text-[12px]">
+                      <th className="py-2 font-normal">Coin</th>
+                      <th className="py-2 font-normal">Total Balance</th>
+                      <th className="py-2 font-normal">Available Balance</th>
+                      <th className="py-2 font-normal">USDC Value <ChevronDown className="w-3 h-3 inline text-t3" /></th>
+                      <th className="py-2 font-normal">PNL (ROE %)</th>
+                      <th className="py-2 font-normal">Contract</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="border-t border-brd">
+                      <td className="py-3 font-medium text-t1">USDC</td>
+                      <td className="py-3 font-tabular text-t1">{formatNumber(account?.balance ?? 10000)}</td>
+                      <td className="py-3 font-tabular text-t2">{formatNumber(availableBalance)}</td>
+                      <td className="py-3 font-tabular text-t1">${formatNumber(account?.balance ?? 10000)}</td>
+                      <td className="py-3 font-tabular text-t2">—</td>
+                      <td className="py-3 font-tabular text-t2">—</td>
+                    </tr>
+                  </tbody>
+                </table>
+              ) : (
+                <div className="text-t3 text-[12px]">No balances yet</div>
+              )}
+            </>
           )}
 
           {/* Open Orders Tab */}

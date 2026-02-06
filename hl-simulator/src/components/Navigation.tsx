@@ -40,13 +40,13 @@ export function Navigation({
     <>
       <nav className="flex items-center h-[48px] px-4 border-b border-brd bg-s1 sticky top-0 z-50">
         {/* Logo */}
-        <div className="flex items-center gap-2 pr-4 border-r border-brd mr-3 h-full">
+        <div className="flex items-center gap-1.5 pr-4 border-r border-brd mr-3 h-full">
           {/* Two circles logo like Hyperliquid */}
-          <svg width="24" height="24" viewBox="0 0 24 24" className="flex-shrink-0">
-            <circle cx="8" cy="12" r="6" fill="#00d8c4" />
-            <circle cx="16" cy="12" r="6" fill="#00d8c4" />
+          <svg width="20" height="20" viewBox="0 0 20 20" className="flex-shrink-0">
+            <circle cx="6.5" cy="10" r="3.5" fill="#00d8c4" />
+            <circle cx="13.5" cy="10" r="3.5" fill="#00d8c4" />
           </svg>
-          <span className="font-light text-[15px] tracking-tight text-t1 italic">Hyperliquid</span>
+          <span className="font-extralight text-[15px] tracking-tight text-t1 italic leading-none">Hyperliquid</span>
           <span className="bg-acc/10 text-acc text-[8px] px-1.5 py-0.5 rounded font-bold tracking-wider border border-acc/15">
             SIM
           </span>

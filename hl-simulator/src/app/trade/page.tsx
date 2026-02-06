@@ -131,17 +131,16 @@ export default function TradePage() {
         decimals={decimals}
       />
 
-      {/* Main Layout: 2-column Hyperliquid grid */}
-      {/* Desktop: [chart | right-sidebar(380px)] over [bottom-panel(200px)] */}
-      <div className="flex-1 flex flex-col md:grid md:grid-cols-[1fr_380px] md:grid-rows-[1fr_200px] min-h-0 overflow-hidden">
-        {/* Chart area - spans row 1, col 1 */}
+      {/* Main Layout: 2-column grid like real Hyperliquid */}
+      <div className="flex-1 flex flex-col md:grid md:grid-cols-[1fr_340px] md:grid-rows-[1fr_220px] min-h-0 overflow-hidden">
+        {/* Chart area */}
         <div className="h-[40vh] md:h-auto md:row-span-1 md:col-span-1 min-h-0 overflow-hidden">
           <TradingViewChart coin={coin} />
         </div>
 
-        {/* Right Sidebar (380px) - OrderForm on top, OrderBook below */}
+        {/* Right Sidebar (340px) - OrderForm on top, OrderBook below */}
         <div className="md:row-span-2 md:col-start-2 flex flex-col border-l border-brd overflow-hidden bg-s1">
-          {/* Order Form - fixed height at top */}
+          {/* Order Form */}
           <div className="flex-shrink-0 border-b border-brd">
             <OrderForm
               coin={coin}
@@ -152,24 +151,24 @@ export default function TradePage() {
             />
           </div>
 
-          {/* D2: Order Book with tabs */}
+          {/* Order Book with tabs */}
           <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
-            <div className="flex items-center justify-between px-2.5 py-2 border-b border-brd flex-shrink-0">
+            <div className="flex items-center justify-between px-2.5 py-1.5 border-b border-brd flex-shrink-0">
               <div className="flex items-center gap-4">
-                <span className="text-[12px] font-medium text-t1 border-b-2 border-t1 pb-1">Order Book</span>
-                <span className="text-[12px] font-medium text-t3 pb-1 cursor-pointer hover:text-t2">Trades</span>
+                <span className="text-[11px] font-medium text-t1 border-b-2 border-t1 pb-1">Order Book</span>
+                <span className="text-[11px] font-medium text-t3 pb-1 cursor-pointer hover:text-t2">Trades</span>
               </div>
-              <div className="flex items-center gap-2">
-                <select className="bg-s2 border border-brd rounded px-1.5 py-0.5 text-[10px] text-t2 outline-none">
+              <div className="flex items-center gap-1.5">
+                <select className="bg-s2 border border-brd rounded px-1 py-0.5 text-[10px] text-t2 outline-none">
                   <option>0.001</option>
                   <option>0.01</option>
                   <option>0.1</option>
                   <option>1</option>
                 </select>
-                <select className="bg-s2 border border-brd rounded px-1.5 py-0.5 text-[10px] text-t2 outline-none">
+                <select className="bg-s2 border border-brd rounded px-1 py-0.5 text-[10px] text-t2 outline-none">
                   <option>{coin}</option>
                 </select>
-                <button className="text-t3 hover:text-t2">⋮</button>
+                <button className="text-t3 hover:text-t2 text-[13px]">⋮</button>
               </div>
             </div>
             <div className="flex-1 overflow-y-auto">
@@ -183,7 +182,7 @@ export default function TradePage() {
           </div>
         </div>
 
-        {/* Bottom Panel (200px fixed height, spans chart column only) */}
+        {/* Bottom Panel */}
         <div className="h-[200px] md:h-auto md:col-span-1 md:row-start-2 border-t border-brd overflow-hidden">
           <BottomTabsPanel
             positions={positions}

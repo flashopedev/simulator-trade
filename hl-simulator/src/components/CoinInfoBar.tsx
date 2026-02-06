@@ -13,6 +13,14 @@ const COIN_LEVERAGE: Record<SupportedCoin, string> = {
   SOL: "25x",
 };
 
+// Coin gradient colors
+const COIN_COLORS: Record<SupportedCoin, string> = {
+  HYPE: "from-emerald-400 to-cyan-500",
+  BTC: "from-orange-400 to-yellow-500",
+  ETH: "from-blue-400 to-indigo-500",
+  SOL: "from-purple-400 to-fuchsia-500",
+};
+
 interface CoinInfoBarProps {
   selectedCoin: SupportedCoin;
   onSelectCoin: (coin: SupportedCoin) => void;
@@ -77,122 +85,120 @@ export function CoinInfoBar({
     return price.toFixed(decimals);
   };
 
-  const formatLargeNumber = (num: number) => {
-    return `$${num.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}M`;
-  };
-
   return (
     <>
-      <div className="flex flex-col border-b border-brd bg-s1">
-        {/* ROW 1: Star only */}
-        <div className="flex items-center h-[28px] px-4">
-          <button
-            onClick={() => setIsFavorite(!isFavorite)}
-            className="flex items-center"
-          >
-            <Star
-              className={cn(
-                "w-4 h-4 transition-colors",
-                isFavorite ? "fill-yellow-400 text-yellow-400" : "text-t4 hover:text-t3"
-              )}
-            />
-          </button>
+      <div className="flex items-center h-[52px] px-4 gap-4 border-b border-brd bg-s1 overflow-x-auto">
+        {/* Favorite star */}
+        <button
+          onClick={() => setIsFavorite(!isFavorite)}
+          className="flex items-center flex-shrink-0"
+        >
+          <Star
+            className={cn(
+              "w-[14px] h-[14px] transition-colors",
+              isFavorite ? "fill-yellow-400 text-yellow-400" : "text-t4 hover:text-t3"
+            )}
+          />
+        </button>
+
+        {/* Coin selector */}
+        <button
+          onClick={() => setShowCoinSelector(true)}
+          className="flex items-center gap-2 flex-shrink-0"
+        >
+          {/* Coin icon */}
+          <div className={cn(
+            "w-6 h-6 rounded-full bg-gradient-to-br flex items-center justify-center text-[10px] font-bold text-white",
+            COIN_COLORS[selectedCoin]
+          )}>
+            {COIN_ICONS[selectedCoin]}
+          </div>
+          {/* Name + dropdown */}
+          <span className="text-[20px] font-semibold text-t1 leading-none">{selectedCoin}-USDC</span>
+          <ChevronDown className="w-4 h-4 text-t3 -ml-0.5" />
+        </button>
+
+        {/* Leverage badge */}
+        <span className="px-1.5 py-0.5 bg-acc/15 text-acc text-[11px] font-bold rounded border border-acc/20 flex-shrink-0">
+          {COIN_LEVERAGE[selectedCoin]}
+        </span>
+
+        {/* Divider */}
+        <div className="w-px h-7 bg-brd flex-shrink-0" />
+
+        {/* Mark Price */}
+        <div className="flex flex-col flex-shrink-0">
+          <span className="text-[10px] text-t3 border-b border-dotted border-t4 cursor-help leading-tight">
+            Mark
+          </span>
+          <span className="text-[13px] text-t1 font-medium font-tabular mt-0.5 leading-tight">
+            {formatPrice(markPrice)}
+          </span>
         </div>
 
-        {/* ROW 2: Main info bar */}
-        <div className="h-[55px] flex items-center gap-5 px-4">
-          {/* Coin selector */}
-          <button
-            onClick={() => setShowCoinSelector(true)}
-            className="flex items-center gap-2"
-          >
-            {/* Coin icon */}
-            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-acc to-blu flex items-center justify-center text-[11px] font-bold text-white">
-              {COIN_ICONS[selectedCoin]}
-            </div>
-            {/* Name + dropdown */}
-            <span className="text-[18px] font-bold text-t1">{selectedCoin}-USDC</span>
-            <ChevronDown className="w-4 h-4 text-t3" />
-            {/* Leverage badge */}
-            <span className="px-1.5 py-0.5 bg-acc text-black text-[11px] font-bold rounded">
-              {COIN_LEVERAGE[selectedCoin]}
-            </span>
-          </button>
+        {/* Oracle Price */}
+        <div className="flex flex-col flex-shrink-0">
+          <span className="text-[10px] text-t3 border-b border-dotted border-t4 cursor-help leading-tight">
+            Oracle
+          </span>
+          <span className="text-[13px] text-t1 font-medium font-tabular mt-0.5 leading-tight">
+            {formatPrice(oraclePrice)}
+          </span>
+        </div>
 
-          {/* Divider */}
-          <div className="w-px h-8 bg-brd" />
+        {/* Divider */}
+        <div className="w-px h-7 bg-brd flex-shrink-0 hidden lg:block" />
 
-          {/* Mark Price */}
-          <div className="flex flex-col">
-            <span className="text-[11px] text-t3 border-b border-dotted border-t4 cursor-help pb-0.5">
-              Mark
-            </span>
-            <span className="text-[14px] text-t1 font-medium font-tabular mt-0.5">
-              {formatPrice(markPrice)}
-            </span>
-          </div>
+        {/* 24H Change */}
+        <div className="flex flex-col flex-shrink-0 hidden md:flex">
+          <span className="text-[10px] text-t3 border-b border-dotted border-t4 cursor-help leading-tight">
+            24H Change
+          </span>
+          <span className={cn(
+            "text-[13px] font-medium font-tabular mt-0.5 leading-tight",
+            stats.change24h !== null && stats.change24h >= 0 ? "text-grn" : "text-red"
+          )}>
+            {priceChange !== null && stats.change24h !== null
+              ? `${stats.change24h >= 0 ? "+" : "-"}${priceChange.toFixed(decimals)} / ${stats.change24h >= 0 ? "+" : ""}${stats.change24h.toFixed(2)}%`
+              : "—"}
+          </span>
+        </div>
 
-          {/* Oracle Price */}
-          <div className="flex flex-col">
-            <span className="text-[11px] text-t3 border-b border-dotted border-t4 cursor-help pb-0.5">
-              Oracle
-            </span>
-            <span className="text-[14px] text-t1 font-medium font-tabular mt-0.5">
-              {formatPrice(oraclePrice)}
-            </span>
-          </div>
+        {/* 24H Volume */}
+        <div className="flex flex-col flex-shrink-0 hidden lg:flex">
+          <span className="text-[10px] text-t3 border-b border-dotted border-t4 cursor-help leading-tight">
+            24H Volume
+          </span>
+          <span className="text-[13px] text-t2 font-medium font-tabular mt-0.5 leading-tight">
+            ${volume24h.toFixed(0)}M
+          </span>
+        </div>
 
-          {/* 24H Change */}
-          <div className="flex flex-col">
-            <span className="text-[11px] text-t3 border-b border-dotted border-t4 cursor-help pb-0.5">
-              24H Change
-            </span>
+        {/* Open Interest */}
+        <div className="flex flex-col flex-shrink-0 hidden lg:flex">
+          <span className="text-[10px] text-t3 border-b border-dotted border-t4 cursor-help leading-tight">
+            Open Interest
+          </span>
+          <span className="text-[13px] text-t2 font-medium font-tabular mt-0.5 leading-tight">
+            ${openInterest.toFixed(0)}M
+          </span>
+        </div>
+
+        {/* Funding / Countdown */}
+        <div className="flex flex-col flex-shrink-0 hidden xl:flex">
+          <span className="text-[10px] text-t3 border-b border-dotted border-t4 cursor-help leading-tight">
+            Funding / Countdown
+          </span>
+          <div className="flex items-center gap-2 mt-0.5">
             <span className={cn(
-              "text-[14px] font-medium font-tabular mt-0.5",
-              stats.change24h !== null && stats.change24h >= 0 ? "text-grn" : "text-red"
+              "text-[13px] font-medium font-tabular leading-tight",
+              fundingRate >= 0 ? "text-grn" : "text-red"
             )}>
-              {priceChange !== null && stats.change24h !== null
-                ? `${stats.change24h >= 0 ? "+" : "-"}${priceChange.toFixed(decimals)} / ${stats.change24h >= 0 ? "+" : ""}${stats.change24h.toFixed(2)}%`
-                : "—"}
+              {fundingRate >= 0 ? "" : "-"}{(Math.abs(fundingRate) * 100).toFixed(4)}%
             </span>
-          </div>
-
-          {/* 24H Volume */}
-          <div className="hidden lg:flex flex-col">
-            <span className="text-[11px] text-t3 border-b border-dotted border-t4 cursor-help pb-0.5">
-              24H Volume
+            <span className="text-[13px] font-tabular text-t2 leading-tight">
+              {fundingCountdown}
             </span>
-            <span className="text-[14px] text-t1 font-medium font-tabular mt-0.5">
-              ${volume24h.toFixed(0)}M
-            </span>
-          </div>
-
-          {/* Open Interest */}
-          <div className="hidden lg:flex flex-col">
-            <span className="text-[11px] text-t3 border-b border-dotted border-t4 cursor-help pb-0.5">
-              Open Interest
-            </span>
-            <span className="text-[14px] text-t1 font-medium font-tabular mt-0.5">
-              ${openInterest.toFixed(0)}M
-            </span>
-          </div>
-
-          {/* Funding / Countdown */}
-          <div className="hidden xl:flex flex-col">
-            <span className="text-[11px] text-t3 border-b border-dotted border-t4 cursor-help pb-0.5">
-              Funding / Countdown
-            </span>
-            <div className="flex items-center gap-2 mt-0.5">
-              <span className={cn(
-                "text-[14px] font-medium font-tabular",
-                fundingRate >= 0 ? "text-grn" : "text-red"
-              )}>
-                {fundingRate >= 0 ? "" : "-"}{(Math.abs(fundingRate) * 100).toFixed(4)}%
-              </span>
-              <span className="text-[14px] font-tabular text-t2">
-                {fundingCountdown}
-              </span>
-            </div>
           </div>
         </div>
       </div>

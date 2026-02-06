@@ -4,6 +4,18 @@ import { useState, useEffect, useCallback } from "react";
 import { cn, type SupportedCoin } from "@/lib/utils";
 import { Search, Star, X, Settings, Maximize2 } from "lucide-react";
 
+// Category tag colors (matches real HL colored badges)
+const CATEGORY_COLORS: Record<string, string> = {
+  "L1": "bg-blue-500/20 text-blue-400 border-blue-500/30",
+  "DeFi": "bg-purple-500/20 text-purple-400 border-purple-500/30",
+  "Meme": "bg-pink-500/20 text-pink-400 border-pink-500/30",
+  "AI": "bg-cyan-500/20 text-cyan-400 border-cyan-500/30",
+  "L2": "bg-green-500/20 text-green-400 border-green-500/30",
+  "GameFi": "bg-orange-500/20 text-orange-400 border-orange-500/30",
+  "NFT": "bg-rose-500/20 text-rose-400 border-rose-500/30",
+  "Infra": "bg-indigo-500/20 text-indigo-400 border-indigo-500/30",
+};
+
 interface CoinData {
   symbol: SupportedCoin;
   displayName: string;
@@ -14,13 +26,53 @@ interface CoinData {
   volume: string;
   openInterest: string;
   isFavorite?: boolean;
+  categories?: string[];
 }
 
 const COINS_DATA: CoinData[] = [
-  { symbol: "HYPE", displayName: "HYPE-USDC", leverage: "10x", price: 33.07, change24h: -3.22, funding8h: 0.0100, volume: "$254M", openInterest: "$156M" },
-  { symbol: "BTC", displayName: "BTC-USDC", leverage: "50x", price: 98000, change24h: 1.50, funding8h: 0.0050, volume: "$1.2B", openInterest: "$890M" },
-  { symbol: "ETH", displayName: "ETH-USDC", leverage: "50x", price: 3200, change24h: -0.80, funding8h: 0.0080, volume: "$450M", openInterest: "$320M" },
-  { symbol: "SOL", displayName: "SOL-USDC", leverage: "25x", price: 180, change24h: 2.10, funding8h: 0.0120, volume: "$120M", openInterest: "$78M" },
+  { symbol: "HYPE", displayName: "HYPE-USDC", leverage: "10x", price: 33.07, change24h: -3.22, funding8h: 0.0100, volume: "$254M", openInterest: "$156M", categories: ["DeFi", "L1"] },
+  { symbol: "BTC", displayName: "BTC-USDC", leverage: "50x", price: 98000, change24h: 1.50, funding8h: 0.0050, volume: "$1.2B", openInterest: "$890M", categories: ["L1"] },
+  { symbol: "ETH", displayName: "ETH-USDC", leverage: "50x", price: 3200, change24h: -0.80, funding8h: 0.0080, volume: "$450M", openInterest: "$320M", categories: ["L1"] },
+  { symbol: "SOL", displayName: "SOL-USDC", leverage: "25x", price: 180, change24h: 2.10, funding8h: 0.0120, volume: "$120M", openInterest: "$78M", categories: ["L1"] },
+];
+
+// Extended list of display-only coins (not tradeable but shown in selector like real HL)
+interface DisplayCoin {
+  symbol: string;
+  displayName: string;
+  leverage: string;
+  price: number;
+  change24h: number;
+  funding8h: number;
+  volume: string;
+  openInterest: string;
+  categories?: string[];
+  tradeable: boolean;
+}
+
+const ALL_COINS: DisplayCoin[] = [
+  { symbol: "HYPE", displayName: "HYPE-USDC", leverage: "10x", price: 33.07, change24h: -3.22, funding8h: 0.0100, volume: "$254M", openInterest: "$156M", categories: ["DeFi", "L1"], tradeable: true },
+  { symbol: "BTC", displayName: "BTC-USDC", leverage: "50x", price: 98245, change24h: 1.50, funding8h: 0.0050, volume: "$1.2B", openInterest: "$890M", categories: ["L1"], tradeable: true },
+  { symbol: "ETH", displayName: "ETH-USDC", leverage: "50x", price: 2756, change24h: -0.80, funding8h: 0.0080, volume: "$450M", openInterest: "$320M", categories: ["L1"], tradeable: true },
+  { symbol: "SOL", displayName: "SOL-USDC", leverage: "25x", price: 206.5, change24h: 2.10, funding8h: 0.0120, volume: "$120M", openInterest: "$78M", categories: ["L1"], tradeable: true },
+  { symbol: "DOGE", displayName: "DOGE-USDC", leverage: "20x", price: 0.2634, change24h: 5.42, funding8h: 0.0085, volume: "$89M", openInterest: "$45M", categories: ["Meme"], tradeable: false },
+  { symbol: "AVAX", displayName: "AVAX-USDC", leverage: "20x", price: 37.82, change24h: -1.15, funding8h: 0.0065, volume: "$67M", openInterest: "$34M", categories: ["L1"], tradeable: false },
+  { symbol: "LINK", displayName: "LINK-USDC", leverage: "20x", price: 19.45, change24h: 3.78, funding8h: 0.0072, volume: "$58M", openInterest: "$29M", categories: ["DeFi", "Infra"], tradeable: false },
+  { symbol: "ARB", displayName: "ARB-USDC", leverage: "15x", price: 0.8234, change24h: -2.45, funding8h: 0.0045, volume: "$45M", openInterest: "$22M", categories: ["L2"], tradeable: false },
+  { symbol: "OP", displayName: "OP-USDC", leverage: "15x", price: 1.856, change24h: 1.22, funding8h: 0.0055, volume: "$38M", openInterest: "$19M", categories: ["L2"], tradeable: false },
+  { symbol: "SUI", displayName: "SUI-USDC", leverage: "15x", price: 3.542, change24h: 8.34, funding8h: 0.0150, volume: "$156M", openInterest: "$67M", categories: ["L1"], tradeable: false },
+  { symbol: "WIF", displayName: "WIF-USDC", leverage: "10x", price: 1.234, change24h: -6.78, funding8h: -0.0120, volume: "$78M", openInterest: "$34M", categories: ["Meme"], tradeable: false },
+  { symbol: "PEPE", displayName: "PEPE-USDC", leverage: "10x", price: 0.00001234, change24h: 12.45, funding8h: 0.0200, volume: "$134M", openInterest: "$56M", categories: ["Meme"], tradeable: false },
+  { symbol: "JUP", displayName: "JUP-USDC", leverage: "10x", price: 0.876, change24h: -1.56, funding8h: 0.0034, volume: "$23M", openInterest: "$11M", categories: ["DeFi"], tradeable: false },
+  { symbol: "TIA", displayName: "TIA-USDC", leverage: "15x", price: 4.567, change24h: -3.21, funding8h: 0.0089, volume: "$45M", openInterest: "$23M", categories: ["Infra", "L1"], tradeable: false },
+  { symbol: "SEI", displayName: "SEI-USDC", leverage: "10x", price: 0.3421, change24h: 4.56, funding8h: 0.0067, volume: "$34M", openInterest: "$16M", categories: ["L1"], tradeable: false },
+  { symbol: "INJ", displayName: "INJ-USDC", leverage: "15x", price: 24.56, change24h: 2.34, funding8h: 0.0078, volume: "$56M", openInterest: "$28M", categories: ["DeFi", "L1"], tradeable: false },
+  { symbol: "RENDER", displayName: "RENDER-USDC", leverage: "10x", price: 7.234, change24h: -4.12, funding8h: 0.0056, volume: "$34M", openInterest: "$17M", categories: ["AI"], tradeable: false },
+  { symbol: "FET", displayName: "FET-USDC", leverage: "10x", price: 1.567, change24h: 6.78, funding8h: 0.0123, volume: "$45M", openInterest: "$22M", categories: ["AI"], tradeable: false },
+  { symbol: "ONDO", displayName: "ONDO-USDC", leverage: "10x", price: 1.234, change24h: 3.45, funding8h: 0.0067, volume: "$28M", openInterest: "$14M", categories: ["DeFi"], tradeable: false },
+  { symbol: "STX", displayName: "STX-USDC", leverage: "10x", price: 1.876, change24h: -1.23, funding8h: 0.0045, volume: "$19M", openInterest: "$9M", categories: ["L2"], tradeable: false },
+  { symbol: "NEAR", displayName: "NEAR-USDC", leverage: "15x", price: 5.234, change24h: 1.89, funding8h: 0.0056, volume: "$34M", openInterest: "$17M", categories: ["L1", "AI"], tradeable: false },
+  { symbol: "BONK", displayName: "BONK-USDC", leverage: "5x", price: 0.00002345, change24h: -8.45, funding8h: -0.0089, volume: "$67M", openInterest: "$28M", categories: ["Meme"], tradeable: false },
 ];
 
 interface CoinSelectorModalProps {
@@ -37,8 +89,8 @@ export function CoinSelectorModal({
   selectedCoin,
 }: CoinSelectorModalProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeTab, setActiveTab] = useState<"all" | "perps" | "spot">("perps");
-  const [favorites, setFavorites] = useState<Set<SupportedCoin>>(() => new Set<SupportedCoin>(["HYPE"]));
+  const [activeTab, setActiveTab] = useState<string>("perps");
+  const [favorites, setFavorites] = useState<Set<string>>(() => new Set(["HYPE"]));
   const [filterMode, setFilterMode] = useState<"strict" | "all">("all");
 
   // Handle escape key
@@ -52,7 +104,7 @@ export function CoinSelectorModal({
     }
   }, [isOpen, onClose]);
 
-  const toggleFavorite = useCallback((symbol: SupportedCoin, e: React.MouseEvent) => {
+  const toggleFavorite = useCallback((symbol: string, e: React.MouseEvent) => {
     e.stopPropagation();
     setFavorites(prev => {
       const next = new Set(prev);
@@ -65,31 +117,35 @@ export function CoinSelectorModal({
     });
   }, []);
 
-  const handleSelectCoin = (coin: SupportedCoin) => {
-    onSelectCoin(coin);
-    onClose();
+  const handleSelectCoin = (coin: DisplayCoin) => {
+    if (coin.tradeable) {
+      onSelectCoin(coin.symbol as SupportedCoin);
+      onClose();
+    }
   };
 
   // Filter coins
-  const filteredCoins = COINS_DATA.filter(coin => {
+  const filteredCoins = ALL_COINS.filter(coin => {
     if (searchQuery) {
-      return coin.displayName.toLowerCase().includes(searchQuery.toLowerCase());
+      return coin.symbol.toLowerCase().includes(searchQuery.toLowerCase()) ||
+             coin.displayName.toLowerCase().includes(searchQuery.toLowerCase());
     }
     return true;
   });
 
-  // Sort: favorites first
+  // Sort: favorites first, then by volume
   const sortedCoins = [...filteredCoins].sort((a, b) => {
     const aFav = favorites.has(a.symbol) ? 1 : 0;
     const bFav = favorites.has(b.symbol) ? 1 : 0;
-    return bFav - aFav;
+    if (bFav !== aFav) return bFav - aFav;
+    return 0;
   });
 
   if (!isOpen) return null;
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-start justify-center pt-[10vh]"
+      className="fixed inset-0 z-[100] flex items-start justify-center pt-[8vh]"
       onClick={onClose}
     >
       {/* Backdrop */}
@@ -97,7 +153,7 @@ export function CoinSelectorModal({
 
       {/* Modal */}
       <div
-        className="relative w-[800px] max-w-[90vw] max-h-[70vh] bg-s1 border border-brd rounded-lg overflow-hidden flex flex-col"
+        className="relative w-[860px] max-w-[92vw] max-h-[75vh] bg-s1 border border-brd rounded-lg overflow-hidden flex flex-col"
         onClick={e => e.stopPropagation()}
       >
         {/* Header with search */}
@@ -106,7 +162,7 @@ export function CoinSelectorModal({
             <Search className="w-4 h-4 text-t4" />
             <input
               type="text"
-              placeholder="Search"
+              placeholder="Search name or paste address"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="flex-1 bg-transparent text-[13px] text-t1 placeholder-t4 outline-none"
@@ -161,7 +217,7 @@ export function CoinSelectorModal({
           ].map(tab => (
             <button
               key={tab.id}
-              onClick={() => !tab.disabled && setActiveTab(tab.id as "all" | "perps" | "spot")}
+              onClick={() => !tab.disabled && setActiveTab(tab.id)}
               disabled={tab.disabled}
               className={cn(
                 "px-3 py-1.5 text-[12px] font-medium rounded transition-colors whitespace-nowrap",
@@ -175,7 +231,7 @@ export function CoinSelectorModal({
         </div>
 
         {/* Table header */}
-        <div className="grid grid-cols-[40px_1fr_100px_100px_90px_90px_90px] gap-2 px-4 py-2 border-b border-brd text-[11px] text-t4">
+        <div className="grid grid-cols-[36px_1fr_100px_100px_90px_90px_90px] gap-2 px-4 py-2 border-b border-brd text-[10px] text-t4 uppercase tracking-wider">
           <span></span>
           <span>Symbol</span>
           <span className="text-right">Last Price</span>
@@ -190,10 +246,11 @@ export function CoinSelectorModal({
           {sortedCoins.map(coin => (
             <div
               key={coin.symbol}
-              onClick={() => handleSelectCoin(coin.symbol)}
+              onClick={() => handleSelectCoin(coin)}
               className={cn(
-                "grid grid-cols-[40px_1fr_100px_100px_90px_90px_90px] gap-2 px-4 py-2.5 cursor-pointer transition-colors",
-                selectedCoin === coin.symbol ? "bg-acc/10" : "hover:bg-s2"
+                "grid grid-cols-[36px_1fr_100px_100px_90px_90px_90px] gap-2 px-4 py-2 transition-colors",
+                coin.tradeable ? "cursor-pointer" : "cursor-default opacity-70",
+                selectedCoin === coin.symbol && coin.tradeable ? "bg-acc/10" : coin.tradeable ? "hover:bg-s2" : ""
               )}
             >
               {/* Favorite star */}
@@ -203,7 +260,7 @@ export function CoinSelectorModal({
               >
                 <Star
                   className={cn(
-                    "w-4 h-4 transition-colors",
+                    "w-3.5 h-3.5 transition-colors",
                     favorites.has(coin.symbol)
                       ? "fill-yellow-400 text-yellow-400"
                       : "text-t4 hover:text-t3"
@@ -211,22 +268,42 @@ export function CoinSelectorModal({
                 />
               </button>
 
-              {/* Symbol with leverage badge */}
+              {/* Symbol with leverage badge + category tags */}
               <div className="flex items-center gap-2">
                 <span className="text-[13px] font-medium text-t1">{coin.displayName}</span>
-                <span className="px-1.5 py-0.5 bg-acc/20 text-acc text-[10px] font-bold rounded">
+                <span className="px-1 py-0.5 bg-acc/15 text-acc text-[9px] font-bold rounded border border-acc/20">
                   {coin.leverage}
                 </span>
+                {/* Category tags */}
+                {coin.categories?.map(cat => (
+                  <span
+                    key={cat}
+                    className={cn(
+                      "px-1.5 py-0.5 text-[9px] font-medium rounded border",
+                      CATEGORY_COLORS[cat] || "bg-gray-500/20 text-gray-400 border-gray-500/30"
+                    )}
+                  >
+                    {cat}
+                  </span>
+                ))}
+                {!coin.tradeable && (
+                  <span className="text-[9px] text-t4">(view only)</span>
+                )}
               </div>
 
               {/* Last Price */}
-              <span className="text-right text-[13px] text-t1 font-tabular">
-                {coin.price.toLocaleString(undefined, { minimumFractionDigits: coin.price < 100 ? 2 : 0 })}
+              <span className="text-right text-[12px] text-t1 font-tabular self-center">
+                {coin.price >= 1
+                  ? coin.price.toLocaleString(undefined, { minimumFractionDigits: coin.price < 100 ? 2 : 0, maximumFractionDigits: coin.price < 100 ? 2 : 0 })
+                  : coin.price < 0.001
+                    ? coin.price.toFixed(8)
+                    : coin.price.toFixed(4)
+                }
               </span>
 
               {/* 24H Change */}
               <span className={cn(
-                "text-right text-[13px] font-tabular",
+                "text-right text-[12px] font-tabular self-center",
                 coin.change24h >= 0 ? "text-grn" : "text-red"
               )}>
                 {coin.change24h >= 0 ? "+" : ""}{coin.change24h.toFixed(2)}%
@@ -234,19 +311,19 @@ export function CoinSelectorModal({
 
               {/* 8H Funding */}
               <span className={cn(
-                "text-right text-[13px] font-tabular",
+                "text-right text-[12px] font-tabular self-center",
                 coin.funding8h >= 0 ? "text-grn" : "text-red"
               )}>
-                {coin.funding8h >= 0 ? "" : "-"}{coin.funding8h.toFixed(4)}%
+                {coin.funding8h >= 0 ? "" : "-"}{Math.abs(coin.funding8h).toFixed(4)}%
               </span>
 
               {/* Volume */}
-              <span className="text-right text-[13px] text-t2 font-tabular">
+              <span className="text-right text-[12px] text-t2 font-tabular self-center">
                 {coin.volume}
               </span>
 
               {/* Open Interest */}
-              <span className="text-right text-[13px] text-t2 font-tabular">
+              <span className="text-right text-[12px] text-t2 font-tabular self-center">
                 {coin.openInterest}
               </span>
             </div>
@@ -254,7 +331,7 @@ export function CoinSelectorModal({
         </div>
 
         {/* Keyboard shortcuts footer */}
-        <div className="flex items-center gap-4 px-4 py-2 border-t border-brd text-[11px] text-t4">
+        <div className="flex items-center gap-4 px-4 py-2 border-t border-brd text-[10px] text-t4">
           <span><kbd className="px-1.5 py-0.5 bg-s3 rounded text-t3">⌘K</kbd> Open</span>
           <span><kbd className="px-1.5 py-0.5 bg-s3 rounded text-t3">↑↓</kbd> Navigate</span>
           <span><kbd className="px-1.5 py-0.5 bg-s3 rounded text-t3">Enter</kbd> Select</span>

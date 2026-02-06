@@ -1,84 +1,60 @@
 "use client";
 
-import { useEffect, useRef, memo } from "react";
+import { useEffect, useRef, memo, useState } from "react";
 
 interface TradingViewChartProps {
   coin: string;
 }
 
-// Map our coins to TradingView PERP symbols (FIX 10)
+// Map our coins to TradingView symbols
 const SYMBOL_MAP: Record<string, string> = {
-  HYPE: "BYBIT:HYPEUSDT.P",
-  BTC: "BINANCE:BTCUSDT.P",
-  ETH: "BINANCE:ETHUSDT.P",
-  SOL: "BINANCE:SOLUSDT.P",
+  HYPE: "GATEIO:HYPEUSDT",
+  BTC: "BINANCE:BTCUSDT",
+  ETH: "BINANCE:ETHUSDT",
+  SOL: "BINANCE:SOLUSDT",
+  DOGE: "BINANCE:DOGEUSDT",
+  AVAX: "BINANCE:AVAXUSDT",
+  LINK: "BINANCE:LINKUSDT",
+  ARB: "BINANCE:ARBUSDT",
+  OP: "BINANCE:OPUSDT",
+  SUI: "BINANCE:SUIUSDT",
+  APT: "BINANCE:APTUSDT",
+  MATIC: "BINANCE:MATICUSDT",
+  NEAR: "BINANCE:NEARUSDT",
+  ATOM: "BINANCE:ATOMUSDT",
+  FTM: "BINANCE:FTMUSDT",
+  INJ: "BINANCE:INJUSDT",
+  TIA: "BINANCE:TIAUSDT",
+  SEI: "BINANCE:SEIUSDT",
+  WLD: "BINANCE:WLDUSDT",
+  STRK: "BINANCE:STRKUSDT",
+  JUP: "BYBIT:JUPUSDT",
+  ONDO: "BYBIT:ONDOUSDT",
 };
 
 function TradingViewChartComponent({ coin }: TradingViewChartProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
+  const [widgetKey, setWidgetKey] = useState(0);
+  const symbol = SYMBOL_MAP[coin] || "BINANCE:BTCUSDT";
 
+  // Force re-render when coin changes
   useEffect(() => {
-    if (!containerRef.current) return;
-
-    // Clear previous widget
-    containerRef.current.innerHTML = "";
-
-    // Create widget container
-    const widgetContainer = document.createElement("div");
-    widgetContainer.className = "tradingview-widget-container";
-    widgetContainer.style.height = "100%";
-    widgetContainer.style.width = "100%";
-
-    const widgetInner = document.createElement("div");
-    widgetInner.className = "tradingview-widget-container__widget";
-    widgetInner.style.height = "100%";
-    widgetInner.style.width = "100%";
-    widgetContainer.appendChild(widgetInner);
-
-    containerRef.current.appendChild(widgetContainer);
-
-    // Create and append script
-    const script = document.createElement("script");
-    script.src = "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
-    script.type = "text/javascript";
-    script.async = true;
-
-    // FIX 9: Show drawing tools (hide_side_toolbar: false)
-    script.innerHTML = JSON.stringify({
-      autosize: true,
-      symbol: SYMBOL_MAP[coin] || "BINANCE:BTCUSDT.P",
-      interval: "15",
-      timezone: "Etc/UTC",
-      theme: "dark",
-      style: "1",
-      locale: "en",
-      backgroundColor: "#0a0f14",
-      gridColor: "#1a1f2e",
-      hide_top_toolbar: false,
-      hide_side_toolbar: false,
-      hide_legend: false,
-      allow_symbol_change: false,
-      save_image: false,
-      calendar: false,
-      hide_volume: false,
-      support_host: "https://www.tradingview.com",
-    });
-
-    widgetContainer.appendChild(script);
-
-    return () => {
-      if (containerRef.current) {
-        containerRef.current.innerHTML = "";
-      }
-    };
+    setWidgetKey(prev => prev + 1);
   }, [coin]);
 
   return (
-    <div
-      ref={containerRef}
-      className="w-full h-full bg-bg"
-      style={{ minHeight: "300px" }}
-    />
+    <div className="w-full h-full bg-bg" style={{ minHeight: "300px" }}>
+      <iframe
+        key={widgetKey}
+        src={`https://s.tradingview.com/widgetembed/?frameElementId=tradingview_widget&symbol=${encodeURIComponent(symbol)}&interval=15&hide_side_toolbar=false&allow_symbol_change=false&save_image=false&theme=dark&style=1&timezone=Etc%2FUTC&withdateranges=1&hide_top_toolbar=false&hide_legend=false&studies=Volume@tv-basicstudies&locale=en`}
+        style={{
+          width: "100%",
+          height: "100%",
+          border: "none",
+        }}
+        allowTransparency
+        allowFullScreen
+      />
+    </div>
   );
 }
 

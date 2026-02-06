@@ -132,15 +132,30 @@ export default function TradePage() {
         decimals={decimals}
       />
 
-      {/* Main Layout: 2-column grid (chart + sidebar) - TradingView has built-in toolbar */}
-      <div className="flex-1 flex flex-col md:grid md:grid-cols-[1fr_340px] md:grid-rows-[1fr_220px] min-h-0 overflow-hidden">
-        {/* Chart area */}
-        <div className="h-[40vh] md:h-auto md:row-span-1 md:col-span-1 min-h-0 overflow-hidden">
-          <TradingViewChart coin={coin} />
+      {/* Main Layout: 2-column grid (chart + sidebar) */}
+      <div className="flex-1 flex flex-col md:grid md:grid-cols-[1fr_340px] min-h-0 overflow-hidden">
+        {/* Left column: Chart + Bottom Panel */}
+        <div className="flex flex-col min-h-0 overflow-hidden">
+          {/* Chart area - takes remaining space */}
+          <div className="flex-1 min-h-[200px] overflow-hidden">
+            <TradingViewChart coin={coin} />
+          </div>
+
+          {/* Bottom Panel */}
+          <div className="h-[180px] flex-shrink-0 border-t border-brd overflow-hidden">
+            <BottomTabsPanel
+              positions={positions}
+              history={history}
+              orders={orders}
+              currentPrices={prices}
+              balance={account?.balance ?? 10000}
+              onClosePosition={handleClosePosition}
+            />
+          </div>
         </div>
 
-        {/* Right Sidebar (340px) - OrderForm on top, OrderBook below */}
-        <div className="md:row-span-2 md:col-start-2 flex flex-col border-l border-brd overflow-hidden bg-s1">
+        {/* Right Sidebar (340px) - OrderForm on top, OrderBook below - scrollable */}
+        <div className="flex flex-col border-l border-brd overflow-y-auto bg-s1">
           {/* Order Form */}
           <div className="flex-shrink-0 border-b border-brd">
             <OrderForm
@@ -153,7 +168,7 @@ export default function TradePage() {
           </div>
 
           {/* Order Book with tabs */}
-          <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
+          <div className="flex-1 min-h-[300px] flex flex-col">
             <div className="flex items-center justify-between px-2.5 py-1.5 border-b border-brd flex-shrink-0">
               <div className="flex items-center gap-4">
                 <span className="text-[11px] font-medium text-t1 border-b-2 border-t1 pb-1">Order Book</span>
@@ -181,18 +196,6 @@ export default function TradePage() {
               />
             </div>
           </div>
-        </div>
-
-        {/* Bottom Panel */}
-        <div className="h-[200px] md:h-auto md:col-start-1 md:row-start-2 border-t border-brd overflow-hidden">
-          <BottomTabsPanel
-            positions={positions}
-            history={history}
-            orders={orders}
-            currentPrices={prices}
-            balance={account?.balance ?? 10000}
-            onClosePosition={handleClosePosition}
-          />
         </div>
       </div>
 

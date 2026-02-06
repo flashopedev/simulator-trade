@@ -8,7 +8,7 @@ import { TradingViewChart } from "@/components/TradingViewChart";
 import { OrderForm } from "@/components/OrderForm";
 import { OrderBook } from "@/components/OrderBook";
 import { BottomTabsPanel } from "@/components/BottomTabsPanel";
-import { ChartToolbar } from "@/components/ChartToolbar";
+// ChartToolbar not needed - TradingView has built-in toolbar
 import { AuthForm } from "@/components/AuthForm";
 import { NotificationContainer } from "@/components/Notification";
 import { useAuth } from "@/hooks/useAuth";
@@ -132,20 +132,15 @@ export default function TradePage() {
         decimals={decimals}
       />
 
-      {/* Main Layout: 3-column grid like real Hyperliquid (toolbar + chart + sidebar) */}
-      <div className="flex-1 flex flex-col md:grid md:grid-cols-[44px_1fr_340px] md:grid-rows-[1fr_220px] min-h-0 overflow-hidden">
-        {/* Left Chart Toolbar - hidden on mobile */}
-        <div className="hidden md:flex md:row-span-2 md:col-start-1">
-          <ChartToolbar />
-        </div>
-
+      {/* Main Layout: 2-column grid (chart + sidebar) - TradingView has built-in toolbar */}
+      <div className="flex-1 flex flex-col md:grid md:grid-cols-[1fr_340px] md:grid-rows-[1fr_220px] min-h-0 overflow-hidden">
         {/* Chart area */}
-        <div className="h-[40vh] md:h-auto md:row-span-1 md:col-start-2 min-h-0 overflow-hidden">
+        <div className="h-[40vh] md:h-auto md:row-span-1 md:col-span-1 min-h-0 overflow-hidden">
           <TradingViewChart coin={coin} />
         </div>
 
         {/* Right Sidebar (340px) - OrderForm on top, OrderBook below */}
-        <div className="md:row-span-2 md:col-start-3 flex flex-col border-l border-brd overflow-hidden bg-s1">
+        <div className="md:row-span-2 md:col-start-2 flex flex-col border-l border-brd overflow-hidden bg-s1">
           {/* Order Form */}
           <div className="flex-shrink-0 border-b border-brd">
             <OrderForm
@@ -189,7 +184,7 @@ export default function TradePage() {
         </div>
 
         {/* Bottom Panel */}
-        <div className="h-[200px] md:h-auto md:col-start-2 md:row-start-2 border-t border-brd overflow-hidden">
+        <div className="h-[200px] md:h-auto md:col-start-1 md:row-start-2 border-t border-brd overflow-hidden">
           <BottomTabsPanel
             positions={positions}
             history={history}

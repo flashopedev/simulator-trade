@@ -16,8 +16,9 @@ const config: Config = {
         s3: "#1c2430",
         s4: "#232d3b",
         s5: "#2a3544",
+        card: "#111a22",
         // Borders
-        brd: "#1a1f2e",
+        brd: "#1e2a35",
         brd2: "#2a3544",
         // Text
         t1: "#ffffff",

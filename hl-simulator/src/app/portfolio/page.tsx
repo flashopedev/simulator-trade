@@ -127,7 +127,7 @@ export default function PortfolioPage() {
       <div className="flex-1 flex flex-col">
         {/* Header: Portfolio title + buttons */}
         <div className="flex items-center justify-between px-5 py-4">
-          <h1 className="text-[32px] font-semibold text-t1">Portfolio</h1>
+          <h1 className="text-[36px] font-semibold text-t1">Portfolio</h1>
           <div className="flex items-center gap-3">
             {HEADER_BUTTONS.map((btn) => (
               <button
@@ -145,14 +145,14 @@ export default function PortfolioPage() {
           {/* Left column - 14 Day Volume + Fees stacked with gap-4 */}
           <div className="flex flex-col gap-4">
             {/* FIX 1: 14 Day Volume card with border + cyan accent */}
-            <div className="bg-s1 border border-brd rounded-lg border-l-2 border-l-acc p-5">
+            <div className="bg-card border border-brd rounded-lg border-l-2 border-l-acc p-5">
               <div className="text-[13px] text-t3 mb-1">14 Day Volume</div>
               <div className="text-[40px] font-semibold text-t1 leading-none">$0</div>
               <button className="text-[13px] text-acc mt-3 hover:underline">View Volume</button>
             </div>
 
             {/* FIX 1 & 2: Fees card with border + cyan accent + correct fees */}
-            <div className="bg-s1 border border-brd rounded-lg border-l-2 border-l-acc p-5">
+            <div className="bg-card border border-brd rounded-lg border-l-2 border-l-acc p-5">
               <div className="flex items-center justify-between mb-1">
                 <span className="text-[13px] text-t3">Fees (Taker / Maker)</span>
                 <button className="flex items-center gap-1 text-[12px] text-t2 hover:text-t1">
@@ -165,7 +165,7 @@ export default function PortfolioPage() {
           </div>
 
           {/* FIX 1: Middle column - Stats card with border + cyan accent */}
-          <div className="bg-s1 border border-brd rounded-lg border-l-2 border-l-acc p-5">
+          <div className="bg-card border border-brd rounded-lg border-l-2 border-l-acc p-5">
             {/* Row with dropdowns */}
             <div className="flex items-center gap-6 mb-2">
               <button className="flex items-center gap-1.5 text-[13px] text-t1 hover:text-acc">
@@ -195,8 +195,8 @@ export default function PortfolioPage() {
             </div>
           </div>
 
-          {/* FIX 1: Right column - Chart card with border + cyan accent */}
-          <div className="bg-s1 border border-brd rounded-lg border-l-2 border-l-acc p-5">
+          {/* FIX C: Right column - Chart card WITHOUT cyan accent */}
+          <div className="bg-card border border-brd rounded-lg p-5">
             {/* Chart tabs - no underlines, just text */}
             <div className="flex items-center gap-6 mb-3">
               <button
@@ -219,26 +219,28 @@ export default function PortfolioPage() {
               </button>
             </div>
 
-            {/* SVG Chart */}
+            {/* FIX B: SVG Chart with smooth Bezier curve */}
             <div className="h-[200px]">
-              <svg viewBox="0 0 400 180" className="w-full h-full" preserveAspectRatio="none">
+              <svg viewBox="0 0 400 200" className="w-full h-full" preserveAspectRatio="none">
+                <defs>
+                  <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#00d8c4" stopOpacity="0.15" />
+                    <stop offset="100%" stopColor="#00d8c4" stopOpacity="0" />
+                  </linearGradient>
+                </defs>
                 {/* Y axis labels */}
-                <text x="0" y="170" fill="#4b5563" fontSize="11">0</text>
-                <text x="0" y="125" fill="#4b5563" fontSize="11">1</text>
-                <text x="0" y="80" fill="#4b5563" fontSize="11">2</text>
+                <text x="0" y="185" fill="#4b5563" fontSize="11">0</text>
+                <text x="0" y="135" fill="#4b5563" fontSize="11">1</text>
+                <text x="0" y="85" fill="#4b5563" fontSize="11">2</text>
                 <text x="0" y="35" fill="#4b5563" fontSize="11">3</text>
                 {/* Horizontal grid lines */}
-                <line x1="20" y1="165" x2="395" y2="165" stroke="#1a1f2e" strokeWidth="1" />
-                <line x1="20" y1="120" x2="395" y2="120" stroke="#1a1f2e" strokeWidth="0.5" strokeDasharray="4" />
-                <line x1="20" y1="75" x2="395" y2="75" stroke="#1a1f2e" strokeWidth="0.5" strokeDasharray="4" />
-                <line x1="20" y1="30" x2="395" y2="30" stroke="#1a1f2e" strokeWidth="0.5" strokeDasharray="4" />
-                {/* Chart line */}
-                <polyline
-                  points="25,160 60,158 100,150 150,130 200,100 250,80 300,60 350,45 390,35"
-                  fill="none"
-                  stroke="#00d8c4"
-                  strokeWidth="2"
-                />
+                <line x1="20" y1="180" x2="395" y2="180" stroke="#1e2a35" strokeWidth="1" />
+                <line x1="20" y1="130" x2="395" y2="130" stroke="#1e2a35" strokeWidth="0.5" strokeDasharray="4" />
+                <line x1="20" y1="80" x2="395" y2="80" stroke="#1e2a35" strokeWidth="0.5" strokeDasharray="4" />
+                <line x1="20" y1="30" x2="395" y2="30" stroke="#1e2a35" strokeWidth="0.5" strokeDasharray="4" />
+                {/* Smooth Bezier curve */}
+                <path d="M 30 185 C 60 180, 100 175, 140 160 C 180 145, 220 120, 260 100 C 300 80, 340 55, 395 35" fill="none" stroke="#00d8c4" strokeWidth="1.5" />
+                <path d="M 30 185 C 60 180, 100 175, 140 160 C 180 145, 220 120, 260 100 C 300 80, 340 55, 395 35 L 395 190 L 30 190 Z" fill="url(#areaGrad)" />
               </svg>
             </div>
           </div>
@@ -254,7 +256,7 @@ export default function PortfolioPage() {
                   onClick={() => !tab.disabled && setActiveTab(tab.key)}
                   disabled={tab.disabled}
                   className={cn(
-                    "px-4 py-3 text-[13px] font-medium whitespace-nowrap border-b-2 -mb-[1px] transition-colors",
+                    "px-4 py-3 text-[13px] font-medium whitespace-nowrap border-b-[3px] -mb-[1px] transition-colors",
                     activeTab === tab.key
                       ? "text-t1 border-t1"
                       : tab.disabled
@@ -298,7 +300,7 @@ export default function PortfolioPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {positions.map((p) => {
+                    {positions.map((p, i) => {
                       const decimals = COIN_DECIMALS[p.coin] || 2;
                       const markPrice = prices[p.coin] || p.entry_price;
                       const positionValue = p.size * markPrice;
@@ -307,7 +309,7 @@ export default function PortfolioPage() {
                       const roe = calculateRoe(pnl, p.entry_price, p.size, p.leverage);
 
                       return (
-                        <tr key={p.id} className="border-t border-brd">
+                        <tr key={p.id} className={cn("border-t border-brd hover:bg-s2", i % 2 === 1 && "bg-[#0c1117]")}>
                           <td className="py-3">
                             <span className={cn("font-medium", p.side === "Long" ? "text-grn" : "text-red")}>
                               {p.coin} {p.leverage}x {p.side === "Long" ? "L" : "S"}

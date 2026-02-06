@@ -127,19 +127,15 @@ export default function PortfolioPage() {
       <Navigation balance={totalEquity} isConnected={true} onSignOut={signOut} />
 
       <div className="flex-1 flex flex-col pb-16">
-        {/* ШАГ 1: Header with title and buttons */}
+        {/* Header with title and buttons */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-brd">
           <h1 className="text-[28px] font-medium text-t1">Portfolio</h1>
+          {/* 2.1: All buttons same style */}
           <div className="flex items-center gap-2 flex-wrap">
-            {HEADER_BUTTONS.map((btn, i) => (
+            {HEADER_BUTTONS.map((btn) => (
               <button
                 key={btn}
-                className={cn(
-                  "px-4 py-2 text-[13px] rounded-lg border transition-colors",
-                  i === 7
-                    ? "border-acc text-acc hover:bg-acc/10"
-                    : "border-brd text-t3 cursor-default opacity-60"
-                )}
+                className="px-4 py-2 text-[13px] rounded-lg border border-brd text-acc hover:bg-s2 transition-colors"
               >
                 {btn}
               </button>
@@ -147,21 +143,21 @@ export default function PortfolioPage() {
           </div>
         </div>
 
-        {/* ШАГ 2: 3-column grid section */}
+        {/* 3-column grid section */}
         <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr_1fr] gap-4 px-6 py-4">
           {/* Left column - two cards */}
           <div className="flex flex-col gap-4">
-            {/* 14 Day Volume */}
-            <div className="border border-brd rounded-lg p-5">
-              <div className="text-[12px] text-t3 uppercase tracking-wider">14 Day Volume</div>
+            {/* 14 Day Volume - 2.2 & 2.3: no uppercase, accent left border */}
+            <div className="border border-brd border-l-2 border-l-acc rounded-lg p-5">
+              <div className="text-[13px] text-t3">14 Day Volume</div>
               <div className="text-[32px] font-medium text-t1 mt-2">$0</div>
               <button className="text-[13px] text-acc mt-2 hover:underline">View Volume</button>
             </div>
 
-            {/* Fees */}
-            <div className="border border-brd rounded-lg p-5">
+            {/* Fees - 2.2 & 2.3: no uppercase, accent left border */}
+            <div className="border border-brd border-l-2 border-l-acc rounded-lg p-5">
               <div className="flex items-center justify-between">
-                <span className="text-[12px] text-t3 uppercase tracking-wider">Fees (Taker / Maker)</span>
+                <span className="text-[13px] text-t3">Fees (Taker / Maker)</span>
                 <button className="flex items-center gap-1 text-[12px] text-t2">
                   Perps <ChevronDown className="w-3 h-3" />
                 </button>
@@ -171,8 +167,8 @@ export default function PortfolioPage() {
             </div>
           </div>
 
-          {/* Middle column - stats table */}
-          <div className="border border-brd rounded-lg p-5">
+          {/* Middle column - stats table with 2.3 accent border */}
+          <div className="border border-brd border-l-2 border-l-acc rounded-lg p-5">
             <div className="flex items-center gap-4 mb-4">
               <button className="flex items-center gap-1 text-[13px] text-t1">
                 Perps + Spot + Vaults <ChevronDown className="w-3 h-3" />
@@ -199,8 +195,8 @@ export default function PortfolioPage() {
             </div>
           </div>
 
-          {/* Right column - chart */}
-          <div className="border border-brd rounded-lg p-5">
+          {/* Right column - chart with 2.3 accent border */}
+          <div className="border border-brd border-l-2 border-l-acc rounded-lg p-5">
             <div className="flex items-center gap-4 mb-4 border-b border-brd">
               <button
                 onClick={() => setChartTab("value")}
@@ -221,13 +217,28 @@ export default function PortfolioPage() {
                 PNL
               </button>
             </div>
-            <div className="h-[180px] bg-s2/30 rounded flex items-center justify-center">
-              <span className="text-t4 text-[13px]">No chart data</span>
+            {/* 2.4: SVG chart placeholder */}
+            <div className="h-[180px] rounded">
+              <svg viewBox="0 0 300 150" className="w-full h-full">
+                <line x1="40" y1="140" x2="290" y2="140" stroke="#1a1f2e" strokeWidth="1" />
+                <line x1="40" y1="10" x2="40" y2="140" stroke="#1a1f2e" strokeWidth="1" />
+                {/* Y axis labels */}
+                <text x="10" y="140" fill="#6b7280" fontSize="10">0</text>
+                <text x="10" y="100" fill="#6b7280" fontSize="10">1</text>
+                <text x="10" y="60" fill="#6b7280" fontSize="10">2</text>
+                <text x="10" y="20" fill="#6b7280" fontSize="10">3</text>
+                {/* Grid lines */}
+                <line x1="40" y1="100" x2="290" y2="100" stroke="#1a1f2e" strokeWidth="0.5" strokeDasharray="4" />
+                <line x1="40" y1="60" x2="290" y2="60" stroke="#1a1f2e" strokeWidth="0.5" strokeDasharray="4" />
+                <line x1="40" y1="20" x2="290" y2="20" stroke="#1a1f2e" strokeWidth="0.5" strokeDasharray="4" />
+                {/* Accent line */}
+                <polyline points="40,130 100,120 160,90 220,70 290,40" fill="none" stroke="#00d8c4" strokeWidth="2" />
+              </svg>
             </div>
           </div>
         </div>
 
-        {/* ШАГ 3: Bottom tabs section */}
+        {/* Bottom tabs section */}
         <div className="flex-1 flex flex-col px-6">
           {/* Tabs */}
           <div className="flex items-center justify-between border-b border-brd">
@@ -268,21 +279,23 @@ export default function PortfolioPage() {
                   <div className="overflow-x-auto">
                     <table className="w-full text-[12px]">
                       <thead>
+                        {/* 2.5: dotted underline on PNL, Margin, Funding + 2.6: Position Value ▾ */}
                         <tr className="text-t3 text-left border-b border-brd">
                           <th className="py-2 font-medium">Coin</th>
                           <th className="py-2 font-medium">Size</th>
-                          <th className="py-2 font-medium">Position Value</th>
+                          <th className="py-2 font-medium">Position Value ▾</th>
                           <th className="py-2 font-medium">Entry Price</th>
                           <th className="py-2 font-medium">Mark Price</th>
-                          <th className="py-2 font-medium">PNL (ROE %)</th>
+                          <th className="py-2 font-medium border-b border-dotted border-t4 cursor-help">PNL (ROE %)</th>
                           <th className="py-2 font-medium">Liq. Price</th>
-                          <th className="py-2 font-medium">Margin</th>
-                          <th className="py-2 font-medium">Funding</th>
+                          <th className="py-2 font-medium border-b border-dotted border-t4 cursor-help">Margin</th>
+                          <th className="py-2 font-medium border-b border-dotted border-t4 cursor-help">Funding</th>
                           <th className="py-2"></th>
                         </tr>
                       </thead>
                       <tbody>
-                        {positions.map((p) => {
+                        {/* 2.7: alternating row colors */}
+                        {positions.map((p, i) => {
                           const decimals = COIN_DECIMALS[p.coin] || 2;
                           const markPrice = prices[p.coin] || p.entry_price;
                           const positionValue = p.size * markPrice;
@@ -291,7 +304,13 @@ export default function PortfolioPage() {
                           const roe = calculateRoe(pnl, p.entry_price, p.size, p.leverage);
 
                           return (
-                            <tr key={p.id} className="border-b border-brd hover:bg-s2/50 transition-colors">
+                            <tr
+                              key={p.id}
+                              className={cn(
+                                "border-b border-brd hover:bg-s2/50 transition-colors",
+                                i % 2 === 1 ? "bg-s2/30" : ""
+                              )}
+                            >
                               <td className="py-2.5">
                                 <span className={cn(
                                   "font-medium",
@@ -389,10 +408,16 @@ export default function PortfolioPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {history.slice(0, 50).map((h) => {
+                        {history.slice(0, 50).map((h, i) => {
                           const decimals = COIN_DECIMALS[h.coin] || 2;
                           return (
-                            <tr key={h.id} className="border-b border-brd hover:bg-s2/50 transition-colors">
+                            <tr
+                              key={h.id}
+                              className={cn(
+                                "border-b border-brd hover:bg-s2/50 transition-colors",
+                                i % 2 === 1 ? "bg-s2/30" : ""
+                              )}
+                            >
                               <td className="py-2.5 text-t3">{new Date(h.closed_at).toLocaleString()}</td>
                               <td className="py-2.5 font-medium text-t1">{h.coin}{h.liquidated && " 💀"}</td>
                               <td className={cn("py-2.5", h.side === "Long" ? "text-grn" : "text-red")}>

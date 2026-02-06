@@ -87,7 +87,7 @@ export function CoinInfoBar({
 
   return (
     <>
-      <div className="flex items-center h-[52px] px-4 gap-4 border-b border-brd bg-s1 overflow-x-auto">
+      <div className="relative z-10 flex items-center h-[52px] px-4 gap-4 border-b border-brd bg-s1 overflow-x-auto">
         {/* Favorite star */}
         <button
           onClick={() => setIsFavorite(!isFavorite)}

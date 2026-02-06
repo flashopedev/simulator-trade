@@ -105,38 +105,54 @@ export function CoinInfoBar({
   // Prices
   const markPrice = stats.price;
   const oraclePrice = stats.price ? stats.price * 0.9998 : null;
-  const openInterest = 776.4; // Mock: $776.4M
-  const volume24h = 889.1; // Mock: $889.1M
-  const fundingRate = stats.fundingRate ?? 0.0013;
+  const openInterest = 763716026.42; // Mock: Full value like real HL
+  const volume24h = 884126276.33; // Mock: Full value like real HL
+  const fundingRate = stats.fundingRate ?? 0.000013; // 0.0013% like real HL
 
   // 24h change value
   const priceChange = stats.price && stats.change24h
     ? (stats.price * Math.abs(stats.change24h) / 100)
     : null;
 
+  // Format price like real HL: 32,554 (comma for decimal)
   const formatPrice = (price: number | null) => {
     if (price === null) return "—";
-    if (price >= 1000) return price.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-    if (price >= 100) return price.toFixed(1);
-    return price.toFixed(decimals);
+    // Format with comma as decimal separator like real HL
+    if (price >= 1000) {
+      return price.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+    }
+    // Use comma for decimal separator
+    return price.toFixed(decimals).replace(".", ",");
+  };
+
+  // Format large numbers with spaces and decimals like real HL: $873 170 464,95
+  const formatLargeNumber = (num: number) => {
+    // Split into integer and decimal parts
+    const [intPart, decPart] = num.toFixed(2).split(".");
+    // Add space as thousands separator
+    const formattedInt = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+    // Use comma for decimal separator like real HL
+    return `${formattedInt},${decPart}`;
   };
 
   return (
     <>
-      <div className="relative z-10 flex items-center h-[52px] px-4 gap-4 border-b border-brd bg-s1 overflow-x-auto">
-        {/* Favorite star */}
+      {/* Star row - separate line like real HL */}
+      <div className="h-6 flex items-center px-4 bg-s1">
         <button
           onClick={() => setIsFavorite(!isFavorite)}
-          className="flex items-center flex-shrink-0"
+          className="flex items-center"
         >
           <Star
             className={cn(
-              "w-[14px] h-[14px] transition-colors",
+              "w-4 h-4 transition-colors",
               isFavorite ? "fill-yellow-400 text-yellow-400" : "text-t4 hover:text-t3"
             )}
           />
         </button>
+      </div>
 
+      <div className="relative z-10 flex items-center h-[52px] px-4 gap-4 border-b border-brd bg-s1 overflow-x-auto">
         {/* Coin selector */}
         <button
           onClick={() => setShowCoinSelector(true)}
@@ -150,12 +166,12 @@ export function CoinInfoBar({
             {COIN_ICONS[selectedCoin]}
           </div>
           {/* Name + dropdown */}
-          <span className="text-[20px] font-semibold text-t1 leading-none">{selectedCoin}-USDC</span>
+          <span className="text-[20px] font-normal text-t1 leading-none">{selectedCoin}-USDC</span>
           <ChevronDown className="w-4 h-4 text-t3 -ml-0.5" />
         </button>
 
-        {/* Leverage badge */}
-        <span className="px-1.5 py-0.5 bg-acc/15 text-acc text-[11px] font-bold rounded border border-acc/20 flex-shrink-0">
+        {/* Leverage badge - matching real HL: 12px, acc color, dark teal background */}
+        <span className="px-1.5 py-0.5 bg-[#0e3333] text-acc text-[12px] font-normal rounded flex-shrink-0">
           {COIN_LEVERAGE[selectedCoin]}
         </span>
 
@@ -195,7 +211,7 @@ export function CoinInfoBar({
             stats.change24h !== null && stats.change24h >= 0 ? "text-grn" : "text-red"
           )}>
             {priceChange !== null && stats.change24h !== null
-              ? `${stats.change24h >= 0 ? "+" : "-"}${priceChange.toFixed(decimals)} / ${stats.change24h >= 0 ? "+" : ""}${stats.change24h.toFixed(2)}%`
+              ? `${stats.change24h >= 0 ? "" : "-"}${priceChange.toFixed(decimals).replace(".", ",")} / ${stats.change24h >= 0 ? "" : "-"}${Math.abs(stats.change24h).toFixed(2).replace(".", ",")}%`
               : "—"}
           </span>
         </div>
@@ -206,7 +222,7 @@ export function CoinInfoBar({
             24H Volume
           </span>
           <span className="text-[13px] text-t2 font-medium font-tabular mt-0.5 leading-tight">
-            ${volume24h.toFixed(0)}M
+            ${formatLargeNumber(volume24h)}
           </span>
         </div>
 
@@ -216,7 +232,7 @@ export function CoinInfoBar({
             Open Interest
           </span>
           <span className="text-[13px] text-t2 font-medium font-tabular mt-0.5 leading-tight">
-            ${openInterest.toFixed(0)}M
+            ${formatLargeNumber(openInterest)}
           </span>
         </div>
 
@@ -230,7 +246,7 @@ export function CoinInfoBar({
               "text-[13px] font-medium font-tabular leading-tight",
               fundingRate >= 0 ? "text-grn" : "text-red"
             )}>
-              {fundingRate >= 0 ? "" : "-"}{(Math.abs(fundingRate) * 100).toFixed(4)}%
+              {(fundingRate * 100).toFixed(4).replace(".", ",")}%
             </span>
             <span className="text-[13px] font-tabular text-t2 leading-tight">
               {fundingCountdown}

@@ -2,12 +2,11 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { cn, calculateLiquidationPrice, formatNumber, COIN_DECIMALS } from "@/lib/utils";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Check } from "lucide-react";
 import { ConfirmOrderModal } from "./ConfirmOrderModal";
 import { AdjustLeverageModal } from "./AdjustLeverageModal";
 
 type OrderTab = "market" | "limit";
-type TIF = "GTC" | "IOC" | "FOK";
 
 interface OrderFormProps {
   coin: string;
@@ -44,7 +43,6 @@ export function OrderForm({
   const [tpsl, setTpsl] = useState(false);
   const [tpPrice, setTpPrice] = useState("");
   const [slPrice, setSlPrice] = useState("");
-  const [tif, setTif] = useState<TIF>("GTC");
 
   // Modal states
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -59,22 +57,6 @@ export function OrderForm({
   const liqPrice = execPrice > 0 && sizeNum > 0
     ? calculateLiquidationPrice(execPrice, isBuy, leverage)
     : null;
-
-  // Calculate TP/SL gain/loss percentages
-  const tpPriceNum = parseFloat(tpPrice) || 0;
-  const slPriceNum = parseFloat(slPrice) || 0;
-
-  const tpGainPercent = tpPriceNum && execPrice
-    ? isBuy
-      ? ((tpPriceNum - execPrice) / execPrice) * 100 * leverage
-      : ((execPrice - tpPriceNum) / execPrice) * 100 * leverage
-    : 0;
-
-  const slLossPercent = slPriceNum && execPrice
-    ? isBuy
-      ? ((execPrice - slPriceNum) / execPrice) * 100 * leverage
-      : ((slPriceNum - execPrice) / execPrice) * 100 * leverage
-    : 0;
 
   const handleSlider = useCallback(
     (pct: number) => {
@@ -92,7 +74,6 @@ export function OrderForm({
     if (orderType === "limit" && !parseFloat(limitPrice)) return;
     if (margin > availableBalance) return;
 
-    // Check if we should skip confirmation
     const skipConfirm = localStorage.getItem("skipOrderConfirm") === "true";
     if (skipConfirm) {
       executeOrder();
@@ -109,8 +90,8 @@ export function OrderForm({
       leverage,
       orderType,
       marginMode,
-      tpPrice: tpsl && tpPriceNum ? tpPriceNum : undefined,
-      slPrice: tpsl && slPriceNum ? slPriceNum : undefined,
+      tpPrice: tpsl && parseFloat(tpPrice) ? parseFloat(tpPrice) : undefined,
+      slPrice: tpsl && parseFloat(slPrice) ? parseFloat(slPrice) : undefined,
     });
     setSize("");
     setLimitPrice("");
@@ -130,46 +111,37 @@ export function OrderForm({
     }
   }, [price, orderType, decimals, limitPrice]);
 
-  // Slider steps for visual dots - 9 steps like real HL
-  const sliderSteps = [0, 12.5, 25, 37.5, 50, 62.5, 75, 87.5, 100];
-
   return (
     <>
       <div className="flex flex-col bg-s1">
-        {/* Cross | Nx | Classic - compact HL style */}
-        <div className="flex border-b border-brd">
+        {/* Cross | Nx | Classic - exact real HL style */}
+        <div className="flex gap-2 px-3 py-2">
           <button
             onClick={() => setMarginMode("cross")}
-            className={cn(
-              "flex-1 py-2 text-[13px] font-medium text-center border-r border-brd transition-colors",
-              marginMode === "cross" ? "text-t1" : "text-t3 hover:text-t2"
-            )}
+            className="flex-1 h-[33px] text-[12px] font-normal text-center rounded-[8px] text-white bg-[#273035] border border-transparent transition-colors hover:brightness-110"
           >
             Cross
           </button>
           <button
             onClick={() => setShowLeverageModal(true)}
-            className="flex-1 py-2 text-[13px] font-medium text-center border-r border-brd text-acc hover:brightness-110 transition-all cursor-pointer"
+            className="flex-1 h-[33px] text-[12px] font-normal text-center text-acc rounded-[8px] bg-[#273035] border border-transparent transition-colors hover:brightness-110 cursor-pointer"
           >
             {leverage}x
           </button>
           <button
             onClick={() => setMarginMode("isolated")}
-            className={cn(
-              "flex-1 py-2 text-[13px] font-medium text-center transition-colors",
-              marginMode === "isolated" ? "text-t1" : "text-t3 hover:text-t2"
-            )}
+            className="flex-1 h-[33px] text-[12px] font-normal text-center rounded-[8px] text-white bg-[#273035] border border-transparent transition-colors hover:brightness-110"
           >
             Classic
           </button>
         </div>
 
         {/* Order type tabs: Market | Limit | Pro */}
-        <div className="flex border-b border-brd">
+        <div className="flex items-center px-3 border-b border-brd">
           <button
             onClick={() => setOrderTab("market")}
             className={cn(
-              "flex-1 py-2.5 text-[13px] font-medium border-b-2 transition-colors",
+              "px-4 py-2.5 text-[13px] font-medium border-b-2 -mb-px transition-colors",
               orderTab === "market"
                 ? "text-t1 border-t1"
                 : "text-t3 border-transparent hover:text-t2"
@@ -180,7 +152,7 @@ export function OrderForm({
           <button
             onClick={() => setOrderTab("limit")}
             className={cn(
-              "flex-1 py-2.5 text-[13px] font-medium border-b-2 transition-colors",
+              "px-4 py-2.5 text-[13px] font-medium border-b-2 -mb-px transition-colors",
               orderTab === "limit"
                 ? "text-t1 border-t1"
                 : "text-t3 border-transparent hover:text-t2"
@@ -188,24 +160,23 @@ export function OrderForm({
           >
             Limit
           </button>
-          <button
-            disabled
-            className="flex-1 py-2.5 text-[13px] font-medium text-t3 border-b-2 border-transparent cursor-not-allowed flex items-center justify-center gap-1"
-          >
-            Pro <ChevronDown className="w-3 h-3" />
-          </button>
+          <div className="ml-auto flex items-center">
+            <span className="text-[13px] font-medium text-t3 flex items-center gap-0.5 cursor-pointer hover:text-t2">
+              Pro <ChevronDown className="w-3 h-3" />
+            </span>
+          </div>
         </div>
 
-        <div className="p-3 space-y-2.5">
-          {/* Buy / Long | Sell / Short */}
-          <div className="flex">
+        <div className="p-3 space-y-3">
+          {/* Buy / Long | Sell / Short - INSIDE gray container like real HL */}
+          <div className="flex bg-[#1e2a30] rounded-lg p-0.5">
             <button
               onClick={() => setIsBuy(true)}
               className={cn(
-                "flex-1 py-2 text-[13px] font-bold transition-all rounded-l",
+                "flex-1 py-2.5 text-[13px] font-semibold transition-all rounded-md",
                 isBuy
-                  ? "bg-acc text-black"
-                  : "bg-transparent text-t3 border border-brd border-r-0 hover:text-t2"
+                  ? "bg-acc text-[#02231e]"
+                  : "bg-transparent text-t2 hover:text-t1"
               )}
             >
               Buy / Long
@@ -213,10 +184,10 @@ export function OrderForm({
             <button
               onClick={() => setIsBuy(false)}
               className={cn(
-                "flex-1 py-2 text-[13px] font-bold transition-all rounded-r",
+                "flex-1 py-2.5 text-[13px] font-semibold transition-all rounded-md",
                 !isBuy
                   ? "bg-red text-white"
-                  : "bg-transparent text-t3 border border-brd border-l-0 hover:text-t2"
+                  : "bg-transparent text-t2 hover:text-t1"
               )}
             >
               Sell / Short
@@ -224,249 +195,191 @@ export function OrderForm({
           </div>
 
           {/* Available to Trade */}
-          <div className="flex justify-between text-[11px]">
+          <div className="flex justify-between text-[12px]">
             <span className="text-t3">Available to Trade</span>
-            <span className="text-t1 font-tabular">{formatNumber(availableBalance)} USDC</span>
+            <span className="text-t1 font-tabular">{formatNumber(availableBalance).replace(".", ",")} USDC</span>
           </div>
 
           {/* Current Position */}
-          <div className="flex justify-between text-[11px]">
+          <div className="flex justify-between text-[12px]">
             <span className="text-t3">Current Position</span>
             <span className={cn(
               "font-tabular",
               currentPositionSize > 0 ? "text-acc" : currentPositionSize < 0 ? "text-red" : "text-t1"
             )}>
-              {currentPositionSize !== 0 ? `${currentPositionSize.toFixed(5)} ${coin}` : `0.00000 ${coin}`}
+              {currentPositionSize !== 0 ? `${currentPositionSize.toFixed(2).replace(".", ",")} ${coin}` : `0,00 ${coin}`}
             </span>
           </div>
 
-          {/* Limit price (only for limit) */}
-          {orderTab === "limit" && (
-            <div>
-              <div className="flex items-center bg-transparent border border-brd rounded px-3 focus-within:border-acc transition-colors">
-                <span className="text-[11px] text-t3 mr-2">Price (USDC)</span>
+          {/* Size input - with dark background like real HL */}
+          <div className="flex items-center bg-[#1e2a30] rounded-lg px-3 py-2">
+            <span className="text-[12px] text-t3 mr-2">Size</span>
+            <input
+              type="number"
+              value={size}
+              onChange={(e) => setSize(e.target.value)}
+              placeholder="0.00"
+              className="flex-1 bg-transparent text-[14px] font-medium outline-none font-tabular text-t1 text-right"
+            />
+            <div className="flex items-center gap-1 text-[12px] text-t3 ml-2">
+              <span>USDC</span>
+              <ChevronDown className="w-3 h-3" />
+            </div>
+          </div>
+
+          {/* Approximate value */}
+          <div className="flex justify-end">
+            <span className="text-[11px] text-t4 font-tabular">≈ ${formatNumber(notional).replace(".", ",")}</span>
+          </div>
+
+          {/* Slider - matching real HL exactly with 5 dots */}
+          <div className="py-1">
+            <div className="flex items-center gap-3">
+              <div className="flex-1 relative h-6 flex items-center">
+                {/* Circular thumb */}
+                <div
+                  className="absolute z-20 w-[18px] h-[18px] rounded-full border-2 border-acc bg-[#0d1214] cursor-pointer"
+                  style={{ left: `calc(${sliderPct}% - 9px)` }}
+                />
+                {/* Track background */}
+                <div className="absolute left-0 right-0 h-[4px] bg-[#3a4449] rounded-full" />
+                {/* Track fill */}
+                <div
+                  className="absolute left-0 h-[4px] bg-acc rounded-full"
+                  style={{ width: `${sliderPct}%` }}
+                />
+                {/* 5 dots at 0%, 25%, 50%, 75%, 100% */}
+                <div className="absolute left-0 right-0 flex items-center justify-between">
+                  {[0, 25, 50, 75, 100].map((step) => (
+                    <button
+                      key={step}
+                      onClick={() => handleSlider(step)}
+                      className={cn(
+                        "w-[8px] h-[8px] rounded-full transition-all z-10",
+                        sliderPct >= step ? "bg-acc" : "bg-[#4a5459]"
+                      )}
+                    />
+                  ))}
+                </div>
+                {/* Invisible range input */}
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={sliderPct}
+                  onChange={(e) => handleSlider(parseInt(e.target.value))}
+                  className="absolute inset-0 w-full opacity-0 cursor-pointer z-30"
+                />
+              </div>
+              {/* % input box */}
+              <div className="flex items-center bg-[#1e2a30] rounded-lg px-3 py-2 min-w-[65px]">
                 <input
                   type="number"
-                  value={limitPrice}
-                  onChange={(e) => setLimitPrice(e.target.value)}
-                  placeholder="0.00"
-                  className="flex-1 bg-transparent py-1.5 text-[13px] font-medium outline-none font-tabular text-t1 text-right"
+                  value={sliderPct}
+                  onChange={(e) => handleSlider(parseInt(e.target.value) || 0)}
+                  className="w-6 bg-transparent text-[13px] text-t1 font-tabular outline-none text-right"
                 />
-                <button
-                  onClick={() => price && setLimitPrice(price.toFixed(decimals))}
-                  className="text-[11px] text-acc font-medium hover:underline ml-2"
-                >
-                  Mid
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Size input */}
-          <div>
-            <div className="flex items-center bg-transparent border border-brd rounded px-3 focus-within:border-acc transition-colors">
-              <span className="text-[11px] text-t3 mr-2">Size</span>
-              <input
-                type="number"
-                value={size}
-                onChange={(e) => setSize(e.target.value)}
-                placeholder="0.00"
-                className="flex-1 bg-transparent py-1.5 text-[13px] font-medium outline-none font-tabular text-t1 text-right"
-              />
-              <div className="flex items-center gap-1 text-[11px] text-t3 ml-2">
-                <span>USDC</span>
-                <ChevronDown className="w-3 h-3" />
-              </div>
-            </div>
-            <div className="flex justify-end mt-0.5">
-              <span className="text-[10px] text-t4 font-tabular">≈ ${formatNumber(notional)}</span>
-            </div>
-          </div>
-
-          {/* Slider with dots like real HL */}
-          <div className="py-1">
-            <div className="relative">
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={sliderPct}
-                onChange={(e) => handleSlider(parseInt(e.target.value))}
-                className="w-full h-1 bg-s3 rounded-full appearance-none cursor-pointer"
-                style={{
-                  background: `linear-gradient(to right, #50D2C1 ${sliderPct}%, #1a2328 ${sliderPct}%)`
-                }}
-              />
-              {/* Slider dots */}
-              <div className="absolute top-0 left-0 right-0 h-1 flex items-center justify-between pointer-events-none px-0">
-                {sliderSteps.map((step) => (
-                  <button
-                    key={step}
-                    onClick={() => handleSlider(step)}
-                    className={cn(
-                      "w-2 h-2 rounded-full transition-colors pointer-events-auto",
-                      sliderPct >= step
-                        ? "bg-acc"
-                        : "bg-s3 border border-t4"
-                    )}
-                  />
-                ))}
-              </div>
-            </div>
-            <div className="flex justify-end mt-1.5">
-              <div className="flex items-center gap-1 bg-s2 border border-brd rounded px-2 py-0.5">
-                <span className="text-[11px] text-t1 font-tabular">{sliderPct}</span>
-                <span className="text-[11px] text-t3">%</span>
+                <span className="text-[12px] text-t3 ml-1">%</span>
               </div>
             </div>
           </div>
 
-          {/* Reduce Only + TIF (for Limit) + Take Profit / Stop Loss */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <label className="flex items-center gap-1.5 text-[11px] text-t2 cursor-pointer">
+          {/* Reduce Only checkbox - custom checkbox like real HL */}
+          <label className="flex items-center gap-2.5 cursor-pointer">
+            <div className={cn(
+              "w-4 h-4 rounded border-2 flex items-center justify-center transition-colors",
+              reduceOnly ? "bg-acc border-acc" : "border-[#4a5459] bg-transparent"
+            )}>
+              {reduceOnly && <Check className="w-3 h-3 text-black" strokeWidth={3} />}
+            </div>
+            <span className="text-[12px] text-t2">Reduce Only</span>
+          </label>
+
+          {/* Take Profit / Stop Loss checkbox */}
+          <label className="flex items-center gap-2.5 cursor-pointer">
+            <div className={cn(
+              "w-4 h-4 rounded border-2 flex items-center justify-center transition-colors",
+              tpsl ? "bg-acc border-acc" : "border-acc bg-transparent"
+            )}>
+              {tpsl && <Check className="w-3 h-3 text-black" strokeWidth={3} />}
+            </div>
+            <span className="text-[12px] text-t2">Take Profit / Stop Loss</span>
+          </label>
+
+          {/* TP/SL Fields - exact 50/50 like real HL */}
+          <div className="space-y-2">
+            {/* TP Price row - both fields equal width, height 33px */}
+            <div className="flex items-center gap-2">
+              <div className="flex-1 flex items-center h-[33px] bg-transparent rounded-[8px] px-3 border border-[#273035]">
+                <span className="text-[12px] text-t3 mr-2 whitespace-nowrap">TP Price</span>
                 <input
-                  type="checkbox"
-                  checked={reduceOnly}
-                  onChange={(e) => setReduceOnly(e.target.checked)}
-                  className="w-3 h-3 rounded border-brd accent-acc"
+                  type="number"
+                  value={tpPrice}
+                  onChange={(e) => setTpPrice(e.target.value)}
+                  disabled={!tpsl}
+                  className="flex-1 bg-transparent text-[13px] outline-none font-tabular text-t1 text-right disabled:opacity-50"
                 />
-                Reduce Only
-              </label>
-              <label className="flex items-center gap-1.5 text-[11px] text-t2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={tpsl}
-                  onChange={(e) => setTpsl(e.target.checked)}
-                  className="w-3 h-3 rounded border-brd accent-acc"
-                />
-                Take Profit / Stop Loss
-              </label>
-            </div>
-            {orderTab === "limit" && (
-              <div className="flex items-center gap-1">
-                <span className="text-[10px] text-t4">TIF</span>
-                <select
-                  value={tif}
-                  onChange={(e) => setTif(e.target.value as TIF)}
-                  className="bg-s2 border border-brd rounded px-1.5 py-0.5 text-[10px] text-acc outline-none cursor-pointer"
-                >
-                  <option value="GTC">GTC</option>
-                  <option value="IOC">IOC</option>
-                  <option value="FOK">FOK</option>
-                </select>
               </div>
-            )}
+              <div className="flex-1 flex items-center h-[33px] bg-transparent rounded-[8px] px-3 border border-[#273035] justify-between">
+                <span className="text-[12px] text-t3">Gain</span>
+                <div className="flex items-center gap-1">
+                  <span className="text-[12px] text-t3">%</span>
+                  <ChevronDown className="w-3 h-3 text-t4" />
+                </div>
+              </div>
+            </div>
+
+            {/* SL Price row - both fields equal width, height 33px */}
+            <div className="flex items-center gap-2">
+              <div className="flex-1 flex items-center h-[33px] bg-transparent rounded-[8px] px-3 border border-[#273035]">
+                <span className="text-[12px] text-t3 mr-2 whitespace-nowrap">SL Price</span>
+                <input
+                  type="number"
+                  value={slPrice}
+                  onChange={(e) => setSlPrice(e.target.value)}
+                  disabled={!tpsl}
+                  className="flex-1 bg-transparent text-[13px] outline-none font-tabular text-t1 text-right disabled:opacity-50"
+                />
+              </div>
+              <div className="flex-1 flex items-center h-[33px] bg-transparent rounded-[8px] px-3 border border-[#273035] justify-between">
+                <span className="text-[12px] text-t3">Loss</span>
+                <div className="flex items-center gap-1">
+                  <span className="text-[12px] text-t3">%</span>
+                  <ChevronDown className="w-3 h-3 text-t4" />
+                </div>
+              </div>
+            </div>
           </div>
 
-          {/* TP/SL Fields - matching real HL layout */}
-          {tpsl && (
-            <div className="space-y-2 pt-1">
-              {/* TP Price */}
-              <div className="flex items-center gap-2">
-                <div className="flex-1 flex items-center bg-transparent border border-brd rounded px-2 focus-within:border-acc transition-colors">
-                  <span className="text-[10px] text-t4 mr-1.5 whitespace-nowrap">TP Price</span>
-                  <input
-                    type="number"
-                    value={tpPrice}
-                    onChange={(e) => setTpPrice(e.target.value)}
-                    placeholder=""
-                    className="flex-1 bg-transparent py-1 text-[12px] font-medium outline-none font-tabular text-t1 text-right min-w-0"
-                  />
-                </div>
-                <div className="flex items-center bg-s2 border border-brd rounded px-2 py-1 min-w-[80px] justify-between">
-                  <span className="text-[10px] text-t3">Gain</span>
-                  <div className="flex items-center gap-1">
-                    <span className={cn(
-                      "text-[11px] font-tabular",
-                      tpGainPercent > 0 ? "text-acc" : "text-t3"
-                    )}>
-                      {tpGainPercent > 0 ? tpGainPercent.toFixed(2) : ""}
-                    </span>
-                    <span className="text-[10px] text-t3">%</span>
-                    <ChevronDown className="w-3 h-3 text-t4" />
-                  </div>
-                </div>
-              </div>
-
-              {/* SL Price */}
-              <div className="flex items-center gap-2">
-                <div className="flex-1 flex items-center bg-transparent border border-brd rounded px-2 focus-within:border-acc transition-colors">
-                  <span className="text-[10px] text-t4 mr-1.5 whitespace-nowrap">SL Price</span>
-                  <input
-                    type="number"
-                    value={slPrice}
-                    onChange={(e) => setSlPrice(e.target.value)}
-                    placeholder=""
-                    className="flex-1 bg-transparent py-1 text-[12px] font-medium outline-none font-tabular text-t1 text-right min-w-0"
-                  />
-                </div>
-                <div className="flex items-center bg-s2 border border-brd rounded px-2 py-1 min-w-[80px] justify-between">
-                  <span className="text-[10px] text-t3">Loss</span>
-                  <div className="flex items-center gap-1">
-                    <span className={cn(
-                      "text-[11px] font-tabular",
-                      slLossPercent > 0 ? "text-red" : "text-t3"
-                    )}>
-                      {slLossPercent > 0 ? slLossPercent.toFixed(2) : ""}
-                    </span>
-                    <span className="text-[10px] text-t3">%</span>
-                    <ChevronDown className="w-3 h-3 text-t4" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Submit button */}
+          {/* Place Order button */}
           <button
             onClick={handleSubmit}
             disabled={!price || sizeNum <= 0 || margin > availableBalance}
             className={cn(
-              "w-full py-3 rounded font-bold text-[14px] transition-all disabled:opacity-30 disabled:cursor-not-allowed",
-              isBuy ? "bg-acc text-black" : "bg-red text-white"
+              "w-full py-3 rounded-lg font-semibold text-[14px] transition-all disabled:opacity-30 disabled:cursor-not-allowed mt-2",
+              isBuy ? "bg-acc text-[#02231e]" : "bg-red text-white"
             )}
           >
             Place Order
           </button>
 
-          {/* Order details */}
-          <div className="space-y-1.5 text-[11px] pt-2 border-t border-brd">
-            <div className="flex justify-between">
-              <span className="text-t3 border-b border-dotted border-t4 cursor-help">
-                Liquidation Price
-              </span>
-              <span className="text-t1 font-tabular">
-                {liqPrice ? liqPrice.toFixed(decimals) : "N/A"}
-              </span>
+          {/* Order info below button */}
+          <div className="space-y-1.5 pt-1">
+            <div className="flex justify-between text-[11px]">
+              <span className="text-t3 border-b border-dotted border-t4">Liquidation Price</span>
+              <span className="text-t1 font-tabular">{liqPrice ? liqPrice.toFixed(decimals).replace(".", ",") : "N/A"}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-t3 border-b border-dotted border-t4 cursor-help">
-                Order Value
-              </span>
-              <span className="text-t2 font-tabular">
-                {notional > 0 ? `${formatNumber(notional)} USDC` : "N/A"}
-              </span>
+            <div className="flex justify-between text-[11px]">
+              <span className="text-t3">Order Value</span>
+              <span className="text-t1 font-tabular">{notional > 0 ? `${formatNumber(notional).replace(".", ",")} USDC` : "N/A"}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-t3 border-b border-dotted border-t4 cursor-help">
-                Margin Required
-              </span>
-              <span className="text-t2 font-tabular">
-                {margin > 0 ? `${formatNumber(margin)} USDC` : "N/A"}
-              </span>
+            <div className="flex justify-between text-[11px]">
+              <span className="text-t3">Margin Required</span>
+              <span className="text-t1 font-tabular">{margin > 0 ? `${formatNumber(margin).replace(".", ",")} USDC` : "N/A"}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-t3 border-b border-dotted border-t4 cursor-help">
-                Slippage
-              </span>
-              <span className="text-acc font-tabular">Est: 0% / Max: 8.00%</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-t3 border-b border-dotted border-t4 cursor-help">
-                Fees
-              </span>
-              <span className="text-t2 font-tabular">0.0450% / 0.0150%</span>
+            <div className="flex justify-between text-[11px]">
+              <span className="text-t3 border-b border-dotted border-t4">Slippage</span>
+              <span className="text-acc font-tabular">Est: 0% / Max: 8,00%</span>
             </div>
           </div>
         </div>

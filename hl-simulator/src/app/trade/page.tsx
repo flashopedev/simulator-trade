@@ -113,16 +113,18 @@ export default function TradePage() {
   const totalEquity = getTotalEquity(prices);
 
   return (
-    <div className="h-screen flex flex-col bg-bg overflow-hidden">
+    <div className="min-h-screen flex flex-col bg-bg">
       <NotificationContainer />
 
-      {/* Header */}
-      <Navigation
-        balance={totalEquity}
-        isConnected={isConnected}
-        connectionMode={connectionMode}
-        onSignOut={signOut}
-      />
+      {/* Header - sticky */}
+      <div className="sticky top-0 z-50">
+        <Navigation
+          balance={totalEquity}
+          isConnected={isConnected}
+          connectionMode={connectionMode}
+          onSignOut={signOut}
+        />
+      </div>
 
       {/* Coin Info Bar */}
       <CoinInfoBar
@@ -132,17 +134,17 @@ export default function TradePage() {
         decimals={decimals}
       />
 
-      {/* Main Layout: 2-column grid (chart + sidebar) */}
-      <div className="flex-1 flex flex-col md:grid md:grid-cols-[1fr_340px] min-h-0 overflow-hidden">
+      {/* Main Layout: 2-column grid (chart + sidebar) - sidebar 396px like real HL */}
+      <div className="flex-1 flex flex-col md:grid md:grid-cols-[1fr_396px]">
         {/* Left column: Chart + Bottom Panel */}
-        <div className="flex flex-col min-h-0 overflow-hidden">
-          {/* Chart area - takes remaining space */}
-          <div className="flex-1 min-h-[200px] overflow-hidden">
+        <div className="flex flex-col">
+          {/* Chart area */}
+          <div className="h-[500px] md:h-[calc(100vh-350px)] min-h-[400px]">
             <TradingViewChart coin={coin} />
           </div>
 
           {/* Bottom Panel */}
-          <div className="h-[180px] flex-shrink-0 border-t border-brd overflow-hidden">
+          <div className="h-[200px] flex-shrink-0 border-t border-brd overflow-auto">
             <BottomTabsPanel
               positions={positions}
               history={history}
@@ -154,10 +156,10 @@ export default function TradePage() {
           </div>
         </div>
 
-        {/* Right Sidebar (340px) - OrderForm on top, OrderBook below - scrollable */}
-        <div className="flex flex-col border-l border-brd overflow-y-auto bg-s1">
-          {/* Order Form */}
-          <div className="flex-shrink-0 border-b border-brd">
+        {/* Right Sidebar - OrderForm + OrderBook */}
+        <div className="flex flex-col border-l border-brd bg-s1">
+          {/* Order Form - scrollable if needed */}
+          <div className="flex-shrink-0 border-b border-brd overflow-y-auto max-h-[70vh]">
             <OrderForm
               coin={coin}
               price={price}
@@ -168,7 +170,7 @@ export default function TradePage() {
           </div>
 
           {/* Order Book with tabs */}
-          <div className="flex-1 min-h-[300px] flex flex-col">
+          <div className="flex-1 min-h-[250px] flex flex-col">
             <div className="flex items-center justify-between px-2.5 py-1.5 border-b border-brd flex-shrink-0">
               <div className="flex items-center gap-4">
                 <span className="text-[11px] font-medium text-t1 border-b-2 border-t1 pb-1">Order Book</span>
@@ -176,9 +178,9 @@ export default function TradePage() {
               </div>
               <div className="flex items-center gap-1.5">
                 <select className="bg-s2 border border-brd rounded px-1 py-0.5 text-[10px] text-t2 outline-none">
-                  <option>0.001</option>
-                  <option>0.01</option>
-                  <option>0.1</option>
+                  <option>0,001</option>
+                  <option>0,01</option>
+                  <option>0,1</option>
                   <option>1</option>
                 </select>
                 <select className="bg-s2 border border-brd rounded px-1 py-0.5 text-[10px] text-t2 outline-none">
@@ -203,7 +205,7 @@ export default function TradePage() {
       <Footer isConnected={isConnected} />
 
       {/* Mobile bottom nav spacer */}
-      <div className="h-12 md:hidden" />
+      <div className="h-14 md:hidden" />
     </div>
   );
 }

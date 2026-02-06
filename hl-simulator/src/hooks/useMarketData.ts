@@ -83,7 +83,7 @@ export function useMarketData(coin: SupportedCoin, timeframe: Timeframe) {
           change24h: change,
           high24h: high,
           low24h: low,
-          fundingRate: 0.0001,
+          fundingRate: 0.000013, // 0.0013% like real HL
         });
 
         setStatus(`${data.length} candles loaded`);

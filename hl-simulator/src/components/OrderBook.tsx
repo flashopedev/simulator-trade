@@ -28,13 +28,22 @@ export function OrderBook({ asks, bids, midPrice, decimals }: OrderBookProps) {
   const spread = lowestAsk && highestBid ? lowestAsk - highestBid : null;
   const spreadPct = spread && midPrice ? (spread / midPrice) * 100 : null;
 
+  // Format price with comma like real HL
+  const formatPrice = (price: number) => price.toFixed(decimals).replace(".", ",");
+
+  // Format size with space separator like real HL
+  const formatSize = (size: number) => {
+    const rounded = Math.round(size);
+    return rounded.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+  };
+
   return (
     <div className="flex flex-col h-full">
-      {/* D2: Headers with (COIN) suffix */}
+      {/* Headers like real HL */}
       <div className="grid grid-cols-3 px-2.5 py-1.5 text-[10px] text-t4 border-b border-brd">
         <span>Price</span>
-        <span className="text-right">Size</span>
-        <span className="text-right">Total</span>
+        <span className="text-right">Size (USDC)</span>
+        <span className="text-right">Total (USDC)</span>
       </div>
 
       {/* Asks */}
@@ -45,13 +54,13 @@ export function OrderBook({ asks, bids, midPrice, decimals }: OrderBookProps) {
             className="grid grid-cols-3 px-2.5 py-[2px] text-[11px] font-medium relative ob-row"
           >
             <span className="text-red font-tabular">
-              {level.price.toFixed(decimals)}
+              {formatPrice(level.price)}
             </span>
             <span className="text-right text-t2 font-tabular">
-              {level.size.toFixed(2)}
+              {formatSize(level.size)}
             </span>
             <span className="text-right text-t3 font-tabular">
-              {level.total.toFixed(0)}
+              {formatSize(level.total)}
             </span>
             <div
               className="absolute right-0 top-0 bottom-0 bg-red/[0.06]"
@@ -72,13 +81,13 @@ export function OrderBook({ asks, bids, midPrice, decimals }: OrderBookProps) {
             className="grid grid-cols-3 px-2.5 py-[2px] text-[11px] font-medium relative ob-row"
           >
             <span className="text-grn font-tabular">
-              {level.price.toFixed(decimals)}
+              {formatPrice(level.price)}
             </span>
             <span className="text-right text-t2 font-tabular">
-              {level.size.toFixed(2)}
+              {formatSize(level.size)}
             </span>
             <span className="text-right text-t3 font-tabular">
-              {level.total.toFixed(0)}
+              {formatSize(level.total)}
             </span>
             <div
               className="absolute right-0 top-0 bottom-0 bg-grn/[0.06]"
@@ -119,17 +128,20 @@ function SpreadRow({
     prevPriceRef.current = midPrice;
   }, [midPrice]);
 
+  // Format price with comma like real HL
+  const formatPriceLocal = (price: number) => price.toFixed(decimals).replace(".", ",");
+
   return (
     <div
       ref={flashRef}
       className="flex items-center justify-between px-2.5 py-1.5 border-y border-brd bg-s2"
     >
       <span className="text-[14px] font-bold font-tabular text-t1">
-        {midPrice ? midPrice.toFixed(decimals) : "\u2014"}
+        {midPrice ? formatPriceLocal(midPrice) : "\u2014"}
       </span>
       {spread !== null && (
         <span className="text-[10px] text-t3 font-tabular">
-          Spread {spread.toFixed(decimals)} ({spreadPct?.toFixed(3)}%)
+          Spread {spread.toFixed(decimals).replace(".", ",")} ({spreadPct?.toFixed(3).replace(".", ",")}%)
         </span>
       )}
     </div>

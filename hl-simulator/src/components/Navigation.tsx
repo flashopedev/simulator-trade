@@ -39,25 +39,25 @@ export function Navigation({
   return (
     <>
       <nav className="flex items-center h-[56px] px-4 border-b border-brd bg-s1 sticky top-0 z-50">
-        {/* Logo */}
-        <Link href="/trade" className="flex items-center gap-1.5 mr-6">
-          {/* Two circles logo like Hyperliquid */}
-          <svg width="20" height="20" viewBox="0 0 20 20" className="flex-shrink-0">
-            <circle cx="6.5" cy="10" r="3.5" fill="#00d8c4" />
-            <circle cx="13.5" cy="10" r="3.5" fill="#00d8c4" />
+        {/* Logo - white like real HL */}
+        <Link href="/trade" className="flex items-center gap-2 mr-8">
+          {/* Two circles logo like Hyperliquid - WHITE */}
+          <svg width="22" height="22" viewBox="0 0 20 20" className="flex-shrink-0">
+            <circle cx="6" cy="10" r="4" fill="#ffffff" />
+            <circle cx="14" cy="10" r="4" fill="#ffffff" />
           </svg>
-          <span className="font-extralight text-[15px] tracking-tight text-t1 italic leading-none">Hyperliquid</span>
+          <span className="font-light text-[15px] tracking-tight text-white italic leading-none">Hyperliquid</span>
         </Link>
 
-        {/* Navigation Links */}
-        <div className="hidden md:flex h-full items-stretch">
+        {/* Navigation Links - wider spacing like real HL */}
+        <div className="hidden md:flex h-full items-stretch gap-1">
           {NAV_ITEMS.map((item) => (
             item.enabled ? (
               <Link
                 key={item.label}
                 href={item.href}
                 className={cn(
-                  "flex items-center px-3 text-[12px] font-normal border-b-2 transition-colors",
+                  "flex items-center px-4 text-[13px] font-normal border-b-2 transition-colors",
                   pathname === item.href || (item.href === "/earn" && pathname === "/faucet")
                     ? "text-[#97FCE4] border-[#97FCE4]"
                     : "text-t1 border-transparent hover:text-[#97FCE4]"
@@ -68,7 +68,7 @@ export function Navigation({
             ) : (
               <span
                 key={item.label}
-                className="flex items-center px-3 text-[12px] font-normal text-t1 cursor-default border-b-2 border-transparent"
+                className="flex items-center px-4 text-[13px] font-normal text-t1 cursor-default border-b-2 border-transparent"
               >
                 {item.label}
                 {item.hasDropdown && (
@@ -96,10 +96,12 @@ export function Navigation({
             </svg>
           </button>
 
-          {/* Notifications icon */}
+          {/* Desktop/Mobile icon like real HL */}
           <div className="w-8 h-8 flex items-center justify-center border border-[#273035] rounded cursor-pointer hover:border-t3 transition-colors">
             <svg className="w-5 h-5 text-t3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
-              <path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+              <rect x="2" y="3" width="20" height="14" rx="2" />
+              <line x1="8" y1="21" x2="16" y2="21" />
+              <line x1="12" y1="17" x2="12" y2="21" />
             </svg>
           </div>
 

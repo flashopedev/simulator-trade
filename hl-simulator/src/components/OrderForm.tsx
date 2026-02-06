@@ -306,11 +306,11 @@ export function OrderForm({
             <span className="text-[12px] text-t2">Take Profit / Stop Loss</span>
           </label>
 
-          {/* TP/SL Fields - exact 50/50 like real HL */}
+          {/* TP/SL Fields - exact 50/50 like real HL: 183px each, gap 6px */}
           <div className="space-y-2">
-            {/* TP Price row - both fields equal width, height 33px */}
-            <div className="flex items-center gap-2">
-              <div className="flex-1 flex items-center h-[33px] bg-transparent rounded-[8px] px-3 border border-[#273035]">
+            {/* TP Price row */}
+            <div className="flex items-center gap-[6px]">
+              <div className="w-[calc(50%-3px)] flex items-center h-[33px] bg-transparent rounded-[8px] px-3 border border-[#273035]">
                 <span className="text-[12px] text-t3 mr-2 whitespace-nowrap">TP Price</span>
                 <input
                   type="number"
@@ -320,7 +320,7 @@ export function OrderForm({
                   className="flex-1 bg-transparent text-[13px] outline-none font-tabular text-t1 text-right disabled:opacity-50"
                 />
               </div>
-              <div className="flex-1 flex items-center h-[33px] bg-transparent rounded-[8px] px-3 border border-[#273035] justify-between">
+              <div className="w-[calc(50%-3px)] flex items-center h-[33px] bg-transparent rounded-[8px] px-3 border border-[#273035] justify-between">
                 <span className="text-[12px] text-t3">Gain</span>
                 <div className="flex items-center gap-1">
                   <span className="text-[12px] text-t3">%</span>
@@ -329,9 +329,9 @@ export function OrderForm({
               </div>
             </div>
 
-            {/* SL Price row - both fields equal width, height 33px */}
-            <div className="flex items-center gap-2">
-              <div className="flex-1 flex items-center h-[33px] bg-transparent rounded-[8px] px-3 border border-[#273035]">
+            {/* SL Price row */}
+            <div className="flex items-center gap-[6px]">
+              <div className="w-[calc(50%-3px)] flex items-center h-[33px] bg-transparent rounded-[8px] px-3 border border-[#273035]">
                 <span className="text-[12px] text-t3 mr-2 whitespace-nowrap">SL Price</span>
                 <input
                   type="number"
@@ -341,7 +341,7 @@ export function OrderForm({
                   className="flex-1 bg-transparent text-[13px] outline-none font-tabular text-t1 text-right disabled:opacity-50"
                 />
               </div>
-              <div className="flex-1 flex items-center h-[33px] bg-transparent rounded-[8px] px-3 border border-[#273035] justify-between">
+              <div className="w-[calc(50%-3px)] flex items-center h-[33px] bg-transparent rounded-[8px] px-3 border border-[#273035] justify-between">
                 <span className="text-[12px] text-t3">Loss</span>
                 <div className="flex items-center gap-1">
                   <span className="text-[12px] text-t3">%</span>

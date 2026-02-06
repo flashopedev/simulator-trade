@@ -51,15 +51,14 @@ function TradingViewChartComponent({ coin }: TradingViewChartProps) {
     setWidgetKey(prev => prev + 1);
   }, [coin]);
 
-  // TradingView widget embed URL - candlestick style (style=1)
-  // Using #0f1a1f background to match real Hyperliquid exactly
-  // hide_top_toolbar=1 hides the timeframe selector bar
-  const iframeSrc = `https://s.tradingview.com/widgetembed/?frameElementId=tradingview_chart&symbol=${encodeURIComponent(symbol)}&interval=60&hidesidetoolbar=0&symboledit=0&saveimage=0&toolbarbg=0f1a1f&theme=dark&style=1&timezone=Etc%2FUTC&withdateranges=0&showpopupbutton=0&studies=Volume%40tv-basicstudies&locale=en&hide_legend=0&hide_top_toolbar=1`;
+  // TradingView Advanced Chart widget with dark background
+  // Using Bybit for HYPE like in original screenshot
+  const bybitSymbol = coin === "HYPE" ? "BYBIT:HYPEUSDT.P" : symbol;
+  const iframeSrc = `https://s.tradingview.com/widgetembed/?frameElementId=tradingview_chart&symbol=${encodeURIComponent(bybitSymbol)}&interval=15&hidesidetoolbar=0&symboledit=0&saveimage=0&toolbarbg=000000&theme=dark&style=1&timezone=Etc%2FUTC&withdateranges=0&showpopupbutton=0&studies=Volume%40tv-basicstudies&locale=en&hide_legend=0&allow_symbol_change=0&backgroundColor=rgba(0,0,0,1)&gridColor=rgba(40,40,40,1)`;
 
   return (
-    <div className="w-full h-full relative" style={{ minHeight: "300px", backgroundColor: "#0f1a1f" }}>
-      {/* Custom header overlay to match real HL - covers original symbol text and OHLC data */}
-      {/* Position at top:6px, width covers full TradingView header */}
+    <div className="w-full h-full relative" style={{ minHeight: "300px", backgroundColor: "#000000" }}>
+      {/* Custom header overlay */}
       <div
         className="absolute z-10 flex items-center gap-1 pointer-events-none"
         style={{
@@ -67,7 +66,7 @@ function TradingViewChartComponent({ coin }: TradingViewChartProps) {
           left: "8px",
           width: "700px",
           height: "22px",
-          backgroundColor: "#0f1a1f",
+          backgroundColor: "#000000",
           paddingLeft: "4px",
           paddingTop: "2px",
           paddingBottom: "2px"
@@ -75,7 +74,7 @@ function TradingViewChartComponent({ coin }: TradingViewChartProps) {
       >
         <span style={{ color: "#2962FF", fontSize: "11px" }}>●</span>
         <span style={{ color: "#d1d4dc", fontSize: "13px", fontWeight: 500 }}>{displayName}</span>
-        <span style={{ color: "#787b86", fontSize: "13px" }}>· 1h · Hyperliquid</span>
+        <span style={{ color: "#787b86", fontSize: "13px" }}>· 15 · Hyperliquid</span>
       </div>
       <iframe
         key={widgetKey}

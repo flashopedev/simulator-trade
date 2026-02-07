@@ -53,10 +53,10 @@ function TradingViewChartComponent({ coin }: TradingViewChartProps) {
 
   // TradingView widget - use Bybit perpetual for accurate data, no overlay
   const bybitSymbol = coin === "HYPE" ? "BYBIT:HYPEUSDT.P" : symbol;
-  const iframeSrc = `https://s.tradingview.com/widgetembed/?frameElementId=tradingview_chart&symbol=${encodeURIComponent(bybitSymbol)}&interval=15&hidesidetoolbar=0&symboledit=0&saveimage=0&theme=dark&style=1&timezone=Etc%2FUTC&withdateranges=0&showpopupbutton=0&studies=Volume%40tv-basicstudies&locale=en&hide_legend=0`;
+  const iframeSrc = `https://s.tradingview.com/widgetembed/?frameElementId=tradingview_chart&symbol=${encodeURIComponent(bybitSymbol)}&interval=15&hidesidetoolbar=1&symboledit=0&saveimage=0&theme=dark&style=1&timezone=Etc%2FUTC&withdateranges=0&showpopupbutton=0&studies=Volume%40tv-basicstudies&locale=en&hide_legend=0`;
 
   return (
-    <div className="w-full h-full" style={{ minHeight: "300px" }}>
+    <div className="w-full h-full" style={{ minHeight: "300px", backgroundColor: "#0f1a1f" }}>
       <iframe
         key={widgetKey}
         id="tradingview_chart"

@@ -8,9 +8,9 @@ import { TradingViewChart } from "@/components/TradingViewChart";
 import { OrderForm } from "@/components/OrderForm";
 import { OrderBook } from "@/components/OrderBook";
 import { BottomTabsPanel } from "@/components/BottomTabsPanel";
-import { ChartToolbar } from "@/components/ChartToolbar";
 import { AuthForm } from "@/components/AuthForm";
 import { NotificationContainer } from "@/components/Notification";
+import { ChartToolbar } from "@/components/ChartToolbar";
 import { useAuth } from "@/hooks/useAuth";
 import { useTrading } from "@/hooks/useTrading";
 import { useMarketData } from "@/hooks/useMarketData";
@@ -140,7 +140,7 @@ export default function TradePage() {
         <div className="flex flex-col">
           {/* Chart area with toolbar */}
           <div className="h-[500px] md:h-[calc(100vh-350px)] min-h-[400px] flex">
-            {/* Left toolbar */}
+            {/* Left toolbar - matching real HL */}
             <ChartToolbar />
             {/* Chart */}
             <div className="flex-1">

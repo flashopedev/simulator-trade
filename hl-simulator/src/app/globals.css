@@ -32,7 +32,7 @@ body {
   background: var(--bg);
   color: var(--t1);
   font-family: system-ui, "Segoe UI", Roboto, Ubuntu, "Helvetica Neue", sans-serif;
-  font-size: 13px;
+  font-size: 12px;
   font-feature-settings: "calt" off;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;

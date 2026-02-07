@@ -32,7 +32,7 @@ const config: Config = {
         blu: "#0066ff",      // blue accent
       },
       fontFamily: {
-        sans: ["Inter", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "sans-serif"],
+        sans: ["system-ui", "Segoe UI", "Roboto", "Ubuntu", "Helvetica Neue", "sans-serif"],
       },
     },
   },

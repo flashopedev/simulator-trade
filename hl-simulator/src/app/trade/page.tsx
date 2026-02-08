@@ -139,7 +139,7 @@ export default function TradePage() {
           {/* Chart area — matches real HL layout:
               Top bar (38px) + [Left toolbar (52px) | Chart canvas | Right price scale] + Bottom bar (38px)
               All wrapped in a single rounded container */}
-          <div className="flex-1 min-h-[500px] flex flex-col rounded-[5px] bg-[#0f1a1f] overflow-hidden">
+          <div className="h-[568px] flex-shrink-0 flex flex-col rounded-[5px] bg-[#0f1a1f] overflow-hidden">
             {/* Top bar with timeframes, candle type, indicators */}
             <ChartTopBar timeframe={timeframe} onTimeframeChange={setTimeframe} />
             {/* Middle: toolbar + chart */}
@@ -156,7 +156,7 @@ export default function TradePage() {
           </div>
 
           {/* Bottom Panel */}
-          <div className="h-[200px] flex-shrink-0 overflow-auto rounded-[5px] bg-s1">
+          <div className="h-[327px] flex-shrink-0 overflow-auto rounded-[5px] bg-s1">
             <BottomTabsPanel
               positions={positions}
               history={history}
@@ -169,21 +169,25 @@ export default function TradePage() {
           </div>
         </div>
 
-        {/* Right Sidebar - single rounded container spanning full height */}
-        <div className="flex flex-col rounded-[5px] bg-s1 overflow-hidden">
-          {/* Order Form - scrollable if needed */}
-          <div className="flex-shrink-0 border-b border-brd overflow-y-auto max-h-[70vh]">
-            <OrderForm
-              coin={coin}
-              price={price}
-              availableBalance={getAvailableBalance(prices)}
-              currentPositionSize={currentPosition?.size ?? 0}
-              onPlaceOrder={handlePlaceOrder}
-            />
+        {/* Right Sidebar - two separate blocks like real HL:
+            Top block (OrderForm): same height as star+coininfo+chart = 677px
+            Bottom block (OrderBook): same height as bottom panel = 327px */}
+        <div className="flex flex-col gap-[3px]">
+          {/* Top: Order Form — h=677px matches star(40)+gap(3)+coinInfo(63)+gap(3)+chart(568) */}
+          <div className="h-[677px] flex-shrink-0 flex flex-col rounded-[5px] bg-s1 overflow-hidden">
+            <div className="flex-1 overflow-y-auto">
+              <OrderForm
+                coin={coin}
+                price={price}
+                availableBalance={getAvailableBalance(prices)}
+                currentPositionSize={currentPosition?.size ?? 0}
+                onPlaceOrder={handlePlaceOrder}
+              />
+            </div>
           </div>
 
-          {/* Order Book with tabs */}
-          <div className="flex-1 min-h-[250px] flex flex-col">
+          {/* Bottom: Order Book — h=670px like real HL */}
+          <div className="h-[670px] flex-shrink-0 flex flex-col rounded-[5px] bg-s1 overflow-hidden">
             <div className="flex items-center justify-between px-2.5 py-1.5 border-b border-brd flex-shrink-0">
               <div className="flex items-center gap-4">
                 <span className="text-[12px] font-normal text-t1 border-b-2 border-t1 pb-1">Order Book</span>

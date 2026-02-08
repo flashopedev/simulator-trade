@@ -103,6 +103,24 @@ function TradingViewChartComponent({ coin, timeframe = "15m" }: TradingViewChart
     script.textContent = JSON.stringify(config);
     widgetContainer.appendChild(script);
     containerRef.current.appendChild(widgetContainer);
+
+    // TradingView embed adds a 1px border (border: 1px solid rgb(61,61,61)) on the
+    // iframe's internal <body>. Since it's cross-origin, we can't remove it via CSS.
+    // Instead, we shift the iframe by -1px on all sides and enlarge it by +2px,
+    // so the border is clipped by the parent's overflow:hidden.
+    const observer = new MutationObserver(() => {
+      const iframe = containerRef.current?.querySelector("iframe");
+      if (iframe) {
+        iframe.style.position = "relative";
+        iframe.style.top = "-1px";
+        iframe.style.left = "-1px";
+        iframe.style.width = "calc(100% + 2px)";
+        iframe.style.height = "calc(100% + 2px)";
+        iframe.style.border = "none";
+        observer.disconnect();
+      }
+    });
+    observer.observe(widgetContainer, { childList: true, subtree: true });
   }, [symbol, interval]);
 
   useEffect(() => {

@@ -14,6 +14,8 @@ import { ChartToolbar } from "@/components/ChartToolbar";
 import { useAuth } from "@/hooks/useAuth";
 import { useTrading } from "@/hooks/useTrading";
 import { useMarketData } from "@/hooks/useMarketData";
+import { useBinancePrices } from "@/hooks/useBinancePrices";
+import { useCoinStats } from "@/hooks/useCoinStats";
 import { COIN_DECIMALS, type SupportedCoin, type Timeframe } from "@/lib/utils";
 import type { Position } from "@/lib/supabase/types";
 
@@ -40,33 +42,23 @@ export default function TradePage() {
   });
 
   const {
-    candles,
-    price,
-    allPrices,
     asks,
     bids,
-    trades,
     isConnected,
-    isLoading,
     connectionMode,
-    status,
-    stats,
   } = useMarketData(coin, timeframe);
 
-  const decimals = COIN_DECIMALS[coin] || 2;
+  // Binance prices — stable, reliable source for ALL coins
+  const { prices: binancePrices, connected: binanceConnected } = useBinancePrices();
 
-  // Merge all prices
-  const [prices, setPrices] = useState<Record<string, number>>({});
+  // Per-coin stats from Binance Futures (24h change, volume, OI, funding, oracle)
+  const coinStats = useCoinStats(coin);
 
-  useEffect(() => {
-    const merged: Record<string, number> = { ...allPrices };
-    if (price) merged[coin] = price;
-    setPrices((prev) => {
-      const hasChanges = Object.keys(merged).some((k) => prev[k] !== merged[k]);
-      if (!hasChanges && Object.keys(prev).length === Object.keys(merged).length) return prev;
-      return { ...prev, ...merged };
-    });
-  }, [allPrices, price, coin]);
+  const decimals = COIN_DECIMALS[coin] ?? 2;
+  const price = binancePrices[coin] ?? null;
+
+  // Use Binance prices directly — no merging needed
+  const prices = binancePrices;
 
   // Check liquidations every 5 seconds
   useEffect(() => {
@@ -121,8 +113,8 @@ export default function TradePage() {
       <div className="sticky top-0 z-50">
         <Navigation
           balance={totalEquity}
-          isConnected={isConnected}
-          connectionMode={connectionMode}
+          isConnected={binanceConnected || isConnected}
+          connectionMode={binanceConnected ? "ws" : connectionMode}
           onSignOut={signOut}
         />
       </div>
@@ -131,7 +123,8 @@ export default function TradePage() {
       <CoinInfoBar
         selectedCoin={coin}
         onSelectCoin={setCoin}
-        stats={stats}
+        price={price}
+        coinStats={coinStats}
         decimals={decimals}
       />
 
@@ -209,7 +202,7 @@ export default function TradePage() {
       </div>
 
       {/* Footer */}
-      <Footer isConnected={isConnected} />
+      <Footer isConnected={binanceConnected || isConnected} />
 
       {/* Mobile bottom nav spacer */}
       <div className="h-14 md:hidden" />

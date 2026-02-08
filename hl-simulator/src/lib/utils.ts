@@ -6,19 +6,16 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function formatNumber(value: number, decimals: number = 2): string {
-  return value.toLocaleString("en-US", {
+  // Use European format: comma as decimal, space as thousands (matches real HL display)
+  return value.toLocaleString("de-DE", {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
-  });
+  }).replace(/\./g, ' ');
 }
 
 export function formatUsd(value: number): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value);
+  // European format with $ prefix
+  return '$' + formatNumber(value, 2);
 }
 
 export function formatPercent(value: number): string {
@@ -27,8 +24,8 @@ export function formatPercent(value: number): string {
 }
 
 export function formatPnl(value: number): string {
-  const sign = value >= 0 ? "+" : "";
-  return `${sign}${formatNumber(value, 2)}`;
+  const sign = value >= 0 ? "+" : "-";
+  return `${sign}$${formatNumber(Math.abs(value), 2)}`;
 }
 
 export function calculateLiquidationPrice(
@@ -65,8 +62,8 @@ export function calculateRoe(
 }
 
 export const COIN_DECIMALS: Record<string, number> = {
-  HYPE: 2,
-  BTC: 1,
+  HYPE: 3,
+  BTC: 0,
   ETH: 2,
   SOL: 3,
   DOGE: 4,

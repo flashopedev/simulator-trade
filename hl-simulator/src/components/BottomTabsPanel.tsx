@@ -66,8 +66,8 @@ export function BottomTabsPanel({
 
   return (
     <div className="h-full flex flex-col bg-s1 border-t border-brd">
-      {/* Tabs row - compact like HL */}
-      <div className="flex items-center justify-between px-2 border-b border-brd flex-shrink-0">
+      {/* Tabs row - exact HL match: h-[35px], border-bottom on all tabs #303030, active=white text, inactive=gray */}
+      <div className="flex items-center justify-between flex-shrink-0" style={{ borderBottom: '1px solid #303030' }}>
         <div className="flex items-center overflow-x-auto scrollbar-hide">
           {tabs.map((tab) => (
             <button
@@ -75,37 +75,40 @@ export function BottomTabsPanel({
               onClick={() => !tab.disabled && setActiveTab(tab.key)}
               disabled={tab.disabled}
               className={cn(
-                "px-2 py-1.5 text-[12px] font-normal border-b-2 whitespace-nowrap transition-colors",
+                "h-[35px] text-[12px] font-normal whitespace-nowrap transition-colors",
                 tab.disabled
-                  ? "text-t4 border-transparent cursor-default"
+                  ? "text-t4 cursor-default"
                   : activeTab === tab.key
-                    ? "text-t1 border-acc"
-                    : "text-t3 border-transparent hover:text-t2"
+                    ? "text-[#f6fefd]"
+                    : "text-[#949e9c] hover:text-[#c0c8c6] cursor-pointer"
               )}
+              style={{ padding: '0 12px' }}
             >
               {tab.label}
               {tab.count !== undefined && tab.count > 0 && !tab.disabled && (
-                <span className="ml-1 text-[10px] text-acc">({tab.count})</span>
+                <span className="ml-0.5 text-[12px]">({tab.count})</span>
               )}
             </button>
           ))}
         </div>
 
-        {/* Right side controls */}
-        <div className="flex items-center gap-2 flex-shrink-0 ml-2">
-          <button className="flex items-center gap-1 text-[12px] text-t2 hover:text-t1">
+        {/* Right side controls - exact HL style */}
+        <div className="flex items-center gap-3 flex-shrink-0 pr-2">
+          <button className="flex items-center gap-1 text-[12px] text-[#949e9c] hover:text-[#f6fefd]">
             Filter
             <ChevronDown className="w-3 h-3" />
           </button>
-          <label className="flex items-center gap-1 text-[12px] text-t2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={hideSmallBalances}
-              onChange={(e) => setHideSmallBalances(e.target.checked)}
-              className="w-3 h-3 rounded border-brd"
-            />
-            Hide Small Balances
-          </label>
+          {activeTab === "balances" && (
+            <label className="flex items-center gap-1.5 text-[12px] text-[#f6fefd] cursor-pointer">
+              <input
+                type="checkbox"
+                checked={hideSmallBalances}
+                onChange={(e) => setHideSmallBalances(e.target.checked)}
+                className="w-3 h-3 rounded border-[#303030] bg-transparent accent-[#50d2c1]"
+              />
+              Hide Small Balances
+            </label>
+          )}
         </div>
       </div>
 
@@ -151,7 +154,7 @@ export function BottomTabsPanel({
 
 function DisabledTabContent({ tabName }: { tabName: string }) {
   return (
-    <div className="text-center py-8 text-t3 text-[12px]">
+    <div className="text-center py-8 text-[#949e9c] text-[12px]">
       {tabName} - Coming soon (simulation mode)
     </div>
   );
@@ -160,27 +163,35 @@ function DisabledTabContent({ tabName }: { tabName: string }) {
 function BalancesContent({ balance, hideSmall }: { balance: number; hideSmall: boolean }) {
   if (hideSmall && balance < 1) {
     return (
-      <div className="text-center py-8 text-t3 text-[12px]">No balances to show</div>
+      <div className="text-center py-8 text-[#949e9c] text-[12px]">No balances to show</div>
     );
   }
 
   return (
     <div className="px-3">
-      <table className="w-full text-[12px]">
+      <table className="w-full text-[12px]" style={{ borderCollapse: 'collapse' }}>
         <thead>
-          <tr className="text-t3 text-left">
-            <th className="py-2 font-normal">Coin</th>
-            <th className="py-2 font-normal">Total Balance</th>
-            <th className="py-2 font-normal">Available Balance</th>
-            <th className="py-2 font-normal">USDC Value</th>
+          <tr className="text-[#949e9c] text-left h-[24px]">
+            <th className="font-normal px-1">Coin</th>
+            <th className="font-normal px-1">Total Balance</th>
+            <th className="font-normal px-1">Available Balance</th>
+            <th className="font-normal px-1">USDC Value <ChevronDown className="inline w-3 h-3 opacity-50" /></th>
+            <th className="font-normal px-1" style={{ textDecoration: 'underline dashed', textUnderlineOffset: '3px', textDecorationColor: '#949e9c' }}>PNL (ROE %)</th>
+            <th className="font-normal px-1">Send</th>
+            <th className="font-normal px-1">Transfer</th>
+            <th className="font-normal px-1">Contract</th>
           </tr>
         </thead>
         <tbody>
-          <tr className="border-t border-brd">
-            <td className="py-2 font-normal">USDC</td>
-            <td className="py-2 font-tabular">{formatNumber(balance)}</td>
-            <td className="py-2 font-tabular">{formatNumber(balance)}</td>
-            <td className="py-2 font-tabular">${formatNumber(balance)}</td>
+          <tr className="h-[24px] hover:bg-[#1b2429]">
+            <td className="px-1 text-[#f6fefd] font-normal">USDC</td>
+            <td className="px-1 font-tabular text-[#f6fefd]">{formatNumber(balance)} USDC</td>
+            <td className="px-1 font-tabular text-[#f6fefd]">{formatNumber(balance)} USDC</td>
+            <td className="px-1 font-tabular text-[#f6fefd]">${formatNumber(balance)}</td>
+            <td className="px-1 text-[#949e9c]"></td>
+            <td className="px-1"><button className="text-[12px] text-[#50d2c1] hover:underline">Send</button></td>
+            <td className="px-1"><button className="text-[12px] text-[#50d2c1] hover:underline">Transfer to Perps</button></td>
+            <td className="px-1 text-[#949e9c]"></td>
           </tr>
         </tbody>
       </table>
@@ -199,95 +210,87 @@ function PositionsContent({
 }) {
   return (
     <div className="px-3 overflow-x-auto">
-      <table className="w-full text-[12px] min-w-[900px]">
+      <table className="w-full text-[12px] min-w-[900px]" style={{ borderCollapse: 'collapse' }}>
         <thead>
-          <tr className="text-t3 text-left">
-            <th className="py-2 font-normal">Coin</th>
-            <th className="py-2 font-normal">Size</th>
-            <th className="py-2 font-normal">Position Value</th>
-            <th className="py-2 font-normal">Entry Price</th>
-            <th className="py-2 font-normal">Mark Price</th>
-            <th className="py-2 font-normal">PNL (ROE %)</th>
-            <th className="py-2 font-normal">Liq. Price</th>
-            <th className="py-2 font-normal">Margin</th>
-            <th className="py-2 font-normal">Funding</th>
-            <th className="py-2 font-normal">Close All</th>
-            <th className="py-2 font-normal">TP/SL</th>
+          <tr className="text-[#949e9c] text-left h-[24px]">
+            <th className="font-normal px-1">Coin</th>
+            <th className="font-normal px-1">Size</th>
+            <th className="font-normal px-1">Position Value <ChevronDown className="inline w-3 h-3 opacity-50" /></th>
+            <th className="font-normal px-1">Entry Price</th>
+            <th className="font-normal px-1">Mark Price</th>
+            <th className="font-normal px-1 whitespace-nowrap" style={{ textDecoration: 'underline dashed', textUnderlineOffset: '3px', textDecorationColor: '#949e9c' }}>PNL (ROE %)</th>
+            <th className="font-normal px-1">Liq. Price</th>
+            <th className="font-normal px-1">Margin</th>
+            <th className="font-normal px-1">Funding</th>
+            <th className="font-normal px-1">Close All</th>
+            <th className="font-normal px-1"></th>
           </tr>
         </thead>
         <tbody>
           {positions.length === 0 && (
             <tr>
-              <td colSpan={11} className="py-6 text-center text-t3">
+              <td colSpan={11} className="py-6 text-center text-[#949e9c]">
                 No open positions yet
               </td>
             </tr>
           )}
-          {positions.map((p) => {
-            const decimals = COIN_DECIMALS[p.coin] || 2;
+          {[...positions].sort((a, b) => {
+            const aVal = a.size * (currentPrices[a.coin] || a.entry_price);
+            const bVal = b.size * (currentPrices[b.coin] || b.entry_price);
+            return bVal - aVal;
+          }).map((p) => {
+            const decimals = COIN_DECIMALS[p.coin] ?? 2;
             const markPrice = currentPrices[p.coin] || p.entry_price;
             const pnl = calculatePnl(p.entry_price, markPrice, p.size, p.side === "Long");
             const roe = calculateRoe(pnl, p.entry_price, p.size, p.leverage);
             const margin = (p.size * p.entry_price) / p.leverage;
             const posValue = p.size * markPrice;
             const isLong = p.side === "Long";
+            const sizeDecimals = COIN_DECIMALS[p.coin] !== undefined ? (p.coin === 'BTC' ? 5 : 2) : 2;
 
             return (
-              <tr key={`${p.id}-${markPrice.toFixed(decimals)}`} className="border-t border-brd hover:bg-s2 pnl-row">
-                {/* Coin with leverage badge like real HL */}
-                <td className="py-2 font-normal">
-                  <span className={cn(isLong ? "text-acc" : "text-red")}>
+              <tr key={`${p.id}-${markPrice.toFixed(decimals)}`} className="h-[24px] hover:bg-[#1b2429] pnl-row">
+                {/* Coin + leverage badge - exact HL: "SOL 20x" */}
+                <td className="px-1">
+                  <span className={cn("font-normal", isLong ? "text-[#50d2c1]" : "text-[#ed7088]")}>
                     {p.coin}
                   </span>
-                  <span className="ml-1.5 text-[10px] text-t3">{p.leverage}x</span>
+                  <span className="ml-1 text-[12px] text-[#949e9c]">{p.leverage}x</span>
                 </td>
-                {/* Size - colored based on side */}
-                <td className={cn("py-2 font-tabular", isLong ? "text-acc" : "text-red")}>
-                  {p.size.toFixed(5)} {p.coin}
+                {/* Size - "0,29 SOL" colored */}
+                <td className={cn("px-1 font-tabular", isLong ? "text-[#50d2c1]" : "text-[#ed7088]")}>
+                  {p.size.toFixed(sizeDecimals).replace('.', ',')} {p.coin}
                 </td>
-                {/* Position Value */}
-                <td className="py-2 font-tabular">{formatNumber(posValue)} USDC</td>
+                {/* Position Value - "25,46 USDC" */}
+                <td className="px-1 font-tabular text-[#f6fefd]">{formatNumber(posValue)} USDC</td>
                 {/* Entry Price */}
-                <td className="py-2 font-tabular">{formatNumber(p.entry_price)}</td>
+                <td className="px-1 font-tabular text-[#f6fefd]">{formatNumber(p.entry_price, decimals)}</td>
                 {/* Mark Price */}
-                <td className="py-2 font-tabular">{formatNumber(markPrice)}</td>
-                {/* PNL (ROE %) */}
-                <td className={cn("py-2 font-normal font-tabular", pnl >= 0 ? "text-acc" : "text-red")}>
-                  {formatPnl(pnl)} ({roe >= 0 ? "+" : ""}{roe.toFixed(1)}%)
+                <td className="px-1 font-tabular text-[#f6fefd]">{formatNumber(markPrice, decimals)}</td>
+                {/* PNL (ROE %) - colored + share icon */}
+                <td className={cn("px-1 font-tabular", pnl >= 0 ? "text-[#50d2c1]" : "text-[#ed7088]")}>
+                  {formatPnl(pnl)} ({roe >= 0 ? "+" : ""}{roe.toFixed(1).replace('.', ',')}%)
                 </td>
                 {/* Liquidation Price */}
-                <td className="py-2 font-tabular text-t2">
-                  {p.liquidation_price ? formatNumber(p.liquidation_price) : "N/A"}
+                <td className="px-1 font-tabular text-[#f6fefd]">
+                  {p.liquidation_price ? formatNumber(p.liquidation_price, decimals || 2) : "N/A"}
                 </td>
-                {/* Margin */}
-                <td className="py-2 font-tabular">
-                  ${formatNumber(margin)} <span className="text-t4">(Cross)</span>
+                {/* Margin - "$1,27 (Cross)" */}
+                <td className="px-1 font-tabular text-[#f6fefd]">
+                  ${formatNumber(margin)} <span className="text-[#949e9c]">(Cross)</span>
                 </td>
                 {/* Funding */}
-                <td className="py-2 font-tabular text-t3">$0.00</td>
-                {/* Close All - buttons like real HL */}
-                <td className="py-2">
-                  <div className="flex items-center gap-1">
-                    <button
-                      className="px-1.5 py-0.5 text-[12px] font-normal text-acc hover:underline transition-colors"
-                    >
-                      Limit
-                    </button>
-                    <button
-                      onClick={() => onMarketClose(p)}
-                      className="px-1.5 py-0.5 text-[12px] font-normal text-acc hover:underline transition-colors"
-                    >
-                      Market
-                    </button>
-                    <button
-                      className="px-1.5 py-0.5 text-[12px] font-normal text-acc hover:underline transition-colors"
-                    >
-                      Reverse
-                    </button>
+                <td className="px-1 font-tabular text-[#f6fefd]">$0,00</td>
+                {/* Close All - "Limit Market Reverse" teal links */}
+                <td className="px-1">
+                  <div className="flex items-center gap-2">
+                    <button className="text-[12px] text-[#50d2c1] hover:underline">Limit</button>
+                    <button onClick={() => onMarketClose(p)} className="text-[12px] text-[#50d2c1] hover:underline">Market</button>
+                    <button className="text-[12px] text-[#50d2c1] hover:underline">Reverse</button>
                   </div>
                 </td>
-                {/* TP/SL */}
-                <td className="py-2 text-t4 text-[12px]">-- / --</td>
+                {/* TP/SL - just "--" like real HL */}
+                <td className="px-1 text-[#949e9c] text-[12px]">--</td>
               </tr>
             );
           })}
@@ -302,49 +305,51 @@ function OrdersContent({ orders, onCancelOrder }: { orders: OrderHistory[]; onCa
 
   if (pendingOrders.length === 0) {
     return (
-      <div className="text-center py-8 text-t3 text-[12px]">No open orders yet</div>
+      <div className="text-center py-8 text-[#949e9c] text-[12px]">No open orders</div>
     );
   }
 
   return (
     <div className="px-3 overflow-x-auto">
-      <table className="w-full text-[12px] min-w-[900px]">
+      <table className="w-full text-[12px] min-w-[900px]" style={{ borderCollapse: 'collapse' }}>
         <thead>
-          <tr className="text-t3 text-left">
-            <th className="py-2 font-normal">Time</th>
-            <th className="py-2 font-normal">Type</th>
-            <th className="py-2 font-normal">Coin</th>
-            <th className="py-2 font-normal">Direction</th>
-            <th className="py-2 font-normal">Size</th>
-            <th className="py-2 font-normal">Original Size</th>
-            <th className="py-2 font-normal">Order Value</th>
-            <th className="py-2 font-normal">Price</th>
-            <th className="py-2 font-normal">Reduce Only</th>
-            <th className="py-2 font-normal">Trigger Conditions</th>
-            <th className="py-2 font-normal">Cancel All</th>
+          <tr className="text-[#949e9c] text-left h-[24px]">
+            <th className="font-normal px-1">Time</th>
+            <th className="font-normal px-1">Type</th>
+            <th className="font-normal px-1">Coin</th>
+            <th className="font-normal px-1">Direction</th>
+            <th className="font-normal px-1">Size</th>
+            <th className="font-normal px-1">Original Size</th>
+            <th className="font-normal px-1">Order Value <ChevronDown className="inline w-3 h-3 opacity-50" /></th>
+            <th className="font-normal px-1">Price</th>
+            <th className="font-normal px-1">Reduce Only</th>
+            <th className="font-normal px-1">Trigger Conditions</th>
+            <th className="font-normal px-1">TP/SL</th>
+            <th className="font-normal px-1 text-[#50d2c1]">Cancel All</th>
           </tr>
         </thead>
         <tbody>
           {pendingOrders.map((o) => {
             const orderValue = o.size * o.price;
             return (
-              <tr key={o.id} className="border-t border-brd hover:bg-s2">
-                <td className="py-2 text-t3">
+              <tr key={o.id} className="h-[24px] hover:bg-[#1b2429]">
+                <td className="px-1 text-[#949e9c]">
                   {new Date(o.created_at).toLocaleDateString()} - {new Date(o.created_at).toLocaleTimeString()}
                 </td>
-                <td className="py-2 capitalize">{o.order_type}</td>
-                <td className="py-2 font-normal">{o.coin}</td>
-                <td className={cn("py-2", o.side === "Long" ? "text-acc" : "text-red")}>{o.side}</td>
-                <td className="py-2 font-tabular">{o.size.toFixed(5)}</td>
-                <td className="py-2 font-tabular">{o.size.toFixed(5)}</td>
-                <td className="py-2 font-tabular">{formatNumber(orderValue)} USDC</td>
-                <td className="py-2 font-tabular">{formatNumber(o.price)}</td>
-                <td className="py-2 text-t3">No</td>
-                <td className="py-2 text-t3">N/A</td>
-                <td className="py-2">
+                <td className="px-1 text-[#f6fefd] capitalize">{o.order_type}</td>
+                <td className="px-1 font-normal text-[#f6fefd] font-semibold">{o.coin}</td>
+                <td className={cn("px-1", o.side === "Long" ? "text-[#50d2c1]" : "text-[#ed7088]")}>{o.side}</td>
+                <td className="px-1 font-tabular text-[#f6fefd]">{o.size.toFixed(2)}</td>
+                <td className="px-1 font-tabular text-[#f6fefd]">{o.size.toFixed(2)}</td>
+                <td className="px-1 font-tabular text-[#f6fefd]">{formatNumber(orderValue)} USDC</td>
+                <td className="px-1 font-tabular text-[#f6fefd]">{formatNumber(o.price)}</td>
+                <td className="px-1 text-[#f6fefd]">No</td>
+                <td className="px-1 text-[#f6fefd]">N/A</td>
+                <td className="px-1 text-[#949e9c]">--</td>
+                <td className="px-1">
                   <button
                     onClick={() => onCancelOrder?.(o.id)}
-                    className="text-[12px] font-normal text-red hover:underline"
+                    className="text-[12px] text-[#50d2c1] hover:underline"
                   >
                     Cancel
                   </button>
@@ -354,6 +359,9 @@ function OrdersContent({ orders, onCancelOrder }: { orders: OrderHistory[]; onCa
           })}
         </tbody>
       </table>
+      <div className="px-1 py-1">
+        <button className="text-[12px] text-[#50d2c1] hover:underline">View All</button>
+      </div>
     </div>
   );
 }
@@ -361,22 +369,22 @@ function OrdersContent({ orders, onCancelOrder }: { orders: OrderHistory[]; onCa
 function HistoryContent({ history }: { history: TradeHistory[] }) {
   if (history.length === 0) {
     return (
-      <div className="text-center py-8 text-t3 text-[12px]">No trade history</div>
+      <div className="text-center py-8 text-[#949e9c] text-[12px]">No trade history</div>
     );
   }
 
   return (
     <div className="px-3 overflow-x-auto">
-      <table className="w-full text-[12px] min-w-[700px]">
+      <table className="w-full text-[12px] min-w-[700px]" style={{ borderCollapse: 'collapse' }}>
         <thead>
-          <tr className="text-t3 text-left">
-            <th className="py-2 font-normal">Time</th>
-            <th className="py-2 font-normal">Coin</th>
-            <th className="py-2 font-normal">Side</th>
-            <th className="py-2 font-normal">Size</th>
-            <th className="py-2 font-normal">Entry</th>
-            <th className="py-2 font-normal">Exit</th>
-            <th className="py-2 font-normal">PNL (ROE %)</th>
+          <tr className="text-[#949e9c] text-left h-[24px]">
+            <th className="font-normal px-1">Time</th>
+            <th className="font-normal px-1">Coin</th>
+            <th className="font-normal px-1">Side</th>
+            <th className="font-normal px-1">Size</th>
+            <th className="font-normal px-1">Entry</th>
+            <th className="font-normal px-1">Exit</th>
+            <th className="font-normal px-1">PNL (ROE %)</th>
           </tr>
         </thead>
         <tbody>
@@ -385,18 +393,18 @@ function HistoryContent({ history }: { history: TradeHistory[] }) {
             const roe = calculateRoe(h.pnl, h.entry_price, h.size, h.leverage);
 
             return (
-              <tr key={h.id} className="border-t border-brd hover:bg-s2">
-                <td className="py-2 text-t3">{new Date(h.closed_at).toLocaleTimeString()}</td>
-                <td className="py-2 font-normal">
+              <tr key={h.id} className="h-[24px] hover:bg-[#1b2429]">
+                <td className="px-1 text-[#949e9c]">{new Date(h.closed_at).toLocaleTimeString()}</td>
+                <td className="px-1 text-[#f6fefd]">
                   {h.coin}{h.liquidated ? " 💀" : ""}
                 </td>
-                <td className={cn("py-2", h.side === "Long" ? "text-acc" : "text-red")}>
+                <td className={cn("px-1", h.side === "Long" ? "text-[#50d2c1]" : "text-[#ed7088]")}>
                   {h.leverage}x {h.side}
                 </td>
-                <td className="py-2 font-tabular">{h.size.toFixed(5)}</td>
-                <td className="py-2 font-tabular">{h.entry_price.toFixed(decimals)}</td>
-                <td className="py-2 font-tabular">{h.exit_price.toFixed(decimals)}</td>
-                <td className={cn("py-2 font-normal font-tabular", h.pnl >= 0 ? "text-acc" : "text-red")}>
+                <td className="px-1 font-tabular text-[#f6fefd]">{h.size.toFixed(5)}</td>
+                <td className="px-1 font-tabular text-[#f6fefd]">{h.entry_price.toFixed(decimals)}</td>
+                <td className="px-1 font-tabular text-[#f6fefd]">{h.exit_price.toFixed(decimals)}</td>
+                <td className={cn("px-1 font-tabular", h.pnl >= 0 ? "text-[#50d2c1]" : "text-[#ed7088]")}>
                   {formatPnl(h.pnl)} ({roe >= 0 ? "+" : ""}{roe.toFixed(1)}%)
                 </td>
               </tr>
@@ -411,36 +419,36 @@ function HistoryContent({ history }: { history: TradeHistory[] }) {
 function OrderHistoryContent({ orders }: { orders: OrderHistory[] }) {
   if (!orders || orders.length === 0) {
     return (
-      <div className="text-center py-8 text-t3 text-[12px]">No order history</div>
+      <div className="text-center py-8 text-[#949e9c] text-[12px]">No order history</div>
     );
   }
 
   return (
     <div className="px-3 overflow-x-auto">
-      <table className="w-full text-[12px] min-w-[700px]">
+      <table className="w-full text-[12px] min-w-[700px]" style={{ borderCollapse: 'collapse' }}>
         <thead>
-          <tr className="text-t3 text-left">
-            <th className="py-2 font-normal">Time</th>
-            <th className="py-2 font-normal">Type</th>
-            <th className="py-2 font-normal">Coin</th>
-            <th className="py-2 font-normal">Direction</th>
-            <th className="py-2 font-normal">Size</th>
-            <th className="py-2 font-normal">Price</th>
-            <th className="py-2 font-normal">Status</th>
+          <tr className="text-[#949e9c] text-left h-[24px]">
+            <th className="font-normal px-1">Time</th>
+            <th className="font-normal px-1">Type</th>
+            <th className="font-normal px-1">Coin</th>
+            <th className="font-normal px-1">Direction</th>
+            <th className="font-normal px-1">Size</th>
+            <th className="font-normal px-1">Price</th>
+            <th className="font-normal px-1">Status</th>
           </tr>
         </thead>
         <tbody>
           {orders.slice(0, 50).map((o) => (
-            <tr key={o.id} className="border-t border-brd hover:bg-s2">
-              <td className="py-2 text-t3">{new Date(o.created_at).toLocaleTimeString()}</td>
-              <td className="py-2 capitalize">{o.order_type}</td>
-              <td className="py-2 font-normal">{o.coin}</td>
-              <td className={cn("py-2", o.side === "Long" ? "text-acc" : "text-red")}>{o.side}</td>
-              <td className="py-2 font-tabular">{o.size.toFixed(5)}</td>
-              <td className="py-2 font-tabular">{o.price.toFixed(2)}</td>
+            <tr key={o.id} className="h-[24px] hover:bg-[#1b2429]">
+              <td className="px-1 text-[#949e9c]">{new Date(o.created_at).toLocaleTimeString()}</td>
+              <td className="px-1 text-[#f6fefd] capitalize">{o.order_type}</td>
+              <td className="px-1 text-[#f6fefd]">{o.coin}</td>
+              <td className={cn("px-1", o.side === "Long" ? "text-[#50d2c1]" : "text-[#ed7088]")}>{o.side}</td>
+              <td className="px-1 font-tabular text-[#f6fefd]">{o.size.toFixed(5)}</td>
+              <td className="px-1 font-tabular text-[#f6fefd]">{o.price.toFixed(2)}</td>
               <td className={cn(
-                "py-2 capitalize",
-                o.status === "filled" ? "text-acc" : o.status === "cancelled" ? "text-red" : "text-t3"
+                "px-1 capitalize",
+                o.status === "filled" ? "text-[#50d2c1]" : o.status === "cancelled" ? "text-[#ed7088]" : "text-[#949e9c]"
               )}>
                 {o.status}
               </td>

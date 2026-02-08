@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { cn, COIN_ICONS, SUPPORTED_COINS, type SupportedCoin } from "@/lib/utils";
+import { cn, COIN_ICONS, type SupportedCoin } from "@/lib/utils";
+import type { CoinStats } from "@/hooks/useCoinStats";
 import { Star, ChevronDown } from "lucide-react";
 import { CoinSelectorModal } from "./CoinSelectorModal";
 
@@ -60,34 +61,41 @@ const COIN_COLORS: Record<string, string> = {
 interface CoinInfoBarProps {
   selectedCoin: SupportedCoin;
   onSelectCoin: (coin: SupportedCoin) => void;
-  stats: {
-    price: number | null;
-    change24h: number | null;
-    high24h: number | null;
-    low24h: number | null;
-    fundingRate: number | null;
-  };
+  price: number | null;
+  coinStats: CoinStats;
   decimals: number;
 }
 
 export function CoinInfoBar({
   selectedCoin,
   onSelectCoin,
-  stats,
+  price,
+  coinStats,
   decimals,
 }: CoinInfoBarProps) {
   const [isFavorite, setIsFavorite] = useState(true);
   const [showCoinSelector, setShowCoinSelector] = useState(false);
   const [fundingCountdown, setFundingCountdown] = useState("00:00:00");
 
-  // Funding countdown timer (resets every hour)
+  // Funding countdown timer — uses real nextFundingTime from Binance Futures
   useEffect(() => {
     const updateCountdown = () => {
-      const now = new Date();
-      const nextHour = new Date(now);
-      nextHour.setHours(nextHour.getHours() + 1, 0, 0, 0);
-      const diff = nextHour.getTime() - now.getTime();
+      const now = Date.now();
+      // Use real next funding time if available, otherwise estimate next 8h mark (00:00, 08:00, 16:00 UTC)
+      let target: number;
+      if (coinStats.nextFundingTime && coinStats.nextFundingTime > now) {
+        target = coinStats.nextFundingTime;
+      } else {
+        // Fallback: next 8-hour mark
+        const d = new Date();
+        const currentHour = d.getUTCHours();
+        const nextFundingHour = Math.ceil((currentHour + 1) / 8) * 8;
+        d.setUTCHours(nextFundingHour, 0, 0, 0);
+        if (d.getTime() <= now) d.setTime(d.getTime() + 8 * 3600000);
+        target = d.getTime();
+      }
 
+      const diff = Math.max(0, target - now);
       const hours = Math.floor(diff / (1000 * 60 * 60));
       const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
       const seconds = Math.floor((diff % (1000 * 60)) / 1000);
@@ -100,19 +108,16 @@ export function CoinInfoBar({
     updateCountdown();
     const timer = setInterval(updateCountdown, 1000);
     return () => clearInterval(timer);
-  }, []);
+  }, [coinStats.nextFundingTime]);
 
-  // Prices
-  const markPrice = stats.price;
-  const oraclePrice = stats.price ? stats.price * 0.9998 : null;
-  const openInterest = 763716026.42; // Mock: Full value like real HL
-  const volume24h = 884126276.33; // Mock: Full value like real HL
-  const fundingRate = stats.fundingRate ?? 0.000013; // 0.0013% like real HL
-
-  // 24h change value
-  const priceChange = stats.price && stats.change24h
-    ? (stats.price * Math.abs(stats.change24h) / 100)
-    : null;
+  // Use Binance spot price as mark, Binance Futures index as oracle
+  const markPrice = price;
+  const oraclePrice = coinStats.oraclePrice;
+  const openInterest = coinStats.openInterest;
+  const volume24h = coinStats.volume24h;
+  const fundingRate = coinStats.fundingRate;
+  const change24h = coinStats.change24h;
+  const change24hAbs = coinStats.change24hAbs;
 
   // Format price like real HL: 32,554 (comma for decimal)
   const formatPrice = (price: number | null) => {
@@ -208,10 +213,10 @@ export function CoinInfoBar({
           </span>
           <span className={cn(
             "text-[12px] font-normal font-tabular mt-0.5 leading-tight",
-            stats.change24h !== null && stats.change24h >= 0 ? "text-grn" : "text-red"
+            change24h !== null && change24h >= 0 ? "text-grn" : "text-red"
           )}>
-            {priceChange !== null && stats.change24h !== null
-              ? `${stats.change24h >= 0 ? "" : "-"}${priceChange.toFixed(decimals).replace(".", ",")} / ${stats.change24h >= 0 ? "" : "-"}${Math.abs(stats.change24h).toFixed(2).replace(".", ",")}%`
+            {change24hAbs !== null && change24h !== null
+              ? `${change24h >= 0 ? "" : "-"}${Math.abs(change24hAbs).toFixed(decimals).replace(".", ",")} / ${change24h >= 0 ? "" : "-"}${Math.abs(change24h).toFixed(2).replace(".", ",")}%`
               : "—"}
           </span>
         </div>
@@ -222,7 +227,7 @@ export function CoinInfoBar({
             24H Volume
           </span>
           <span className="text-[12px] text-t2 font-normal font-tabular mt-0.5 leading-tight">
-            ${formatLargeNumber(volume24h)}
+            {volume24h !== null ? `$${formatLargeNumber(volume24h)}` : "—"}
           </span>
         </div>
 
@@ -232,7 +237,7 @@ export function CoinInfoBar({
             Open Interest
           </span>
           <span className="text-[12px] text-t2 font-normal font-tabular mt-0.5 leading-tight">
-            ${formatLargeNumber(openInterest)}
+            {openInterest !== null ? `$${formatLargeNumber(openInterest)}` : "—"}
           </span>
         </div>
 
@@ -244,9 +249,11 @@ export function CoinInfoBar({
           <div className="flex items-center gap-2 mt-0.5">
             <span className={cn(
               "text-[12px] font-normal font-tabular leading-tight",
-              fundingRate >= 0 ? "text-grn" : "text-red"
+              fundingRate !== null && fundingRate >= 0 ? "text-grn" : "text-red"
             )}>
-              {(fundingRate * 100).toFixed(4).replace(".", ",")}%
+              {fundingRate !== null
+                ? `${(fundingRate * 100).toFixed(4).replace(".", ",")}%`
+                : "—"}
             </span>
             <span className="text-[12px] font-tabular text-t2 leading-tight">
               {fundingCountdown}

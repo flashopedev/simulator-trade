@@ -28,12 +28,30 @@ export interface Trade {
   time: number;
 }
 
-// Fallback prices when API is unavailable
+// Fallback prices when API is unavailable (approximate, updated Feb 2026)
 export const FALLBACK_PRICES: Record<string, number> = {
-  HYPE: 21.5,
-  BTC: 98000,
-  ETH: 3200,
-  SOL: 180,
+  HYPE: 31,
+  BTC: 97000,
+  ETH: 2700,
+  SOL: 87,
+  DOGE: 0.26,
+  AVAX: 38,
+  LINK: 19,
+  ARB: 0.82,
+  OP: 1.85,
+  SUI: 3.5,
+  WIF: 1.2,
+  PEPE: 0.00001234,
+  JUP: 0.87,
+  TIA: 4.5,
+  SEI: 0.34,
+  INJ: 24,
+  RENDER: 7.2,
+  FET: 1.5,
+  ONDO: 1.2,
+  STX: 1.8,
+  NEAR: 5.2,
+  BONK: 0.00002345,
 };
 
 const INTERVAL_MS: Record<string, number> = {

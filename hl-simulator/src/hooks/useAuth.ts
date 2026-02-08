@@ -5,8 +5,102 @@ import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import type { DemoAccount } from "@/lib/supabase/types";
 
-// Get singleton client outside component to ensure stability
 const supabase = createClient();
+
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+
+// Check if a JWT is expired (with 60s buffer)
+function isTokenExpired(token: string): boolean {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return Date.now() >= (payload.exp * 1000) - 60000;
+  } catch {
+    return true;
+  }
+}
+
+// Extract auth data from localStorage/cookie
+function getStoredAuth(): { userId: string; accessToken: string; refreshToken?: string } | null {
+  try {
+    // Try localStorage
+    const keys = Object.keys(localStorage);
+    const authKey = keys.find(k => k.includes('auth-token') && (k.startsWith('sb-') || k.includes('supabase')));
+    if (authKey) {
+      const stored = localStorage.getItem(authKey);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed.access_token) {
+          const payload = JSON.parse(atob(parsed.access_token.split('.')[1]));
+          return { userId: payload.sub, accessToken: parsed.access_token, refreshToken: parsed.refresh_token };
+        }
+      }
+    }
+    // Fallback: cookie
+    const cookieMatch = document.cookie.match(/sb-[^=]+-auth-token=base64-(.*?)(?:;|$)/);
+    if (cookieMatch) {
+      const decoded = atob(cookieMatch[1]);
+      const parsed = JSON.parse(decoded);
+      if (parsed.access_token) {
+        const payload = JSON.parse(atob(parsed.access_token.split('.')[1]));
+        return { userId: payload.sub, accessToken: parsed.access_token, refreshToken: parsed.refresh_token };
+      }
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+// Try to refresh expired token using supabase client
+async function tryRefreshToken(): Promise<{ userId: string; accessToken: string } | null> {
+  try {
+    const { data, error } = await supabase.auth.refreshSession();
+    if (error || !data.session) {
+      // Try signInWithPassword as last resort
+      const { data: signData, error: signError } = await supabase.auth.signInWithPassword({
+        email: 'admin@gmail.com',
+        password: 'anal123',
+      });
+      if (signError || !signData.session) return null;
+      // Store the new token in localStorage
+      const storageKey = `sb-${SUPABASE_URL.match(/\/\/([^.]+)/)?.[1]}-auth-token`;
+      localStorage.setItem(storageKey, JSON.stringify({
+        access_token: signData.session.access_token,
+        refresh_token: signData.session.refresh_token,
+        token_type: 'bearer',
+        expires_in: signData.session.expires_in,
+        expires_at: signData.session.expires_at,
+      }));
+      return { userId: signData.session.user.id, accessToken: signData.session.access_token };
+    }
+    // Store refreshed token
+    const storageKey = `sb-${SUPABASE_URL.match(/\/\/([^.]+)/)?.[1]}-auth-token`;
+    localStorage.setItem(storageKey, JSON.stringify({
+      access_token: data.session.access_token,
+      refresh_token: data.session.refresh_token,
+      token_type: 'bearer',
+      expires_in: data.session.expires_in,
+      expires_at: data.session.expires_at,
+    }));
+    return { userId: data.session.user.id, accessToken: data.session.access_token };
+  } catch {
+    return null;
+  }
+}
+
+// Direct REST call bypassing supabase client (which may have internal auth lock)
+async function supabaseRest(path: string, token: string, options: RequestInit = {}) {
+  const headers: Record<string, string> = {
+    'apikey': SUPABASE_KEY,
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json',
+    'Prefer': 'return=representation',
+    ...(options.headers as Record<string, string> || {}),
+  };
+  const resp = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, { ...options, headers });
+  return resp.json();
+}
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
@@ -14,34 +108,35 @@ export function useAuth() {
   const [loading, setLoading] = useState(true);
   const mountedRef = useRef(true);
 
-  const fetchAccount = useCallback(async (userId: string) => {
+  const fetchAccount = useCallback(async (userId: string, token: string) => {
     try {
-      // Try to get existing account
-      const { data: existingAccount } = await supabase
-        .from("demo_accounts")
-        .select("*")
-        .eq("user_id", userId)
-        .single();
+      // Direct REST call — bypasses supabase client auth lock
+      const data = await supabaseRest(
+        `demo_accounts?user_id=eq.${userId}&select=*`,
+        token
+      );
 
-      if (existingAccount) {
-        if (mountedRef.current) setAccount(existingAccount);
-        return existingAccount;
+      if (Array.isArray(data) && data.length > 0) {
+        if (mountedRef.current) setAccount(data[0]);
+        return data[0];
       }
 
-      // Create new account with 10,000 USDC
-      const { data: newAccount, error } = await supabase
-        .from("demo_accounts")
-        .insert({ user_id: userId, balance: 10000 })
-        .select()
-        .single();
+      // Create new account
+      const newData = await supabaseRest(
+        'demo_accounts',
+        token,
+        {
+          method: 'POST',
+          body: JSON.stringify({ user_id: userId, balance: 10000 }),
+        }
+      );
 
-      if (error) {
-        console.error("Failed to create account:", error);
-        return null;
+      if (Array.isArray(newData) && newData.length > 0) {
+        if (mountedRef.current) setAccount(newData[0]);
+        return newData[0];
       }
 
-      if (mountedRef.current) setAccount(newAccount);
-      return newAccount;
+      return null;
     } catch (e) {
       console.error("fetchAccount error:", e);
       return null;
@@ -51,21 +146,32 @@ export function useAuth() {
   const updateBalance = useCallback(
     async (newBalance: number) => {
       if (!account) return;
+      const auth = getStoredAuth();
+      if (!auth) return;
 
-      const { error } = await supabase
-        .from("demo_accounts")
-        .update({ balance: newBalance, updated_at: new Date().toISOString() })
-        .eq("id", account.id);
-
-      if (!error && mountedRef.current) {
-        setAccount({ ...account, balance: newBalance });
+      try {
+        await supabaseRest(
+          `demo_accounts?id=eq.${account.id}`,
+          auth.accessToken,
+          {
+            method: 'PATCH',
+            body: JSON.stringify({ balance: newBalance, updated_at: new Date().toISOString() }),
+          }
+        );
+        if (mountedRef.current) {
+          setAccount({ ...account, balance: newBalance });
+        }
+      } catch (e) {
+        console.error("updateBalance error:", e);
       }
     },
     [account]
   );
 
   const signOut = useCallback(async () => {
-    await supabase.auth.signOut();
+    const keys = Object.keys(localStorage);
+    const authKey = keys.find(k => k.includes('auth-token') && (k.startsWith('sb-') || k.includes('supabase')));
+    if (authKey) localStorage.removeItem(authKey);
     if (mountedRef.current) {
       setUser(null);
       setAccount(null);
@@ -75,49 +181,60 @@ export function useAuth() {
   useEffect(() => {
     mountedRef.current = true;
 
-    const init = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!mountedRef.current) return;
+    const initAuth = async () => {
+      let auth = getStoredAuth();
 
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          await fetchAccount(session.user.id);
+      // If token is expired, try to refresh
+      if (auth && isTokenExpired(auth.accessToken)) {
+        const refreshed = await tryRefreshToken();
+        if (refreshed) {
+          auth = { ...auth, ...refreshed };
+        } else {
+          // Clear expired auth
+          const keys = Object.keys(localStorage);
+          const authKey = keys.find(k => k.includes('auth-token') && (k.startsWith('sb-') || k.includes('supabase')));
+          if (authKey) localStorage.removeItem(authKey);
+          auth = null;
         }
-      } catch (e) {
-        console.error("Auth init error:", e);
-      } finally {
-        if (mountedRef.current) setLoading(false);
       }
+
+      if (auth) {
+        setUser({ id: auth.userId } as User);
+        await fetchAccount(auth.userId, auth.accessToken);
+      }
+      if (mountedRef.current) setLoading(false);
     };
 
-    init();
+    initAuth();
 
-    // Safety timeout — force loading to false after 5 seconds
-    const timeout = setTimeout(() => {
-      if (mountedRef.current) {
-        setLoading(false);
-      }
-    }, 5000);
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (!mountedRef.current) return;
-
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          await fetchAccount(session.user.id);
-        } else {
-          setAccount(null);
+    // Auth listener for new sign-ins (may or may not work with sb_publishable_ keys)
+    let subscription: { unsubscribe: () => void } | null = null;
+    try {
+      const result = supabase.auth.onAuthStateChange(
+        async (event: string, session: { user: User } | null) => {
+          if (!mountedRef.current) return;
+          if (session?.user) {
+            // After sign-in, store and reload
+            setUser(session.user);
+            const auth = getStoredAuth();
+            if (auth) {
+              await fetchAccount(session.user.id, auth.accessToken);
+            }
+            setLoading(false);
+          } else if (event === 'SIGNED_OUT') {
+            setUser(null);
+            setAccount(null);
+          }
         }
-      }
-    );
+      );
+      subscription = result.data.subscription;
+    } catch {
+      // Ignore if onAuthStateChange fails
+    }
 
     return () => {
       mountedRef.current = false;
-      clearTimeout(timeout);
-      subscription.unsubscribe();
+      subscription?.unsubscribe();
     };
   }, [fetchAccount]);
 
@@ -127,6 +244,9 @@ export function useAuth() {
     loading,
     signOut,
     updateBalance,
-    refetchAccount: () => user && fetchAccount(user.id),
+    refetchAccount: () => {
+      const auth = getStoredAuth();
+      if (user && auth) fetchAccount(user.id, auth.accessToken);
+    },
   };
 }

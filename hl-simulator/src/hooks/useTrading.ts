@@ -634,9 +634,10 @@ export function useTrading({ accountId, balance, onBalanceChange }: UseTradingPr
         const price = currentPrices[p.coin];
         if (!price) return;
 
-        if (p.side === "Long" && price <= p.liquidation_price) {
+        // Only liquidate if liq_price makes sense (below entry for Long, above entry for Short)
+        if (p.side === "Long" && p.liquidation_price > 0 && p.liquidation_price < p.entry_price && price <= p.liquidation_price) {
           toClose.push(p);
-        } else if (p.side === "Short" && price >= p.liquidation_price) {
+        } else if (p.side === "Short" && p.liquidation_price > 0 && p.liquidation_price > p.entry_price && price >= p.liquidation_price) {
           toClose.push(p);
         }
       });

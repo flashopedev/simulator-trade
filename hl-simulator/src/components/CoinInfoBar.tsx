@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { cn, COIN_ICONS, type SupportedCoin } from "@/lib/utils";
+import { cn, type SupportedCoin } from "@/lib/utils";
 import type { CoinStats } from "@/hooks/useCoinStats";
 import { Star, ChevronDown } from "lucide-react";
 import { CoinSelectorModal } from "./CoinSelectorModal";
+import { CoinIcon } from "./CoinIcon";
 
 // Leverage per coin
 const COIN_LEVERAGE: Record<string, string> = {
@@ -32,31 +33,7 @@ const COIN_LEVERAGE: Record<string, string> = {
   BONK: "5x",
 };
 
-// Coin gradient colors (just first letter, no fancy gradients to match real HL)
-const COIN_COLORS: Record<string, string> = {
-  HYPE: "from-emerald-400 to-cyan-500",
-  BTC: "from-orange-400 to-yellow-500",
-  ETH: "from-blue-400 to-indigo-500",
-  SOL: "from-purple-400 to-fuchsia-500",
-  DOGE: "from-yellow-400 to-amber-500",
-  AVAX: "from-red-400 to-rose-500",
-  LINK: "from-blue-400 to-cyan-500",
-  ARB: "from-blue-400 to-indigo-500",
-  OP: "from-red-400 to-pink-500",
-  SUI: "from-cyan-400 to-blue-500",
-  WIF: "from-amber-400 to-orange-500",
-  PEPE: "from-green-400 to-emerald-500",
-  JUP: "from-lime-400 to-green-500",
-  TIA: "from-purple-400 to-violet-500",
-  SEI: "from-red-400 to-rose-500",
-  INJ: "from-blue-400 to-indigo-500",
-  RENDER: "from-cyan-400 to-teal-500",
-  FET: "from-purple-400 to-pink-500",
-  ONDO: "from-blue-400 to-cyan-500",
-  STX: "from-orange-400 to-amber-500",
-  NEAR: "from-green-400 to-teal-500",
-  BONK: "from-yellow-400 to-amber-500",
-};
+// COIN_COLORS removed — now using real SVG icons from Hyperliquid
 
 interface CoinInfoBarProps {
   selectedCoin: SupportedCoin;
@@ -142,8 +119,8 @@ export function CoinInfoBar({
 
   return (
     <>
-      {/* Star row - separate line like real HL */}
-      <div className="h-6 flex items-center px-4 bg-s1">
+      {/* Star/Favorites row - matches real HL: 40px height, rounded-[5px], no borders */}
+      <div className="h-[40px] flex items-center px-4 bg-s1 rounded-[5px]">
         <button
           onClick={() => setIsFavorite(!isFavorite)}
           className="flex items-center"
@@ -157,19 +134,14 @@ export function CoinInfoBar({
         </button>
       </div>
 
-      <div className="relative z-10 flex items-center h-[52px] px-4 gap-4 border-b border-brd bg-s1 overflow-x-auto">
+      <div className="relative z-10 flex items-center h-[63px] px-4 gap-4 bg-s1 rounded-[5px] overflow-x-auto">
         {/* Coin selector */}
         <button
           onClick={() => setShowCoinSelector(true)}
           className="flex items-center gap-2 flex-shrink-0"
         >
-          {/* Coin icon */}
-          <div className={cn(
-            "w-6 h-6 rounded-full bg-gradient-to-br flex items-center justify-center text-[10px] font-bold text-white",
-            COIN_COLORS[selectedCoin]
-          )}>
-            {COIN_ICONS[selectedCoin]}
-          </div>
+          {/* Coin icon — real SVG from Hyperliquid, 20x20 like original */}
+          <CoinIcon coin={selectedCoin} size={20} />
           {/* Name + dropdown */}
           <span className="text-[20px] font-normal text-t1 leading-none">{selectedCoin}-USDC</span>
           <ChevronDown className="w-4 h-4 text-t3 -ml-0.5" />

@@ -119,21 +119,23 @@ export default function TradePage() {
         />
       </div>
 
-      {/* Coin Info Bar */}
-      <CoinInfoBar
-        selectedCoin={coin}
-        onSelectCoin={setCoin}
-        price={price}
-        coinStats={coinStats}
-        decimals={decimals}
-      />
+      {/* Main Layout: 2-column grid with 3px gaps like real HL.
+          Containers have rounded-[5px] corners, NO border lines.
+          Gap bg = #1B2429 (gbg), container bg = #0F1A1F (s1). */}
+      <div className="flex-1 flex flex-col md:grid md:grid-cols-[1fr_396px] gap-[3px] bg-gbg p-[3px] pt-[3px]">
+        {/* Left column: Star Row + Coin Info + Chart + Bottom Panel */}
+        <div className="flex flex-col min-w-0 gap-[3px]">
+          {/* Coin Info Bar (includes star row) — left column only, each with rounded corners */}
+          <CoinInfoBar
+            selectedCoin={coin}
+            onSelectCoin={setCoin}
+            price={price}
+            coinStats={coinStats}
+            decimals={decimals}
+          />
 
-      {/* Main Layout: 2-column grid (chart + sidebar) - sidebar 396px like real HL */}
-      <div className="flex-1 flex flex-col md:grid md:grid-cols-[1fr_396px]">
-        {/* Left column: ChartToolbar + Chart + Bottom Panel */}
-        <div className="flex flex-col">
           {/* Chart area with toolbar */}
-          <div className="h-[500px] md:h-[calc(100vh-350px)] min-h-[400px] flex">
+          <div className="flex-1 min-h-[400px] flex rounded-[5px] bg-s1 overflow-hidden">
             {/* Left toolbar - matching real HL */}
             <ChartToolbar />
             {/* Chart */}
@@ -143,7 +145,7 @@ export default function TradePage() {
           </div>
 
           {/* Bottom Panel */}
-          <div className="h-[200px] flex-shrink-0 border-t border-brd overflow-auto">
+          <div className="h-[200px] flex-shrink-0 overflow-auto rounded-[5px] bg-s1">
             <BottomTabsPanel
               positions={positions}
               history={history}
@@ -156,8 +158,8 @@ export default function TradePage() {
           </div>
         </div>
 
-        {/* Right Sidebar - OrderForm + OrderBook */}
-        <div className="flex flex-col border-l border-brd bg-s1">
+        {/* Right Sidebar - single rounded container spanning full height */}
+        <div className="flex flex-col rounded-[5px] bg-s1 overflow-hidden">
           {/* Order Form - scrollable if needed */}
           <div className="flex-shrink-0 border-b border-brd overflow-y-auto max-h-[70vh]">
             <OrderForm

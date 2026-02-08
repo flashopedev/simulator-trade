@@ -11,6 +11,7 @@ const config: Config = {
       colors: {
         // Backgrounds (exact from HL computed styles)
         bg: "#04251F",       // rgb(4, 37, 31) green-tinted page bg
+        gbg: "#1B2429",      // rgb(27, 36, 41) grid gap background (between containers)
         s1: "#0F1A1F",       // rgb(15, 26, 31) card/nav bg
         s2: "#1a2a28",       // hover states, slightly lighter
         s3: "#243432",       // active states

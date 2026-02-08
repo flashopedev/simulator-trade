@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { cn, type SupportedCoin } from "@/lib/utils";
 import { Search, Star, X, Settings, Maximize2 } from "lucide-react";
+import { CoinIcon } from "./CoinIcon";
 
 // Real HL doesn't use category color tags - removed
 
@@ -258,8 +259,9 @@ export function CoinSelectorModal({
                 />
               </button>
 
-              {/* Symbol with leverage badge - matching real HL (no category tags) */}
+              {/* Symbol with icon and leverage badge - matching real HL */}
               <div className="flex items-center gap-2">
+                <CoinIcon coin={coin.symbol} size={20} />
                 <span className="text-[13px] font-medium text-t1">{coin.displayName}</span>
                 <span className="px-1.5 py-0.5 bg-acc/20 text-acc text-[10px] font-medium rounded">
                   {coin.leverage}

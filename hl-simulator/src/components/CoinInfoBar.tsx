@@ -170,8 +170,8 @@ export function CoinInfoBar({
           <ChevronDown className="w-4 h-4 text-t3 -ml-0.5" />
         </button>
 
-        {/* Leverage badge - matching real HL: 12px, acc color, dark teal background */}
-        <span className="px-1.5 py-0.5 bg-[#0e3333] text-acc text-[12px] font-normal rounded flex-shrink-0">
+        {/* Leverage badge - matching real HL: 16px, white, dark teal bg, rounded-[5px] */}
+        <span className="px-1 bg-[#0e3333] text-white text-[16px] font-normal rounded-[5px] flex-shrink-0 leading-[20px]">
           {COIN_LEVERAGE[selectedCoin]}
         </span>
 
@@ -180,20 +180,20 @@ export function CoinInfoBar({
 
         {/* Mark Price */}
         <div className="flex flex-col flex-shrink-0">
-          <span className="text-[10px] text-t3 border-b border-dotted border-t4 cursor-help leading-tight">
+          <span className="text-[12px] text-t2 underline decoration-dashed decoration-t4 cursor-help leading-tight">
             Mark
           </span>
-          <span className="text-[13px] text-t1 font-medium font-tabular mt-0.5 leading-tight">
+          <span className="text-[12px] text-t1 font-normal font-tabular mt-0.5 leading-tight">
             {formatPrice(markPrice)}
           </span>
         </div>
 
         {/* Oracle Price */}
         <div className="flex flex-col flex-shrink-0">
-          <span className="text-[10px] text-t3 border-b border-dotted border-t4 cursor-help leading-tight">
+          <span className="text-[12px] text-t2 underline decoration-dashed decoration-t4 cursor-help leading-tight">
             Oracle
           </span>
-          <span className="text-[13px] text-t1 font-medium font-tabular mt-0.5 leading-tight">
+          <span className="text-[12px] text-t1 font-normal font-tabular mt-0.5 leading-tight">
             {formatPrice(oraclePrice)}
           </span>
         </div>
@@ -203,11 +203,11 @@ export function CoinInfoBar({
 
         {/* 24H Change */}
         <div className="flex flex-col flex-shrink-0 hidden md:flex">
-          <span className="text-[10px] text-t3 border-b border-dotted border-t4 cursor-help leading-tight">
+          <span className="text-[12px] text-t2 underline decoration-dashed decoration-t4 cursor-help leading-tight">
             24H Change
           </span>
           <span className={cn(
-            "text-[13px] font-medium font-tabular mt-0.5 leading-tight",
+            "text-[12px] font-normal font-tabular mt-0.5 leading-tight",
             stats.change24h !== null && stats.change24h >= 0 ? "text-grn" : "text-red"
           )}>
             {priceChange !== null && stats.change24h !== null
@@ -218,37 +218,37 @@ export function CoinInfoBar({
 
         {/* 24H Volume */}
         <div className="flex flex-col flex-shrink-0 hidden lg:flex">
-          <span className="text-[10px] text-t3 border-b border-dotted border-t4 cursor-help leading-tight">
+          <span className="text-[12px] text-t2 underline decoration-dashed decoration-t4 cursor-help leading-tight">
             24H Volume
           </span>
-          <span className="text-[13px] text-t2 font-medium font-tabular mt-0.5 leading-tight">
+          <span className="text-[12px] text-t2 font-normal font-tabular mt-0.5 leading-tight">
             ${formatLargeNumber(volume24h)}
           </span>
         </div>
 
         {/* Open Interest */}
         <div className="flex flex-col flex-shrink-0 hidden lg:flex">
-          <span className="text-[10px] text-t3 border-b border-dotted border-t4 cursor-help leading-tight">
+          <span className="text-[12px] text-t2 underline decoration-dashed decoration-t4 cursor-help leading-tight">
             Open Interest
           </span>
-          <span className="text-[13px] text-t2 font-medium font-tabular mt-0.5 leading-tight">
+          <span className="text-[12px] text-t2 font-normal font-tabular mt-0.5 leading-tight">
             ${formatLargeNumber(openInterest)}
           </span>
         </div>
 
         {/* Funding / Countdown */}
         <div className="flex flex-col flex-shrink-0 hidden xl:flex">
-          <span className="text-[10px] text-t3 border-b border-dotted border-t4 cursor-help leading-tight">
+          <span className="text-[12px] text-t2 underline decoration-dashed decoration-t4 cursor-help leading-tight">
             Funding / Countdown
           </span>
           <div className="flex items-center gap-2 mt-0.5">
             <span className={cn(
-              "text-[13px] font-medium font-tabular leading-tight",
+              "text-[12px] font-normal font-tabular leading-tight",
               fundingRate >= 0 ? "text-grn" : "text-red"
             )}>
               {(fundingRate * 100).toFixed(4).replace(".", ",")}%
             </span>
-            <span className="text-[13px] font-tabular text-t2 leading-tight">
+            <span className="text-[12px] font-tabular text-t2 leading-tight">
               {fundingCountdown}
             </span>
           </div>

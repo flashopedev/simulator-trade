@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import {
   calculateLiquidationPrice,
@@ -9,6 +9,10 @@ import {
 } from "@/lib/utils";
 import type { Position, TradeHistory, OrderHistory } from "@/lib/supabase/types";
 import { notify } from "@/components/Notification";
+
+// Real HL fee structure
+const TAKER_FEE = 0.00045; // 0.045% - market orders
+const MAKER_FEE = 0.00015; // 0.015% - limit orders
 
 interface UseTradingProps {
   accountId: string | null;
@@ -21,6 +25,7 @@ export function useTrading({ accountId, balance, onBalanceChange }: UseTradingPr
   const [history, setHistory] = useState<TradeHistory[]>([]);
   const [orders, setOrders] = useState<OrderHistory[]>([]);
   const [loading, setLoading] = useState(true);
+  const lastPricesRef = useRef<Record<string, number>>({});
 
   const supabase = createClient();
 
@@ -64,16 +69,40 @@ export function useTrading({ accountId, balance, onBalanceChange }: UseTradingPr
     loadData();
   }, [loadData]);
 
-  // Calculate available balance
-  const getAvailableBalance = useCallback(() => {
+  // Calculate used margin across all positions
+  const getUsedMargin = useCallback(() => {
     let usedMargin = 0;
     positions.forEach((p) => {
       usedMargin += (p.size * p.entry_price) / p.leverage;
     });
-    return Math.max(0, balance - usedMargin);
-  }, [positions, balance]);
+    return usedMargin;
+  }, [positions]);
 
-  // Place order
+  // Calculate unrealized PnL across all positions
+  const getUnrealizedPnl = useCallback(
+    (currentPrices?: Record<string, number>) => {
+      const prices = currentPrices || lastPricesRef.current;
+      let totalPnl = 0;
+      positions.forEach((p) => {
+        const price = prices[p.coin] || p.entry_price;
+        totalPnl += calculatePnl(p.entry_price, price, p.size, p.side === "Long");
+      });
+      return totalPnl;
+    },
+    [positions]
+  );
+
+  // Available balance = balance - usedMargin + unrealizedPnL (cross margin mode)
+  const getAvailableBalance = useCallback(
+    (currentPrices?: Record<string, number>) => {
+      const usedMargin = getUsedMargin();
+      const uPnl = getUnrealizedPnl(currentPrices);
+      return Math.max(0, balance - usedMargin + Math.min(0, uPnl));
+    },
+    [balance, getUsedMargin, getUnrealizedPnl]
+  );
+
+  // Place order — handles market (instant) and limit (pending)
   const placeOrder = useCallback(
     async (order: {
       coin: SupportedCoin;
@@ -88,7 +117,8 @@ export function useTrading({ accountId, balance, onBalanceChange }: UseTradingPr
 
       const notional = order.size * order.price;
       const margin = notional / order.leverage;
-      const fee = notional * 0.0005;
+      const feeRate = order.orderType === "market" ? TAKER_FEE : MAKER_FEE;
+      const fee = notional * feeRate;
       const available = getAvailableBalance();
 
       if (margin + fee > available) {
@@ -96,32 +126,275 @@ export function useTrading({ accountId, balance, onBalanceChange }: UseTradingPr
         return false;
       }
 
-      const liquidationPrice = calculateLiquidationPrice(
-        order.price,
-        order.side === "Long",
-        order.leverage
-      );
+      // --- LIMIT ORDER: create pending order, don't open position yet ---
+      if (order.orderType === "limit") {
+        try {
+          const { data: newOrder, error: ordError } = await supabase
+            .from("order_history")
+            .insert({
+              account_id: accountId,
+              coin: order.coin,
+              side: order.side,
+              order_type: "limit",
+              size: order.size,
+              price: order.price,
+              status: "pending",
+              fee: 0,
+            })
+            .select()
+            .single();
 
+          if (ordError) throw ordError;
+
+          if (newOrder) {
+            setOrders((prev) => [newOrder, ...prev]);
+          }
+
+          notify(
+            `Limit ${order.side} ${order.size.toFixed(4)} ${order.coin} @ ${order.price.toFixed(2)}`,
+            "success"
+          );
+          return true;
+        } catch (error) {
+          console.error("Failed to place limit order:", error);
+          notify("Failed to place limit order", "error");
+          return false;
+        }
+      }
+
+      // --- MARKET ORDER: execute immediately ---
       try {
-        // Create position
-        const { data: position, error: posError } = await supabase
-          .from("positions")
-          .insert({
-            account_id: accountId,
-            coin: order.coin,
-            side: order.side,
-            size: order.size,
-            entry_price: order.price,
-            leverage: order.leverage,
-            margin_mode: order.marginMode,
-            liquidation_price: liquidationPrice,
-          })
-          .select()
-          .single();
+        // Check if we already have a position on this coin
+        const existingPosition = positions.find((p) => p.coin === order.coin);
 
-        if (posError) throw posError;
+        if (existingPosition) {
+          // Same side → merge (increase position)
+          if (existingPosition.side === order.side) {
+            const totalSize = existingPosition.size + order.size;
+            const avgEntry =
+              (existingPosition.size * existingPosition.entry_price +
+                order.size * order.price) /
+              totalSize;
+            const newLiqPrice = calculateLiquidationPrice(
+              avgEntry,
+              order.side === "Long",
+              order.leverage
+            );
 
-        // Create order history
+            const { error: updateError } = await supabase
+              .from("positions")
+              .update({
+                size: totalSize,
+                entry_price: avgEntry,
+                leverage: order.leverage,
+                liquidation_price: newLiqPrice,
+              })
+              .eq("id", existingPosition.id);
+
+            if (updateError) throw updateError;
+
+            // Update local state
+            setPositions((prev) =>
+              prev.map((p) =>
+                p.id === existingPosition.id
+                  ? { ...p, size: totalSize, entry_price: avgEntry, leverage: order.leverage, liquidation_price: newLiqPrice }
+                  : p
+              )
+            );
+          } else {
+            // Opposite side → reduce or flip
+            if (order.size < existingPosition.size) {
+              // Partial close
+              const closedSize = order.size;
+              const remainingSize = existingPosition.size - closedSize;
+              const pnl = calculatePnl(
+                existingPosition.entry_price,
+                order.price,
+                closedSize,
+                existingPosition.side === "Long"
+              );
+              const closeFee = closedSize * order.price * TAKER_FEE;
+
+              // Update position size
+              const { error: updateError } = await supabase
+                .from("positions")
+                .update({ size: remainingSize })
+                .eq("id", existingPosition.id);
+
+              if (updateError) throw updateError;
+
+              // Record partial close in trade history
+              await supabase.from("trade_history").insert({
+                account_id: accountId,
+                position_id: existingPosition.id,
+                coin: existingPosition.coin,
+                side: existingPosition.side,
+                size: closedSize,
+                entry_price: existingPosition.entry_price,
+                exit_price: order.price,
+                pnl,
+                leverage: existingPosition.leverage,
+                liquidated: false,
+              });
+
+              // Update balance: return closed margin + pnl - fees
+              const closedMargin = (closedSize * existingPosition.entry_price) / existingPosition.leverage;
+              const newBalance = balance + closedMargin + pnl - closeFee;
+              onBalanceChange(newBalance);
+
+              setPositions((prev) =>
+                prev.map((p) =>
+                  p.id === existingPosition.id ? { ...p, size: remainingSize } : p
+                )
+              );
+
+              setHistory((prev) => [
+                {
+                  id: crypto.randomUUID(),
+                  account_id: accountId,
+                  position_id: existingPosition.id,
+                  coin: existingPosition.coin,
+                  side: existingPosition.side,
+                  size: closedSize,
+                  entry_price: existingPosition.entry_price,
+                  exit_price: order.price,
+                  pnl,
+                  leverage: existingPosition.leverage,
+                  liquidated: false,
+                  closed_at: new Date().toISOString(),
+                },
+                ...prev,
+              ]);
+
+              notify(
+                `Reduced ${existingPosition.side} ${existingPosition.coin} by ${closedSize.toFixed(4)} | PnL: ${pnl >= 0 ? "+" : ""}${pnl.toFixed(2)}`,
+                pnl >= 0 ? "success" : "error"
+              );
+              return true;
+            } else if (order.size === existingPosition.size) {
+              // Full close — delegate to closePosition
+              await closePositionInternal(existingPosition, order.price, fee);
+              return true;
+            } else {
+              // Flip: close existing, open remainder in opposite direction
+              const closePnl = calculatePnl(
+                existingPosition.entry_price,
+                order.price,
+                existingPosition.size,
+                existingPosition.side === "Long"
+              );
+              const closeFee = existingPosition.size * order.price * TAKER_FEE;
+
+              // Close existing
+              await supabase.from("positions").delete().eq("id", existingPosition.id);
+
+              await supabase.from("trade_history").insert({
+                account_id: accountId,
+                position_id: existingPosition.id,
+                coin: existingPosition.coin,
+                side: existingPosition.side,
+                size: existingPosition.size,
+                entry_price: existingPosition.entry_price,
+                exit_price: order.price,
+                pnl: closePnl,
+                leverage: existingPosition.leverage,
+                liquidated: false,
+              });
+
+              // Return margin from closed position
+              const closedMargin = (existingPosition.size * existingPosition.entry_price) / existingPosition.leverage;
+              let newBalance = balance + closedMargin + closePnl - closeFee;
+
+              // Open new position with remaining size
+              const remainingSize = order.size - existingPosition.size;
+              const newMargin = (remainingSize * order.price) / order.leverage;
+              const openFee = remainingSize * order.price * TAKER_FEE;
+              newBalance = newBalance - newMargin - openFee;
+
+              const newLiqPrice = calculateLiquidationPrice(
+                order.price,
+                order.side === "Long",
+                order.leverage
+              );
+
+              const { data: newPos } = await supabase
+                .from("positions")
+                .insert({
+                  account_id: accountId,
+                  coin: order.coin,
+                  side: order.side,
+                  size: remainingSize,
+                  entry_price: order.price,
+                  leverage: order.leverage,
+                  margin_mode: order.marginMode,
+                  liquidation_price: newLiqPrice,
+                })
+                .select()
+                .single();
+
+              onBalanceChange(newBalance);
+
+              setPositions((prev) => {
+                const filtered = prev.filter((p) => p.id !== existingPosition.id);
+                return newPos ? [newPos, ...filtered] : filtered;
+              });
+
+              setHistory((prev) => [
+                {
+                  id: crypto.randomUUID(),
+                  account_id: accountId,
+                  position_id: existingPosition.id,
+                  coin: existingPosition.coin,
+                  side: existingPosition.side,
+                  size: existingPosition.size,
+                  entry_price: existingPosition.entry_price,
+                  exit_price: order.price,
+                  pnl: closePnl,
+                  leverage: existingPosition.leverage,
+                  liquidated: false,
+                  closed_at: new Date().toISOString(),
+                },
+                ...prev,
+              ]);
+
+              notify(
+                `Flipped to ${order.side} ${remainingSize.toFixed(4)} ${order.coin} | Close PnL: ${closePnl >= 0 ? "+" : ""}${closePnl.toFixed(2)}`,
+                closePnl >= 0 ? "success" : "error"
+              );
+              return true;
+            }
+          }
+        } else {
+          // No existing position — open new one
+          const liquidationPrice = calculateLiquidationPrice(
+            order.price,
+            order.side === "Long",
+            order.leverage
+          );
+
+          const { data: position, error: posError } = await supabase
+            .from("positions")
+            .insert({
+              account_id: accountId,
+              coin: order.coin,
+              side: order.side,
+              size: order.size,
+              entry_price: order.price,
+              leverage: order.leverage,
+              margin_mode: order.marginMode,
+              liquidation_price: liquidationPrice,
+            })
+            .select()
+            .single();
+
+          if (posError) throw posError;
+
+          if (position) {
+            setPositions((prev) => [position, ...prev]);
+          }
+        }
+
+        // Record order in history
         await supabase.from("order_history").insert({
           account_id: accountId,
           coin: order.coin,
@@ -133,17 +406,12 @@ export function useTrading({ accountId, balance, onBalanceChange }: UseTradingPr
           fee,
         });
 
-        // Update balance (deduct fee)
-        const newBalance = balance - fee;
+        // Deduct margin + fee from balance
+        const newBalance = balance - margin - fee;
         onBalanceChange(newBalance);
 
-        // Update local state
-        if (position) {
-          setPositions((prev) => [position, ...prev]);
-        }
-
         notify(
-          `${order.side} ${order.size} ${order.coin} @ ${order.price.toFixed(2)} | ${order.leverage}x`,
+          `${order.side} ${order.size.toFixed(4)} ${order.coin} @ ${order.price.toFixed(2)} | ${order.leverage}x`,
           "success"
         );
 
@@ -154,12 +422,12 @@ export function useTrading({ accountId, balance, onBalanceChange }: UseTradingPr
         return false;
       }
     },
-    [accountId, balance, getAvailableBalance, onBalanceChange, supabase]
+    [accountId, balance, positions, getAvailableBalance, onBalanceChange, supabase]
   );
 
-  // Close position
-  const closePosition = useCallback(
-    async (position: Position, currentPrice: number) => {
+  // Internal close position (used by merge flip and direct close)
+  const closePositionInternal = useCallback(
+    async (position: Position, currentPrice: number, precomputedFee?: number) => {
       if (!accountId) return false;
 
       const pnl = calculatePnl(
@@ -168,10 +436,9 @@ export function useTrading({ accountId, balance, onBalanceChange }: UseTradingPr
         position.size,
         position.side === "Long"
       );
-      const fee = position.size * currentPrice * 0.0005;
+      const fee = precomputedFee ?? position.size * currentPrice * TAKER_FEE;
 
       try {
-        // Delete position
         const { error: delError } = await supabase
           .from("positions")
           .delete()
@@ -179,7 +446,6 @@ export function useTrading({ accountId, balance, onBalanceChange }: UseTradingPr
 
         if (delError) throw delError;
 
-        // Create trade history
         await supabase.from("trade_history").insert({
           account_id: accountId,
           position_id: position.id,
@@ -193,12 +459,11 @@ export function useTrading({ accountId, balance, onBalanceChange }: UseTradingPr
           liquidated: false,
         });
 
-        // Update balance
+        // Return margin + PnL - fee
         const margin = (position.size * position.entry_price) / position.leverage;
         const newBalance = balance + margin + pnl - fee;
         onBalanceChange(newBalance);
 
-        // Update local state
         setPositions((prev) => prev.filter((p) => p.id !== position.id));
         setHistory((prev) => [
           {
@@ -233,9 +498,136 @@ export function useTrading({ accountId, balance, onBalanceChange }: UseTradingPr
     [accountId, balance, onBalanceChange, supabase]
   );
 
+  // Public close position
+  const closePosition = useCallback(
+    async (position: Position, currentPrice: number) => {
+      return closePositionInternal(position, currentPrice);
+    },
+    [closePositionInternal]
+  );
+
+  // Check and fill pending limit orders
+  const checkLimitOrders = useCallback(
+    async (currentPrices: Record<string, number>) => {
+      const pendingOrders = orders.filter((o) => o.status === "pending");
+      if (pendingOrders.length === 0) return;
+
+      for (const order of pendingOrders) {
+        const currentPrice = currentPrices[order.coin];
+        if (!currentPrice) continue;
+
+        // Check if limit price is reached
+        let shouldFill = false;
+        if (order.side === "Long") {
+          // Buy limit: fill when market price <= limit price
+          shouldFill = currentPrice <= order.price;
+        } else {
+          // Sell limit: fill when market price >= limit price
+          shouldFill = currentPrice >= order.price;
+        }
+
+        if (shouldFill) {
+          try {
+            // Update order status to filled
+            const fee = order.size * order.price * MAKER_FEE;
+            await supabase
+              .from("order_history")
+              .update({ status: "filled", fee })
+              .eq("id", order.id);
+
+            // Open position at limit price
+            const margin = (order.size * order.price) / 10; // default 10x for limit fills
+            const liquidationPrice = calculateLiquidationPrice(
+              order.price,
+              order.side === "Long",
+              10
+            );
+
+            // Check if position exists for merge
+            const existingPosition = positions.find((p) => p.coin === order.coin && p.side === order.side);
+
+            if (existingPosition) {
+              const totalSize = existingPosition.size + order.size;
+              const avgEntry =
+                (existingPosition.size * existingPosition.entry_price +
+                  order.size * order.price) /
+                totalSize;
+              const newLiqPrice = calculateLiquidationPrice(
+                avgEntry,
+                order.side === "Long",
+                existingPosition.leverage
+              );
+
+              await supabase
+                .from("positions")
+                .update({
+                  size: totalSize,
+                  entry_price: avgEntry,
+                  liquidation_price: newLiqPrice,
+                })
+                .eq("id", existingPosition.id);
+            } else {
+              await supabase.from("positions").insert({
+                account_id: accountId!,
+                coin: order.coin,
+                side: order.side,
+                size: order.size,
+                entry_price: order.price,
+                leverage: 10,
+                margin_mode: "cross",
+                liquidation_price: liquidationPrice,
+              });
+            }
+
+            // Deduct margin + fee
+            const newBalance = balance - margin - fee;
+            onBalanceChange(newBalance);
+
+            notify(
+              `Limit filled: ${order.side} ${order.size.toFixed(4)} ${order.coin} @ ${order.price.toFixed(2)}`,
+              "success"
+            );
+
+            // Reload all data to get consistent state
+            await loadData();
+          } catch (error) {
+            console.error("Failed to fill limit order:", error);
+          }
+        }
+      }
+    },
+    [accountId, balance, orders, positions, onBalanceChange, supabase, loadData]
+  );
+
+  // Cancel pending order
+  const cancelOrder = useCallback(
+    async (orderId: string) => {
+      if (!accountId) return false;
+      try {
+        await supabase
+          .from("order_history")
+          .update({ status: "cancelled" })
+          .eq("id", orderId);
+
+        setOrders((prev) =>
+          prev.map((o) => (o.id === orderId ? { ...o, status: "cancelled" as const } : o))
+        );
+
+        notify("Order cancelled", "success");
+        return true;
+      } catch (error) {
+        console.error("Failed to cancel order:", error);
+        notify("Failed to cancel order", "error");
+        return false;
+      }
+    },
+    [accountId, supabase]
+  );
+
   // Check liquidations
   const checkLiquidations = useCallback(
     async (currentPrices: Record<string, number>) => {
+      lastPricesRef.current = currentPrices;
       const toClose: Position[] = [];
 
       positions.forEach((p) => {
@@ -251,11 +643,11 @@ export function useTrading({ accountId, balance, onBalanceChange }: UseTradingPr
 
       for (const position of toClose) {
         try {
-          // Delete position
           await supabase.from("positions").delete().eq("id", position.id);
 
-          // Record as liquidated
-          const loss = -((position.size * position.entry_price) / position.leverage);
+          // Liquidation loss = entire margin
+          const margin = (position.size * position.entry_price) / position.leverage;
+          const loss = -margin;
 
           await supabase.from("trade_history").insert({
             account_id: accountId,
@@ -270,30 +662,54 @@ export function useTrading({ accountId, balance, onBalanceChange }: UseTradingPr
             liquidated: true,
           });
 
-          notify(`⚠ LIQUIDATED ${position.side} ${position.size} ${position.coin}`, "error");
+          // Balance loses the margin (it was already deducted when opening)
+          // No balance change needed — margin was already reserved
+          // But we need to update local state
+          setPositions((prev) => prev.filter((p) => p.id !== position.id));
+          setHistory((prev) => [
+            {
+              id: crypto.randomUUID(),
+              account_id: accountId!,
+              position_id: position.id,
+              coin: position.coin,
+              side: position.side,
+              size: position.size,
+              entry_price: position.entry_price,
+              exit_price: position.liquidation_price,
+              pnl: loss,
+              leverage: position.leverage,
+              liquidated: true,
+              closed_at: new Date().toISOString(),
+            },
+            ...prev,
+          ]);
+
+          notify(`LIQUIDATED ${position.side} ${position.size.toFixed(4)} ${position.coin}`, "error");
         } catch (error) {
           console.error("Liquidation error:", error);
         }
       }
 
-      if (toClose.length > 0) {
-        loadData();
-      }
+      // Also check limit orders
+      await checkLimitOrders(currentPrices);
     },
-    [accountId, positions, supabase, loadData]
+    [accountId, positions, supabase, checkLimitOrders]
   );
 
-  // Calculate total equity
+  // Calculate total equity = balance + unrealized PnL
+  // (balance already has margin deducted, so equity = balance + uPnL)
   const getTotalEquity = useCallback(
     (currentPrices: Record<string, number>) => {
-      let equity = balance;
+      lastPricesRef.current = currentPrices;
+      let uPnl = 0;
+      let usedMargin = 0;
       positions.forEach((p) => {
         const price = currentPrices[p.coin] || p.entry_price;
-        const margin = (p.size * p.entry_price) / p.leverage;
-        const pnl = calculatePnl(p.entry_price, price, p.size, p.side === "Long");
-        equity += pnl; // margin is already in balance
+        uPnl += calculatePnl(p.entry_price, price, p.size, p.side === "Long");
+        usedMargin += (p.size * p.entry_price) / p.leverage;
       });
-      return equity;
+      // Equity = cash balance + margin in positions + unrealized PnL
+      return balance + usedMargin + uPnl;
     },
     [balance, positions]
   );
@@ -305,6 +721,7 @@ export function useTrading({ accountId, balance, onBalanceChange }: UseTradingPr
     loading,
     placeOrder,
     closePosition,
+    cancelOrder,
     checkLiquidations,
     getAvailableBalance,
     getTotalEquity,

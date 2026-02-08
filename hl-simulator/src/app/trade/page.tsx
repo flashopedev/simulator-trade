@@ -29,6 +29,7 @@ export default function TradePage() {
     orders,
     placeOrder,
     closePosition,
+    cancelOrder,
     checkLiquidations,
     getAvailableBalance,
     getTotalEquity,
@@ -157,6 +158,7 @@ export default function TradePage() {
               currentPrices={prices}
               balance={account?.balance ?? 10000}
               onClosePosition={handleClosePosition}
+              onCancelOrder={cancelOrder}
             />
           </div>
         </div>
@@ -168,7 +170,7 @@ export default function TradePage() {
             <OrderForm
               coin={coin}
               price={price}
-              availableBalance={getAvailableBalance()}
+              availableBalance={getAvailableBalance(prices)}
               currentPositionSize={currentPosition?.size ?? 0}
               onPlaceOrder={handlePlaceOrder}
             />
@@ -178,20 +180,20 @@ export default function TradePage() {
           <div className="flex-1 min-h-[250px] flex flex-col">
             <div className="flex items-center justify-between px-2.5 py-1.5 border-b border-brd flex-shrink-0">
               <div className="flex items-center gap-4">
-                <span className="text-[11px] font-medium text-t1 border-b-2 border-t1 pb-1">Order Book</span>
-                <span className="text-[11px] font-medium text-t3 pb-1 cursor-pointer hover:text-t2">Trades</span>
+                <span className="text-[12px] font-normal text-t1 border-b-2 border-t1 pb-1">Order Book</span>
+                <span className="text-[12px] font-normal text-t3 pb-1 cursor-pointer hover:text-t2">Trades</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <select className="bg-s2 border border-brd rounded px-1 py-0.5 text-[10px] text-t2 outline-none">
+                <select className="bg-s2 border border-brd rounded px-1 py-0.5 text-[12px] text-t2 outline-none">
                   <option>0,001</option>
                   <option>0,01</option>
                   <option>0,1</option>
                   <option>1</option>
                 </select>
-                <select className="bg-s2 border border-brd rounded px-1 py-0.5 text-[10px] text-t2 outline-none">
+                <select className="bg-s2 border border-brd rounded px-1 py-0.5 text-[12px] text-t2 outline-none">
                   <option>{coin}</option>
                 </select>
-                <button className="text-t3 hover:text-t2 text-[13px]">⋮</button>
+                <button className="text-t3 hover:text-t2 text-[12px]">⋮</button>
               </div>
             </div>
             <div className="flex-1 overflow-y-auto">

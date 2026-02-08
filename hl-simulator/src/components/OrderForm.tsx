@@ -8,6 +8,18 @@ import { AdjustLeverageModal } from "./AdjustLeverageModal";
 
 type OrderTab = "market" | "limit";
 
+// Per-coin max leverage matching real HL
+const COIN_MAX_LEVERAGE: Record<string, number> = {
+  HYPE: 10, BTC: 50, ETH: 50, SOL: 25, DOGE: 20, AVAX: 20,
+  LINK: 20, ARB: 15, OP: 15, SUI: 15, WIF: 10, PEPE: 10,
+  JUP: 10, TIA: 15, SEI: 10, INJ: 15, RENDER: 10, FET: 10,
+  ONDO: 10, STX: 10, NEAR: 15, BONK: 5,
+};
+
+// Real HL fee rates
+const TAKER_FEE_PCT = 0.045; // 0.045%
+const MAKER_FEE_PCT = 0.015; // 0.015%
+
 interface OrderFormProps {
   coin: string;
   price: number | null;
@@ -49,14 +61,22 @@ export function OrderForm({
   const [showLeverageModal, setShowLeverageModal] = useState(false);
 
   const decimals = COIN_DECIMALS[coin] || 2;
+  const maxLeverage = COIN_MAX_LEVERAGE[coin] || 10;
   const sizeNum = parseFloat(size) || 0;
   const orderType = orderTab;
   const execPrice = orderType === "limit" ? parseFloat(limitPrice) || price || 0 : price || 0;
   const notional = sizeNum * execPrice;
   const margin = notional / leverage;
+  const feeRate = orderType === "market" ? TAKER_FEE_PCT : MAKER_FEE_PCT;
   const liqPrice = execPrice > 0 && sizeNum > 0
     ? calculateLiquidationPrice(execPrice, isBuy, leverage)
     : null;
+
+  // Clamp leverage when coin changes
+  useEffect(() => {
+    const max = COIN_MAX_LEVERAGE[coin] || 10;
+    if (leverage > max) setLeverage(max);
+  }, [coin, leverage]);
 
   const handleSlider = useCallback(
     (pct: number) => {
@@ -141,7 +161,7 @@ export function OrderForm({
           <button
             onClick={() => setOrderTab("market")}
             className={cn(
-              "px-4 py-2.5 text-[13px] font-medium border-b-2 -mb-px transition-colors",
+              "px-4 py-2.5 text-[12px] font-normal border-b-2 -mb-px transition-colors",
               orderTab === "market"
                 ? "text-t1 border-t1"
                 : "text-t3 border-transparent hover:text-t2"
@@ -152,7 +172,7 @@ export function OrderForm({
           <button
             onClick={() => setOrderTab("limit")}
             className={cn(
-              "px-4 py-2.5 text-[13px] font-medium border-b-2 -mb-px transition-colors",
+              "px-4 py-2.5 text-[12px] font-normal border-b-2 -mb-px transition-colors",
               orderTab === "limit"
                 ? "text-t1 border-t1"
                 : "text-t3 border-transparent hover:text-t2"
@@ -161,7 +181,7 @@ export function OrderForm({
             Limit
           </button>
           <div className="ml-auto flex items-center">
-            <span className="text-[13px] font-medium text-t3 flex items-center gap-0.5 cursor-pointer hover:text-t2">
+            <span className="text-[12px] font-normal text-t3 flex items-center gap-0.5 cursor-pointer hover:text-t2">
               Pro <ChevronDown className="w-3 h-3" />
             </span>
           </div>
@@ -169,14 +189,14 @@ export function OrderForm({
 
         <div className="p-3 space-y-3">
           {/* Buy / Long | Sell / Short - INSIDE gray container like real HL */}
-          <div className="flex bg-[#1e2a30] rounded-lg p-0.5">
+          <div className="flex bg-[#273035] rounded-[8px] p-1">
             <button
               onClick={() => setIsBuy(true)}
               className={cn(
-                "flex-1 py-2.5 text-[13px] font-semibold transition-all rounded-md",
+                "flex-1 h-[29px] text-[12px] font-normal transition-all rounded-[6px]",
                 isBuy
                   ? "bg-acc text-[#02231e]"
-                  : "bg-transparent text-t2 hover:text-t1"
+                  : "bg-transparent text-t1 hover:text-t1"
               )}
             >
               Buy / Long
@@ -184,25 +204,45 @@ export function OrderForm({
             <button
               onClick={() => setIsBuy(false)}
               className={cn(
-                "flex-1 py-2.5 text-[13px] font-semibold transition-all rounded-md",
+                "flex-1 h-[29px] text-[12px] font-normal transition-all rounded-[6px]",
                 !isBuy
                   ? "bg-red text-white"
-                  : "bg-transparent text-t2 hover:text-t1"
+                  : "bg-transparent text-t1 hover:text-t1"
               )}
             >
               Sell / Short
             </button>
           </div>
 
+          {/* Limit Price field — only visible in Limit mode, like real HL */}
+          {orderTab === "limit" && (
+            <div className="flex items-center bg-[#1e2a30] rounded-lg px-3 py-2">
+              <span className="text-[12px] text-t3 mr-2 whitespace-nowrap">Price (USDC)</span>
+              <input
+                type="number"
+                value={limitPrice}
+                onChange={(e) => setLimitPrice(e.target.value)}
+                placeholder="0.00"
+                className="flex-1 bg-transparent text-[12px] font-normal outline-none font-tabular text-t1 text-right"
+              />
+              <button
+                onClick={() => price && setLimitPrice(price.toFixed(decimals))}
+                className="ml-2 text-[12px] text-acc hover:brightness-110"
+              >
+                Mid
+              </button>
+            </div>
+          )}
+
           {/* Available to Trade */}
           <div className="flex justify-between text-[12px]">
-            <span className="text-t3">Available to Trade</span>
+            <span className="text-t2">Available to Trade</span>
             <span className="text-t1 font-tabular">{formatNumber(availableBalance).replace(".", ",")} USDC</span>
           </div>
 
           {/* Current Position */}
           <div className="flex justify-between text-[12px]">
-            <span className="text-t3">Current Position</span>
+            <span className="text-t2">Current Position</span>
             <span className={cn(
               "font-tabular",
               currentPositionSize > 0 ? "text-acc" : currentPositionSize < 0 ? "text-red" : "text-t1"
@@ -219,7 +259,7 @@ export function OrderForm({
               value={size}
               onChange={(e) => setSize(e.target.value)}
               placeholder="0.00"
-              className="flex-1 bg-transparent text-[14px] font-medium outline-none font-tabular text-t1 text-right"
+              className="flex-1 bg-transparent text-[12px] font-normal outline-none font-tabular text-t1 text-right"
             />
             <div className="flex items-center gap-1 text-[12px] text-t3 ml-2">
               <span>USDC</span>
@@ -229,7 +269,7 @@ export function OrderForm({
 
           {/* Approximate value */}
           <div className="flex justify-end">
-            <span className="text-[11px] text-t4 font-tabular">≈ ${formatNumber(notional).replace(".", ",")}</span>
+            <span className="text-[12px] text-t4 font-tabular">≈ ${formatNumber(notional).replace(".", ",")}</span>
           </div>
 
           {/* Slider - matching real HL exactly with 5 dots */}
@@ -277,7 +317,7 @@ export function OrderForm({
                   type="number"
                   value={sliderPct}
                   onChange={(e) => handleSlider(parseInt(e.target.value) || 0)}
-                  className="w-6 bg-transparent text-[13px] text-t1 font-tabular outline-none text-right"
+                  className="w-6 bg-transparent text-[12px] text-t1 font-tabular outline-none text-right"
                 />
                 <span className="text-[12px] text-t3 ml-1">%</span>
               </div>
@@ -317,7 +357,7 @@ export function OrderForm({
                   value={tpPrice}
                   onChange={(e) => setTpPrice(e.target.value)}
                   disabled={!tpsl}
-                  className="flex-1 bg-transparent text-[13px] outline-none font-tabular text-t1 text-right disabled:opacity-50"
+                  className="flex-1 bg-transparent text-[12px] outline-none font-tabular text-t1 text-right disabled:opacity-50"
                 />
               </div>
               <div className="w-[calc(50%-3px)] flex items-center h-[33px] bg-transparent rounded-[8px] px-3 border border-[#273035] justify-between">
@@ -338,7 +378,7 @@ export function OrderForm({
                   value={slPrice}
                   onChange={(e) => setSlPrice(e.target.value)}
                   disabled={!tpsl}
-                  className="flex-1 bg-transparent text-[13px] outline-none font-tabular text-t1 text-right disabled:opacity-50"
+                  className="flex-1 bg-transparent text-[12px] outline-none font-tabular text-t1 text-right disabled:opacity-50"
                 />
               </div>
               <div className="w-[calc(50%-3px)] flex items-center h-[33px] bg-transparent rounded-[8px] px-3 border border-[#273035] justify-between">
@@ -356,7 +396,7 @@ export function OrderForm({
             onClick={handleSubmit}
             disabled={!price || sizeNum <= 0 || margin > availableBalance}
             className={cn(
-              "w-full py-3 rounded-lg font-semibold text-[14px] transition-all disabled:opacity-30 disabled:cursor-not-allowed mt-2",
+              "w-full py-3 rounded-[8px] font-normal text-[12px] transition-all disabled:opacity-30 disabled:cursor-not-allowed mt-2",
               isBuy ? "bg-acc text-[#02231e]" : "bg-red text-white"
             )}
           >
@@ -365,25 +405,29 @@ export function OrderForm({
 
           {/* Order info below button */}
           <div className="space-y-1.5 pt-1">
-            <div className="flex justify-between text-[11px]">
-              <span className="text-t3 border-b border-dotted border-t4">Liquidation Price</span>
+            <div className="flex justify-between text-[12px]">
+              <span className="text-t2 underline decoration-dashed decoration-t4">Liquidation Price</span>
               <span className="text-t1 font-tabular">{liqPrice ? liqPrice.toFixed(decimals).replace(".", ",") : "N/A"}</span>
             </div>
-            <div className="flex justify-between text-[11px]">
-              <span className="text-t3">Order Value</span>
+            <div className="flex justify-between text-[12px]">
+              <span className="text-t2">Order Value</span>
               <span className="text-t1 font-tabular">{notional > 0 ? `${formatNumber(notional).replace(".", ",")} USDC` : "N/A"}</span>
             </div>
-            <div className="flex justify-between text-[11px]">
-              <span className="text-t3">Margin Required</span>
+            <div className="flex justify-between text-[12px]">
+              <span className="text-t2">Margin Required</span>
               <span className="text-t1 font-tabular">{margin > 0 ? `${formatNumber(margin).replace(".", ",")} USDC` : "N/A"}</span>
             </div>
-            <div className="flex justify-between text-[11px]">
-              <span className="text-t3 border-b border-dotted border-t4">Slippage</span>
+            <div className="flex justify-between text-[12px]">
+              <span className="text-t2 underline decoration-dashed decoration-t4">Slippage</span>
               <span className="text-acc font-tabular">Est: 0% / Max: 8,00%</span>
             </div>
-            <div className="flex justify-between text-[11px]">
-              <span className="text-t3 border-b border-dotted border-t4">Fees</span>
-              <span className="text-t1 font-tabular">0,0450% / 0,0150%</span>
+            <div className="flex justify-between text-[12px]">
+              <span className="text-t2 underline decoration-dashed decoration-t4">Fees</span>
+              <span className="text-t1 font-tabular">
+                {orderType === "market"
+                  ? `${TAKER_FEE_PCT.toFixed(4).replace(".", ",")}% (Taker)`
+                  : `${MAKER_FEE_PCT.toFixed(4).replace(".", ",")}% (Maker)`}
+              </span>
             </div>
           </div>
         </div>
@@ -409,7 +453,7 @@ export function OrderForm({
         onConfirm={handleLeverageConfirm}
         currentLeverage={leverage}
         coin={coin}
-        maxLeverage={40}
+        maxLeverage={maxLeverage}
       />
     </>
   );

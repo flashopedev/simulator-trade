@@ -40,7 +40,7 @@ export function OrderBook({ asks, bids, midPrice, decimals }: OrderBookProps) {
   return (
     <div className="flex flex-col h-full">
       {/* Headers like real HL */}
-      <div className="grid grid-cols-3 px-2.5 py-1.5 text-[10px] text-t4 border-b border-brd">
+      <div className="grid grid-cols-3 px-2.5 py-1.5 text-[12px] text-t2 border-b border-brd">
         <span>Price</span>
         <span className="text-right">Size (USDC)</span>
         <span className="text-right">Total (USDC)</span>
@@ -51,7 +51,7 @@ export function OrderBook({ asks, bids, midPrice, decimals }: OrderBookProps) {
         {asks.map((level, i) => (
           <div
             key={`ask-${i}-${level.price}`}
-            className="grid grid-cols-3 px-2.5 py-[2px] text-[11px] font-medium relative ob-row"
+            className="grid grid-cols-3 px-2.5 py-[2px] text-[12px] font-normal relative ob-row leading-[23px]"
           >
             <span className="text-red font-tabular">
               {formatPrice(level.price)}
@@ -78,7 +78,7 @@ export function OrderBook({ asks, bids, midPrice, decimals }: OrderBookProps) {
         {bids.map((level, i) => (
           <div
             key={`bid-${i}-${level.price}`}
-            className="grid grid-cols-3 px-2.5 py-[2px] text-[11px] font-medium relative ob-row"
+            className="grid grid-cols-3 px-2.5 py-[2px] text-[12px] font-normal relative ob-row leading-[23px]"
           >
             <span className="text-grn font-tabular">
               {formatPrice(level.price)}
@@ -136,11 +136,11 @@ function SpreadRow({
       ref={flashRef}
       className="flex items-center justify-between px-2.5 py-1.5 border-y border-brd bg-s2"
     >
-      <span className="text-[14px] font-bold font-tabular text-t1">
+      <span className="text-[12px] font-normal font-tabular text-t1">
         {midPrice ? formatPriceLocal(midPrice) : "\u2014"}
       </span>
       {spread !== null && (
-        <span className="text-[10px] text-t3 font-tabular">
+        <span className="text-[12px] text-t2 font-tabular">
           Spread {spread.toFixed(decimals).replace(".", ",")} ({spreadPct?.toFixed(3).replace(".", ",")}%)
         </span>
       )}

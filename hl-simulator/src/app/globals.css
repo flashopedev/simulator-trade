@@ -16,9 +16,9 @@
   --t2: #949E9C;
   --t3: #878C8F;
   --t4: #5a6260;
-  --acc: #00d8c4;
-  --grn: #23b879;
-  --red: #e54d69;
+  --acc: #50D2C1;
+  --grn: #1FA67D;
+  --red: #ED7088;
   --blu: #0066ff;
 }
 
@@ -33,6 +33,7 @@ body {
   color: var(--t1);
   font-family: system-ui, "Segoe UI", Roboto, Ubuntu, "Helvetica Neue", sans-serif;
   font-size: 12px;
+  font-weight: 400;
   font-feature-settings: "calt" off;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;

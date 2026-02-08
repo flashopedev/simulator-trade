@@ -11,6 +11,8 @@ import { BottomTabsPanel } from "@/components/BottomTabsPanel";
 import { AuthForm } from "@/components/AuthForm";
 import { NotificationContainer } from "@/components/Notification";
 import { ChartToolbar } from "@/components/ChartToolbar";
+import { ChartTopBar } from "@/components/ChartTopBar";
+import { ChartBottomBar } from "@/components/ChartBottomBar";
 import { useAuth } from "@/hooks/useAuth";
 import { useTrading } from "@/hooks/useTrading";
 import { useMarketData } from "@/hooks/useMarketData";
@@ -124,7 +126,7 @@ export default function TradePage() {
           Gap bg = #1B2429 (gbg), container bg = #0F1A1F (s1). */}
       <div className="flex-1 flex flex-col md:grid md:grid-cols-[1fr_396px] gap-[3px] bg-gbg p-[3px] pt-[3px]">
         {/* Left column: Star Row + Coin Info + Chart + Bottom Panel */}
-        <div className="flex flex-col min-w-0 gap-[3px]">
+        <div className="flex flex-col min-w-0 min-h-0 gap-[3px]">
           {/* Coin Info Bar (includes star row) — left column only, each with rounded corners */}
           <CoinInfoBar
             selectedCoin={coin}
@@ -134,14 +136,23 @@ export default function TradePage() {
             decimals={decimals}
           />
 
-          {/* Chart area with toolbar */}
-          <div className="flex-1 min-h-[400px] flex rounded-[5px] bg-s1 overflow-hidden">
-            {/* Left toolbar - matching real HL */}
-            <ChartToolbar />
-            {/* Chart */}
-            <div className="flex-1">
-              <TradingViewChart coin={coin} />
+          {/* Chart area — matches real HL layout:
+              Top bar (38px) + [Left toolbar (52px) | Chart canvas | Right price scale] + Bottom bar (38px)
+              All wrapped in a single rounded container */}
+          <div className="flex-1 min-h-[500px] flex flex-col rounded-[5px] bg-[#0f1a1f] overflow-hidden">
+            {/* Top bar with timeframes, candle type, indicators */}
+            <ChartTopBar timeframe={timeframe} onTimeframeChange={setTimeframe} />
+            {/* Middle: toolbar + chart */}
+            <div className="flex-1 flex min-h-0">
+              {/* Left drawing toolbar — 52px wide like real HL */}
+              <ChartToolbar />
+              {/* Chart canvas */}
+              <div className="flex-1 min-w-0">
+                <TradingViewChart coin={coin} timeframe={timeframe} />
+              </div>
             </div>
+            {/* Bottom bar with range buttons, time, log/auto */}
+            <ChartBottomBar />
           </div>
 
           {/* Bottom Panel */}

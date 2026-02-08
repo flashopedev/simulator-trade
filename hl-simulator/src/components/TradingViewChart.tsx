@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, memo, useState } from "react";
+import { useEffect, useRef, memo, useCallback } from "react";
 import type { Timeframe } from "@/lib/utils";
 
 interface TradingViewChartProps {
@@ -10,7 +10,7 @@ interface TradingViewChartProps {
 
 // Map our coins to TradingView symbols with working exchanges
 const SYMBOL_MAP: Record<string, string> = {
-  HYPE: "GATEIO:HYPEUSDT",
+  HYPE: "BYBIT:HYPEUSDT.P",
   BTC: "BINANCE:BTCUSDT",
   ETH: "BINANCE:ETHUSDT",
   SOL: "BINANCE:SOLUSDT",
@@ -34,7 +34,7 @@ const SYMBOL_MAP: Record<string, string> = {
   BONK: "BINANCE:BONKUSDT",
 };
 
-// Map our timeframe IDs to TradingView interval numbers
+// Map our timeframe IDs to TradingView interval values
 const INTERVAL_MAP: Record<string, string> = {
   "1m": "1",
   "5m": "5",
@@ -45,42 +45,76 @@ const INTERVAL_MAP: Record<string, string> = {
   "1d": "D",
 };
 
+// Real Hyperliquid chart background color: rgb(15, 26, 31) = #0f1a1f
+const HL_BG_COLOR = "rgba(15, 26, 31, 1)";
+const HL_GRID_COLOR = "rgba(44, 58, 65, 0.6)";
+
 function TradingViewChartComponent({ coin, timeframe = "15m" }: TradingViewChartProps) {
-  const [widgetKey, setWidgetKey] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
   const symbol = SYMBOL_MAP[coin] || "BINANCE:BTCUSDT";
   const interval = INTERVAL_MAP[timeframe] || "15";
 
-  // Force re-render when coin or timeframe changes
+  const createWidget = useCallback(() => {
+    if (!containerRef.current) return;
+
+    // Clear any existing widget
+    containerRef.current.innerHTML = "";
+
+    // Create the TradingView widget container structure
+    const widgetContainer = document.createElement("div");
+    widgetContainer.className = "tradingview-widget-container";
+    widgetContainer.style.height = "100%";
+    widgetContainer.style.width = "100%";
+
+    const widgetDiv = document.createElement("div");
+    widgetDiv.className = "tradingview-widget-container__widget";
+    widgetDiv.style.height = "100%";
+    widgetDiv.style.width = "100%";
+    widgetContainer.appendChild(widgetDiv);
+
+    // Create script with widget config
+    const script = document.createElement("script");
+    script.src = "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
+    script.async = true;
+    script.type = "text/javascript";
+
+    const config = {
+      autosize: true,
+      symbol: symbol,
+      interval: interval,
+      timezone: "Etc/UTC",
+      theme: "dark",
+      style: "1",
+      locale: "en",
+      backgroundColor: HL_BG_COLOR,
+      gridColor: HL_GRID_COLOR,
+      hide_top_toolbar: true,
+      hide_side_toolbar: true,
+      hide_legend: false,
+      hide_volume: false,
+      allow_symbol_change: false,
+      save_image: false,
+      calendar: false,
+      withdateranges: false,
+      support_host: "https://www.tradingview.com",
+      studies: ["Volume@tv-basicstudies"],
+    };
+
+    script.textContent = JSON.stringify(config);
+    widgetContainer.appendChild(script);
+    containerRef.current.appendChild(widgetContainer);
+  }, [symbol, interval]);
+
   useEffect(() => {
-    setWidgetKey(prev => prev + 1);
-  }, [coin, timeframe]);
-
-  // Use Bybit perpetual for accurate data
-  const bybitSymbol = coin === "HYPE" ? "BYBIT:HYPEUSDT.P" : symbol;
-
-  // Build URL — hidesidetoolbar=1 works to remove built-in side toolbar.
-  // The built-in TradingView top toolbar CANNOT be hidden via URL params in widgetembed,
-  // so we shift the iframe up by 38px and clip the overflow to hide it.
-  const iframeSrc = `https://s.tradingview.com/widgetembed/?frameElementId=tradingview_chart&symbol=${encodeURIComponent(bybitSymbol)}&interval=${interval}&hidesidetoolbar=1&symboledit=0&saveimage=0&theme=dark&style=1&timezone=Etc%2FUTC&withdateranges=0&showpopupbutton=0&studies=Volume%40tv-basicstudies&locale=en`;
+    createWidget();
+  }, [createWidget]);
 
   return (
-    <div className="w-full h-full overflow-hidden" style={{ backgroundColor: "#131722" }}>
-      {/* Shift iframe up by 38px to hide TradingView's built-in top toolbar.
-          The iframe is made 38px taller to compensate, so the chart fills the visible area. */}
-      <iframe
-        key={widgetKey}
-        id="tradingview_chart"
-        src={iframeSrc}
-        style={{
-          width: "100%",
-          height: "calc(100% + 38px)",
-          marginTop: "-38px",
-          border: "none",
-          display: "block",
-        }}
-        allowFullScreen
-      />
-    </div>
+    <div
+      ref={containerRef}
+      className="w-full h-full overflow-hidden"
+      style={{ backgroundColor: "#0f1a1f" }}
+    />
   );
 }
 

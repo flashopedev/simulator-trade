@@ -90,7 +90,7 @@ function TradingViewChartComponent({ coin, timeframe = "15m" }: TradingViewChart
       gridColor: HL_GRID_COLOR,
       hide_top_toolbar: true,
       hide_side_toolbar: true,
-      hide_legend: false,
+      hide_legend: true,
       hide_volume: false,
       allow_symbol_change: false,
       save_image: false,

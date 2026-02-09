@@ -27,6 +27,18 @@ export function useTrading({ accountId, balance, onBalanceChange }: UseTradingPr
   const [loading, setLoading] = useState(true);
   const lastPricesRef = useRef<Record<string, number>>({});
 
+  // Keep a ref to always have the latest balance in closures
+  const balanceRef = useRef(balance);
+  balanceRef.current = balance;
+
+  // Wrap onBalanceChange to also update ref immediately (before next render)
+  const onBalanceChangeRef = useRef(onBalanceChange);
+  onBalanceChangeRef.current = onBalanceChange;
+  const updateBalance = useCallback((newBalance: number) => {
+    balanceRef.current = newBalance; // Immediate update for subsequent sync reads
+    onBalanceChangeRef.current(newBalance);
+  }, []);
+
   const supabase = createClient();
 
   // Load positions and history
@@ -109,9 +121,9 @@ export function useTrading({ accountId, balance, onBalanceChange }: UseTradingPr
     (currentPrices?: Record<string, number>) => {
       const uPnl = getUnrealizedPnl(currentPrices);
       const pendingMargin = getPendingOrdersMargin();
-      return Math.max(0, balance + Math.min(0, uPnl) - pendingMargin);
+      return Math.max(0, balanceRef.current + Math.min(0, uPnl) - pendingMargin);
     },
-    [balance, getUnrealizedPnl, getPendingOrdersMargin]
+    [getUnrealizedPnl, getPendingOrdersMargin]
   );
 
   // Place order — handles market (instant) and limit (pending)
@@ -132,7 +144,7 @@ export function useTrading({ accountId, balance, onBalanceChange }: UseTradingPr
       const feeRate = order.orderType === "market" ? TAKER_FEE : MAKER_FEE;
       const fee = notional * feeRate;
       // In simulator mode, allow orders as long as balance > 0
-      if (balance <= 0) {
+      if (balanceRef.current <= 0) {
         notify("Insufficient margin", "error");
         return false;
       }
@@ -250,8 +262,8 @@ export function useTrading({ accountId, balance, onBalanceChange }: UseTradingPr
 
               // Update balance: return closed margin + pnl - fees
               const closedMargin = (closedSize * existingPosition.entry_price) / existingPosition.leverage;
-              const newBalance = balance + closedMargin + pnl - closeFee;
-              onBalanceChange(newBalance);
+              const newBalance = balanceRef.current + closedMargin + pnl - closeFee;
+              updateBalance(newBalance);
 
               setPositions((prev) =>
                 prev.map((p) =>
@@ -314,7 +326,7 @@ export function useTrading({ accountId, balance, onBalanceChange }: UseTradingPr
 
               // Return margin from closed position
               const closedMargin = (existingPosition.size * existingPosition.entry_price) / existingPosition.leverage;
-              let newBalance = balance + closedMargin + closePnl - closeFee;
+              let newBalance = balanceRef.current + closedMargin + closePnl - closeFee;
 
               // Open new position with remaining size
               const remainingSize = order.size - existingPosition.size;
@@ -343,7 +355,7 @@ export function useTrading({ accountId, balance, onBalanceChange }: UseTradingPr
                 .select()
                 .single();
 
-              onBalanceChange(newBalance);
+              updateBalance(newBalance);
 
               setPositions((prev) => {
                 const filtered = prev.filter((p) => p.id !== existingPosition.id);
@@ -418,8 +430,8 @@ export function useTrading({ accountId, balance, onBalanceChange }: UseTradingPr
         });
 
         // Deduct margin + fee from balance
-        const newBalance = balance - margin - fee;
-        onBalanceChange(newBalance);
+        const newBalance = balanceRef.current - margin - fee;
+        updateBalance(newBalance);
 
         notify(
           `${order.side} ${order.size.toFixed(4)} ${order.coin} @ ${order.price.toFixed(2)} | ${order.leverage}x`,
@@ -433,7 +445,7 @@ export function useTrading({ accountId, balance, onBalanceChange }: UseTradingPr
         return false;
       }
     },
-    [accountId, balance, positions, getAvailableBalance, onBalanceChange, supabase]
+    [accountId, positions, getAvailableBalance, updateBalance, supabase]
   );
 
   // Internal close position (used by merge flip and direct close)
@@ -472,8 +484,8 @@ export function useTrading({ accountId, balance, onBalanceChange }: UseTradingPr
 
         // Return margin + PnL - fee
         const margin = (position.size * position.entry_price) / position.leverage;
-        const newBalance = balance + margin + pnl - fee;
-        onBalanceChange(newBalance);
+        const newBalance = balanceRef.current + margin + pnl - fee;
+        updateBalance(newBalance);
 
         setPositions((prev) => prev.filter((p) => p.id !== position.id));
         setHistory((prev) => [
@@ -506,7 +518,7 @@ export function useTrading({ accountId, balance, onBalanceChange }: UseTradingPr
         return false;
       }
     },
-    [accountId, balance, onBalanceChange, supabase]
+    [accountId, updateBalance, supabase]
   );
 
   // Public close position
@@ -591,8 +603,8 @@ export function useTrading({ accountId, balance, onBalanceChange }: UseTradingPr
             }
 
             // Deduct margin + fee
-            const newBalance = balance - margin - fee;
-            onBalanceChange(newBalance);
+            const newBalance = balanceRef.current - margin - fee;
+            updateBalance(newBalance);
 
             notify(
               `Limit filled: ${order.side} ${order.size.toFixed(4)} ${order.coin} @ ${order.price.toFixed(2)}`,
@@ -607,7 +619,7 @@ export function useTrading({ accountId, balance, onBalanceChange }: UseTradingPr
         }
       }
     },
-    [accountId, balance, orders, positions, onBalanceChange, supabase, loadData]
+    [accountId, orders, positions, updateBalance, supabase, loadData]
   );
 
   // Cancel pending order
@@ -721,9 +733,9 @@ export function useTrading({ accountId, balance, onBalanceChange }: UseTradingPr
         usedMargin += (p.size * p.entry_price) / p.leverage;
       });
       // Equity = cash balance + margin in positions + unrealized PnL
-      return balance + usedMargin + uPnl;
+      return balanceRef.current + usedMargin + uPnl;
     },
-    [balance, positions]
+    [positions]
   );
 
   return {

@@ -107,6 +107,8 @@ export function useAuth() {
   const [account, setAccount] = useState<DemoAccount | null>(null);
   const [loading, setLoading] = useState(true);
   const mountedRef = useRef(true);
+  const accountRef = useRef<DemoAccount | null>(null);
+  accountRef.current = account;
 
   const fetchAccount = useCallback(async (userId: string, token: string) => {
     try {
@@ -145,27 +147,33 @@ export function useAuth() {
 
   const updateBalance = useCallback(
     async (newBalance: number) => {
-      if (!account) return;
+      const currentAccount = accountRef.current;
+      if (!currentAccount) return;
       const auth = getStoredAuth();
       if (!auth) return;
 
+      // Optimistically update local state IMMEDIATELY (before DB roundtrip)
+      // This prevents stale reads between the call and the DB response
+      if (mountedRef.current) {
+        const updated = { ...currentAccount, balance: newBalance };
+        setAccount(updated);
+        accountRef.current = updated;
+      }
+
       try {
         await supabaseRest(
-          `demo_accounts?id=eq.${account.id}`,
+          `demo_accounts?id=eq.${currentAccount.id}`,
           auth.accessToken,
           {
             method: 'PATCH',
             body: JSON.stringify({ balance: newBalance, updated_at: new Date().toISOString() }),
           }
         );
-        if (mountedRef.current) {
-          setAccount({ ...account, balance: newBalance });
-        }
       } catch (e) {
         console.error("updateBalance error:", e);
       }
     },
-    [account]
+    []
   );
 
   const signOut = useCallback(async () => {

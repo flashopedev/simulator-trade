@@ -6,10 +6,10 @@ import { ChevronDown } from "lucide-react";
 import { ConfirmOrderModal } from "./ConfirmOrderModal";
 import { AdjustLeverageModal } from "./AdjustLeverageModal";
 
-type OrderTab = "market" | "limit";
+type OrderTab = "market" | "limit" | "pro";
 
 // Tab index for sliding indicator
-const TAB_INDEX: Record<string, number> = { market: 0, limit: 1 };
+const TAB_INDEX: Record<string, number> = { market: 0, limit: 1, pro: 2 };
 
 // Per-coin max leverage matching real HL
 const COIN_MAX_LEVERAGE: Record<string, number> = {
@@ -34,7 +34,7 @@ interface OrderFormProps {
     size: number;
     price: number;
     leverage: number;
-    orderType: "market" | "limit";
+    orderType: "market" | "limit" | "pro";
     marginMode: "cross" | "isolated";
     tpPrice?: number;
     slPrice?: number;
@@ -69,10 +69,10 @@ export function OrderForm({
   const maxLeverage = COIN_MAX_LEVERAGE[coin] || 10;
   const sizeNum = parseFloat(size) || 0;
   const orderType = orderTab;
-  const execPrice = orderType === "limit" ? parseFloat(limitPrice) || price || 0 : price || 0;
+  const execPrice = orderType === "limit" || orderType === "pro" ? parseFloat(limitPrice) || price || 0 : price || 0;
   const notional = sizeNum * execPrice;
   const margin = notional / leverage;
-  const feeRate = orderType === "market" ? TAKER_FEE_PCT : MAKER_FEE_PCT;
+  const feeRate = orderType === "limit" ? MAKER_FEE_PCT : TAKER_FEE_PCT;
   const liqPrice = execPrice > 0 && sizeNum > 0
     ? calculateLiquidationPrice(execPrice, isBuy, leverage)
     : null;
@@ -97,8 +97,14 @@ export function OrderForm({
   );
 
   const handleSubmit = () => {
-    if (!price || sizeNum <= 0) return;
-    if (orderType === "limit" && !parseFloat(limitPrice)) return;
+    if (sizeNum <= 0) return;
+    if (orderType === "pro") {
+      // Pro mode: requires custom price, no market price needed
+      if (!parseFloat(limitPrice)) return;
+    } else {
+      if (!price) return;
+      if (orderType === "limit" && !parseFloat(limitPrice)) return;
+    }
 
     const skipConfirm = localStorage.getItem("skipOrderConfirm") === "true";
     if (skipConfirm) {
@@ -132,7 +138,7 @@ export function OrderForm({
   };
 
   useEffect(() => {
-    if (price && orderType === "limit" && !limitPrice) {
+    if (price && (orderType === "limit" || orderType === "pro") && !limitPrice) {
       setLimitPrice(price.toFixed(decimals));
     }
   }, [price, orderType, decimals, limitPrice]);
@@ -186,7 +192,11 @@ export function OrderForm({
               Limit
             </button>
             <button
-              className="h-[35px] text-[12px] font-normal text-center text-[#949e9c] hover:text-[#c0c8c6] transition-colors cursor-default"
+              onClick={() => setOrderTab("pro")}
+              className={cn(
+                "h-[35px] text-[12px] font-normal text-center transition-colors",
+                orderTab === "pro" ? "text-[#f6fefd]" : "text-[#949e9c] hover:text-[#c0c8c6]"
+              )}
             >
               Pro
             </button>
@@ -245,10 +255,10 @@ export function OrderForm({
             </span>
           </div>
 
-          {/* Limit Price field — only visible in Limit mode */}
-          {orderTab === "limit" && (
+          {/* Price field — visible in Limit and Pro mode */}
+          {(orderTab === "limit" || orderTab === "pro") && (
             <div className="flex items-center bg-transparent border border-[#273035] rounded-[8px] h-[33px] px-3 mt-3">
-              <span className="text-[12px] text-t3 mr-2 whitespace-nowrap">Price (USDC)</span>
+              <span className="text-[12px] text-t3 mr-2 whitespace-nowrap">{orderTab === "pro" ? "Entry Price" : "Price (USDC)"}</span>
               <input
                 type="number"
                 value={limitPrice}
@@ -418,7 +428,7 @@ export function OrderForm({
           {/* Place Order button */}
           <button
             onClick={handleSubmit}
-            disabled={!price || sizeNum <= 0}
+            disabled={(orderType !== "pro" && !price) || sizeNum <= 0 || ((orderType === "limit" || orderType === "pro") && !parseFloat(limitPrice))}
             className={cn(
               "w-full h-[33px] rounded-[8px] font-normal text-[12px] transition-all disabled:opacity-30 disabled:cursor-not-allowed",
               isBuy ? "bg-acc text-[#02231e]" : "bg-red text-white"
@@ -448,9 +458,9 @@ export function OrderForm({
             <div className="flex justify-between text-[12px] leading-tight">
               <span className="text-t2 underline decoration-dashed decoration-t4">Fees</span>
               <span className="text-t1 font-tabular">
-                {orderType === "market"
-                  ? `${TAKER_FEE_PCT.toFixed(4).replace(".", ",")}% (Taker)`
-                  : `${MAKER_FEE_PCT.toFixed(4).replace(".", ",")}% (Maker)`}
+                {orderType === "limit"
+                  ? `${MAKER_FEE_PCT.toFixed(4).replace(".", ",")}% (Maker)`
+                  : `${TAKER_FEE_PCT.toFixed(4).replace(".", ",")}% (Taker)`}
               </span>
             </div>
           </div>
@@ -465,7 +475,7 @@ export function OrderForm({
         action={isBuy ? "Long" : "Short"}
         size={sizeNum}
         coin={coin}
-        price={orderType === "market" ? "Market" : execPrice}
+        price={orderType === "market" ? "Market" : orderType === "pro" ? `${execPrice} (Forced)` : execPrice}
         liquidationPrice={liqPrice}
         orderType={orderType}
       />

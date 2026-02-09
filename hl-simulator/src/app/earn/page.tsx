@@ -16,17 +16,22 @@ export default function EarnPage() {
   const [activeTab, setActiveTab] = useState<EarnTab>("faucet");
   const [claiming, setClaiming] = useState(false);
   const [lastClaim, setLastClaim] = useState<Date | null>(null);
+  const [claimAmount, setClaimAmount] = useState("1000");
 
   const handleClaimFaucet = async () => {
     if (!account || claiming) return;
+    const amount = parseFloat(claimAmount);
+    if (!amount || amount <= 0) {
+      notify("Enter a valid amount", "error");
+      return;
+    }
 
     setClaiming(true);
     try {
-      // Add 1000 USDC to balance
-      await updateBalance(account.balance + 1000);
+      await updateBalance(account.balance + amount);
       await refetchAccount();
       setLastClaim(new Date());
-      notify("+1,000 USDC claimed successfully!", "success");
+      notify(`+${formatNumber(amount)} USDC claimed successfully!`, "success");
     } catch (error) {
       notify("Failed to claim faucet. Please try again.", "error");
     } finally {
@@ -122,11 +127,30 @@ export default function EarnPage() {
 
                   <div className="bg-s2 border border-brd rounded-lg p-4 mb-4">
                     <div className="flex items-center justify-between">
-                      <div>
-                        <div className="text-[10px] text-t4 uppercase tracking-wide mb-1">Claim Amount</div>
-                        <div className="text-[20px] font-bold text-acc font-tabular">+1,000 USDC</div>
+                      <div className="flex-1">
+                        <div className="text-[10px] text-t4 uppercase tracking-wide mb-2">Claim Amount (USDC)</div>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="number"
+                            value={claimAmount}
+                            onChange={(e) => setClaimAmount(e.target.value)}
+                            placeholder="1000"
+                            className="w-full bg-s1 border border-brd rounded-lg px-3 py-2 text-[18px] font-bold text-acc font-tabular outline-none focus:border-acc transition-colors"
+                          />
+                        </div>
+                        <div className="flex gap-2 mt-2">
+                          {[1000, 5000, 10000, 50000, 100000].map((amt) => (
+                            <button
+                              key={amt}
+                              onClick={() => setClaimAmount(String(amt))}
+                              className="px-2 py-1 text-[10px] text-t3 bg-s1 border border-brd rounded hover:border-acc hover:text-acc transition-colors"
+                            >
+                              {amt >= 1000 ? `${amt / 1000}k` : amt}
+                            </button>
+                          ))}
+                        </div>
                       </div>
-                      <div className="text-right">
+                      <div className="text-right ml-4">
                         <div className="text-[10px] text-t4 uppercase tracking-wide mb-1">Cooldown</div>
                         <div className="text-[13px] font-medium text-t2">None</div>
                       </div>
@@ -135,10 +159,10 @@ export default function EarnPage() {
 
                   <button
                     onClick={handleClaimFaucet}
-                    disabled={claiming}
+                    disabled={claiming || !parseFloat(claimAmount)}
                     className={cn(
                       "w-full py-3.5 rounded-lg font-bold text-[14px] transition-all",
-                      claiming
+                      claiming || !parseFloat(claimAmount)
                         ? "bg-s3 text-t3 cursor-not-allowed"
                         : "bg-acc text-black hover:brightness-110"
                     )}
@@ -151,7 +175,7 @@ export default function EarnPage() {
                     ) : (
                       <span className="flex items-center justify-center gap-2">
                         <Droplets className="w-4 h-4" />
-                        Claim 1,000 USDC
+                        Claim {formatNumber(parseFloat(claimAmount) || 0)} USDC
                       </span>
                     )}
                   </button>

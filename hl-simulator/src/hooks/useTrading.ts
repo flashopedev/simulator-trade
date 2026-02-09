@@ -126,7 +126,7 @@ export function useTrading({ accountId, balance, onBalanceChange }: UseTradingPr
     [getUnrealizedPnl, getPendingOrdersMargin]
   );
 
-  // Place order — handles market (instant) and limit (pending)
+  // Place order — handles market (instant), limit (pending), and pro (forced entry price)
   const placeOrder = useCallback(
     async (order: {
       coin: SupportedCoin;
@@ -134,14 +134,14 @@ export function useTrading({ accountId, balance, onBalanceChange }: UseTradingPr
       size: number;
       price: number;
       leverage: number;
-      orderType: "market" | "limit";
+      orderType: "market" | "limit" | "pro";
       marginMode: "cross" | "isolated";
     }) => {
       if (!accountId) return false;
 
       const notional = order.size * order.price;
       const margin = notional / order.leverage;
-      const feeRate = order.orderType === "market" ? TAKER_FEE : MAKER_FEE;
+      const feeRate = order.orderType === "limit" ? MAKER_FEE : TAKER_FEE;
       const fee = notional * feeRate;
       // In simulator mode, allow orders as long as balance > 0
       if (balanceRef.current <= 0) {
@@ -261,8 +261,9 @@ export function useTrading({ accountId, balance, onBalanceChange }: UseTradingPr
               });
 
               // Update balance: return closed margin + pnl - fees
+              // Floor at 0 — balance can never go negative
               const closedMargin = (closedSize * existingPosition.entry_price) / existingPosition.leverage;
-              const newBalance = balanceRef.current + closedMargin + pnl - closeFee;
+              const newBalance = Math.max(0, balanceRef.current + closedMargin + pnl - closeFee);
               updateBalance(newBalance);
 
               setPositions((prev) =>
@@ -326,7 +327,7 @@ export function useTrading({ accountId, balance, onBalanceChange }: UseTradingPr
 
               // Return margin from closed position
               const closedMargin = (existingPosition.size * existingPosition.entry_price) / existingPosition.leverage;
-              let newBalance = balanceRef.current + closedMargin + closePnl - closeFee;
+              let newBalance = Math.max(0, balanceRef.current + closedMargin + closePnl - closeFee);
 
               // Open new position with remaining size
               const remainingSize = order.size - existingPosition.size;
@@ -429,8 +430,8 @@ export function useTrading({ accountId, balance, onBalanceChange }: UseTradingPr
           fee,
         });
 
-        // Deduct margin + fee from balance
-        const newBalance = balanceRef.current - margin - fee;
+        // Deduct margin + fee from balance (floor at 0)
+        const newBalance = Math.max(0, balanceRef.current - margin - fee);
         updateBalance(newBalance);
 
         notify(
@@ -483,8 +484,10 @@ export function useTrading({ accountId, balance, onBalanceChange }: UseTradingPr
         });
 
         // Return margin + PnL - fee
+        // Balance = cash + returned_margin + realized_pnl - close_fee
+        // Floor at 0 — balance can never go negative (like real HL)
         const margin = (position.size * position.entry_price) / position.leverage;
-        const newBalance = balanceRef.current + margin + pnl - fee;
+        const newBalance = Math.max(0, balanceRef.current + margin + pnl - fee);
         updateBalance(newBalance);
 
         setPositions((prev) => prev.filter((p) => p.id !== position.id));
@@ -602,8 +605,8 @@ export function useTrading({ accountId, balance, onBalanceChange }: UseTradingPr
               });
             }
 
-            // Deduct margin + fee
-            const newBalance = balanceRef.current - margin - fee;
+            // Deduct margin + fee (floor at 0)
+            const newBalance = Math.max(0, balanceRef.current - margin - fee);
             updateBalance(newBalance);
 
             notify(

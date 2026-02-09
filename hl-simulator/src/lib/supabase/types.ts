@@ -76,7 +76,7 @@ export type Database = {
           account_id: string;
           coin: string;
           side: "Long" | "Short";
-          order_type: "market" | "limit";
+          order_type: "market" | "limit" | "pro";
           size: number;
           price: number;
           status: "filled" | "cancelled" | "pending";
@@ -88,7 +88,7 @@ export type Database = {
           account_id: string;
           coin: string;
           side: "Long" | "Short";
-          order_type: "market" | "limit";
+          order_type: "market" | "limit" | "pro";
           size: number;
           price: number;
           status?: "filled" | "cancelled" | "pending";
@@ -100,7 +100,7 @@ export type Database = {
           account_id?: string;
           coin?: string;
           side?: "Long" | "Short";
-          order_type?: "market" | "limit";
+          order_type?: "market" | "limit" | "pro";
           size?: number;
           price?: number;
           status?: "filled" | "cancelled" | "pending";

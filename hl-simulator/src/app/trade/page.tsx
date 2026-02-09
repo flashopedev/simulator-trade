@@ -76,7 +76,7 @@ export default function TradePage() {
       size: number;
       price: number;
       leverage: number;
-      orderType: "market" | "limit";
+      orderType: "market" | "limit" | "pro";
       marginMode: "cross" | "isolated";
     }) => {
       await placeOrder({ ...order, coin });

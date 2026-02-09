@@ -11,9 +11,9 @@ interface ConfirmOrderModalProps {
   action: "Long" | "Short";
   size: number;
   coin: string;
-  price: number | "Market";
+  price: number | string;
   liquidationPrice: number | null;
-  orderType: "market" | "limit";
+  orderType: "market" | "limit" | "pro";
 }
 
 export function ConfirmOrderModal({
@@ -86,7 +86,7 @@ export function ConfirmOrderModal({
             <div className="flex justify-between text-[14px]">
               <span className="text-t3">Price</span>
               <span className="text-white font-medium">
-                {price === "Market" ? "Market" : formatNumber(price)}
+                {typeof price === "string" ? price : formatNumber(price)}
               </span>
             </div>
 

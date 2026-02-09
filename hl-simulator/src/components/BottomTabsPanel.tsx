@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { cn, formatPnl, formatNumber, calculatePnl, calculateRoe, COIN_DECIMALS } from "@/lib/utils";
 import type { Position, TradeHistory, OrderHistory } from "@/lib/supabase/types";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Pencil, ExternalLink } from "lucide-react";
 import { MarketCloseModal } from "./MarketCloseModal";
 
 type BottomTab =
@@ -21,8 +21,11 @@ interface BottomTabsPanelProps {
   orders: OrderHistory[];
   currentPrices: Record<string, number>;
   balance: number;
+  totalEquity: number;
+  availableBalance: number;
   onClosePosition: (position: Position, size?: number) => void;
   onCancelOrder?: (orderId: string) => void;
+  onSelectCoin?: (coin: string) => void;
 }
 
 export function BottomTabsPanel({
@@ -31,8 +34,11 @@ export function BottomTabsPanel({
   orders,
   currentPrices,
   balance,
+  totalEquity,
+  availableBalance,
   onClosePosition,
   onCancelOrder,
+  onSelectCoin,
 }: BottomTabsPanelProps) {
   const [activeTab, setActiveTab] = useState<BottomTab>("balances");
   const [closeModal, setCloseModal] = useState<Position | null>(null);
@@ -115,13 +121,14 @@ export function BottomTabsPanel({
       {/* Content */}
       <div className="flex-1 overflow-auto">
         {activeTab === "balances" && (
-          <BalancesContent balance={balance} hideSmall={hideSmallBalances} />
+          <BalancesContent totalEquity={totalEquity} availableBalance={availableBalance} hideSmall={hideSmallBalances} />
         )}
         {activeTab === "positions" && (
           <PositionsContent
             positions={positions}
             currentPrices={currentPrices}
             onMarketClose={handleMarketClose}
+            onSelectCoin={onSelectCoin}
           />
         )}
         {activeTab === "orders" && (
@@ -160,8 +167,8 @@ function DisabledTabContent({ tabName }: { tabName: string }) {
   );
 }
 
-function BalancesContent({ balance, hideSmall }: { balance: number; hideSmall: boolean }) {
-  if (hideSmall && balance < 1) {
+function BalancesContent({ totalEquity, availableBalance, hideSmall }: { totalEquity: number; availableBalance: number; hideSmall: boolean }) {
+  if (hideSmall && totalEquity < 1) {
     return (
       <div className="text-center py-8 text-[#949e9c] text-[12px]">No balances to show</div>
     );
@@ -185,9 +192,9 @@ function BalancesContent({ balance, hideSmall }: { balance: number; hideSmall: b
         <tbody>
           <tr className="h-[24px] hover:bg-[#1b2429]">
             <td className="px-1 text-[#f6fefd] font-normal">USDC</td>
-            <td className="px-1 font-tabular text-[#f6fefd]">{formatNumber(balance)} USDC</td>
-            <td className="px-1 font-tabular text-[#f6fefd]">{formatNumber(balance)} USDC</td>
-            <td className="px-1 font-tabular text-[#f6fefd]">${formatNumber(balance)}</td>
+            <td className="px-1 font-tabular text-[#f6fefd]">{formatNumber(totalEquity)} USDC</td>
+            <td className="px-1 font-tabular text-[#f6fefd]">{formatNumber(availableBalance)} USDC</td>
+            <td className="px-1 font-tabular text-[#f6fefd]">${formatNumber(totalEquity)}</td>
             <td className="px-1 text-[#949e9c]"></td>
             <td className="px-1"><button className="text-[12px] text-[#50d2c1] hover:underline">Send</button></td>
             <td className="px-1"><button className="text-[12px] text-[#50d2c1] hover:underline">Transfer to Perps</button></td>
@@ -203,33 +210,34 @@ function PositionsContent({
   positions,
   currentPrices,
   onMarketClose,
+  onSelectCoin,
 }: {
   positions: Position[];
   currentPrices: Record<string, number>;
   onMarketClose: (p: Position) => void;
+  onSelectCoin?: (coin: string) => void;
 }) {
   return (
-    <div className="px-3 overflow-x-auto">
+    <div className="overflow-x-auto">
       <table className="w-full text-[12px] min-w-[900px]" style={{ borderCollapse: 'collapse' }}>
         <thead>
           <tr className="text-[#949e9c] text-left h-[24px]">
-            <th className="font-normal px-1">Coin</th>
-            <th className="font-normal px-1">Size</th>
-            <th className="font-normal px-1">Position Value <ChevronDown className="inline w-3 h-3 opacity-50" /></th>
-            <th className="font-normal px-1">Entry Price</th>
-            <th className="font-normal px-1">Mark Price</th>
-            <th className="font-normal px-1 whitespace-nowrap" style={{ textDecoration: 'underline dashed', textUnderlineOffset: '3px', textDecorationColor: '#949e9c' }}>PNL (ROE %)</th>
-            <th className="font-normal px-1">Liq. Price</th>
-            <th className="font-normal px-1">Margin</th>
-            <th className="font-normal px-1">Funding</th>
-            <th className="font-normal px-1">Close All</th>
-            <th className="font-normal px-1"></th>
+            <th className="font-normal" style={{ paddingLeft: 12, paddingRight: 8 }}>Coin</th>
+            <th className="font-normal" style={{ padding: '0 8px' }}>Size</th>
+            <th className="font-normal" style={{ padding: '0 8px' }}>Position Value <ChevronDown className="inline w-3 h-3 opacity-50" /></th>
+            <th className="font-normal" style={{ padding: '0 8px' }}>Entry Price</th>
+            <th className="font-normal" style={{ padding: '0 8px' }}>Mark Price</th>
+            <th className="font-normal whitespace-nowrap" style={{ padding: '0 8px', textDecoration: 'underline dashed', textUnderlineOffset: '3px', textDecorationColor: '#949e9c' }}>PNL (ROE %)</th>
+            <th className="font-normal" style={{ padding: '0 8px' }}>Liq. Price</th>
+            <th className="font-normal" style={{ padding: '0 8px' }}>Margin</th>
+            <th className="font-normal" style={{ padding: '0 8px' }}>Funding</th>
+            <th className="font-normal" style={{ padding: '0 8px' }}>TP/SL</th>
           </tr>
         </thead>
         <tbody>
           {positions.length === 0 && (
             <tr>
-              <td colSpan={11} className="py-6 text-center text-[#949e9c]">
+              <td colSpan={10} className="py-6 text-center text-[#949e9c]">
                 No open positions yet
               </td>
             </tr>
@@ -248,49 +256,76 @@ function PositionsContent({
             const isLong = p.side === "Long";
             const sizeDecimals = COIN_DECIMALS[p.coin] !== undefined ? (p.coin === 'BTC' ? 5 : 2) : 2;
 
+            // Funding: HL charges every 1h, ~0.01% per 8h = 0.00125% per hour
+            // Longs pay shorts when positive rate. We simulate accumulated funding.
+            const hoursOpen = (Date.now() - new Date(p.created_at).getTime()) / (1000 * 60 * 60);
+            const fundingIntervals = Math.floor(hoursOpen); // 1 interval per hour
+            const fundingRatePerHour = 0.0000125; // 0.00125% per hour
+            const posNotional = p.size * p.entry_price;
+            // Longs pay funding (negative), shorts receive (positive)
+            const funding = isLong
+              ? -(fundingIntervals * fundingRatePerHour * posNotional)
+              : (fundingIntervals * fundingRatePerHour * posNotional);
+
             return (
               <tr key={`${p.id}-${markPrice.toFixed(decimals)}`} className="h-[24px] hover:bg-[#1b2429] pnl-row">
-                {/* Coin + leverage badge - exact HL: "SOL 20x" */}
-                <td className="px-1">
-                  <span className={cn("font-normal", isLong ? "text-[#50d2c1]" : "text-[#ed7088]")}>
+                {/* Coin + leverage — 4px bar + gradient, OurFontBold emulated with fw:800 */}
+                <td
+                  style={{
+                    paddingLeft: 12,
+                    paddingRight: 8,
+                    background: isLong
+                      ? 'transparent linear-gradient(90deg, #1FA67D 0px, #1FA67D 4px, rgba(11,50,38,1) 4px, transparent 100%)'
+                      : 'transparent linear-gradient(90deg, #ED7088 0px, #ED7088 4px, rgba(52,36,46,1) 4px, transparent 100%)',
+                  }}
+                >
+                  <span
+                    className={cn("cursor-pointer hover:underline", isLong ? "text-[#97fce4]" : "text-[#eaafb8]")}
+                    style={{ fontWeight: 800 }}
+                    onClick={() => onSelectCoin?.(p.coin)}
+                  >
                     {p.coin}
                   </span>
-                  <span className="ml-1 text-[12px] text-[#949e9c]">{p.leverage}x</span>
+                  <span className={cn("ml-1.5 font-medium", isLong ? "text-[#50d2c1]" : "text-[#ed7088]")}>
+                    {p.leverage}x
+                  </span>
                 </td>
-                {/* Size - "0,29 SOL" colored */}
-                <td className={cn("px-1 font-tabular", isLong ? "text-[#50d2c1]" : "text-[#ed7088]")}>
+                {/* Size — position-colored like real HL */}
+                <td className={cn("font-tabular font-medium", isLong ? "text-[#1fa67d]" : "text-[#ed7088]")} style={{ padding: '0 8px' }}>
                   {p.size.toFixed(sizeDecimals).replace('.', ',')} {p.coin}
                 </td>
-                {/* Position Value - "25,46 USDC" */}
-                <td className="px-1 font-tabular text-[#f6fefd]">{formatNumber(posValue)} USDC</td>
+                {/* Position Value */}
+                <td className="font-tabular font-medium text-[#f6fefd]" style={{ padding: '0 8px' }}>{formatNumber(posValue)} USDC</td>
                 {/* Entry Price */}
-                <td className="px-1 font-tabular text-[#f6fefd]">{formatNumber(p.entry_price, decimals)}</td>
+                <td className="font-tabular font-medium text-[#f6fefd]" style={{ padding: '0 8px' }}>{formatNumber(p.entry_price, decimals)}</td>
                 {/* Mark Price */}
-                <td className="px-1 font-tabular text-[#f6fefd]">{formatNumber(markPrice, decimals)}</td>
-                {/* PNL (ROE %) - colored + share icon */}
-                <td className={cn("px-1 font-tabular", pnl >= 0 ? "text-[#50d2c1]" : "text-[#ed7088]")}>
-                  {formatPnl(pnl)} ({roe >= 0 ? "+" : ""}{roe.toFixed(1).replace('.', ',')}%)
-                </td>
-                {/* Liquidation Price */}
-                <td className="px-1 font-tabular text-[#f6fefd]">
-                  {p.liquidation_price ? formatNumber(p.liquidation_price, decimals || 2) : "N/A"}
-                </td>
-                {/* Margin - "$1,27 (Cross)" */}
-                <td className="px-1 font-tabular text-[#f6fefd]">
-                  ${formatNumber(margin)} <span className="text-[#949e9c]">(Cross)</span>
-                </td>
-                {/* Funding */}
-                <td className="px-1 font-tabular text-[#f6fefd]">$0,00</td>
-                {/* Close All - "Limit Market Reverse" teal links */}
-                <td className="px-1">
-                  <div className="flex items-center gap-2">
-                    <button className="text-[12px] text-[#50d2c1] hover:underline">Limit</button>
-                    <button onClick={() => onMarketClose(p)} className="text-[12px] text-[#50d2c1] hover:underline">Market</button>
-                    <button className="text-[12px] text-[#50d2c1] hover:underline">Reverse</button>
+                <td className="font-tabular font-medium text-[#f6fefd]" style={{ padding: '0 8px' }}>{formatNumber(markPrice, decimals)}</td>
+                {/* PNL (ROE %) + share icon in teal #50d2c1 */}
+                <td className={cn("font-tabular font-medium", pnl >= 0 ? "text-[#1fa67d]" : "text-[#ed7088]")} style={{ padding: '0 8px' }}>
+                  <div className="flex items-center gap-1">
+                    <span>{formatPnl(pnl)} ({roe >= 0 ? "+" : ""}{roe.toFixed(1).replace('.', ',')}%)</span>
+                    <ExternalLink onClick={() => onMarketClose(p)} className="w-[14px] h-[14px] text-[#50d2c1] cursor-pointer flex-shrink-0" />
                   </div>
                 </td>
-                {/* TP/SL - just "--" like real HL */}
-                <td className="px-1 text-[#949e9c] text-[12px]">--</td>
+                {/* Liquidation Price */}
+                <td className="font-tabular font-medium text-[#f6fefd]" style={{ padding: '0 8px' }}>
+                  {p.liquidation_price ? formatNumber(p.liquidation_price, decimals || 2) : "N/A"}
+                </td>
+                {/* Margin — (Cross) */}
+                <td className="font-tabular font-medium text-[#f6fefd]" style={{ padding: '0 8px' }}>
+                  ${formatNumber(margin)} (Cross)
+                </td>
+                {/* Funding — colored by sign */}
+                <td className={cn("font-tabular font-medium", funding >= 0 ? "text-[#1fa67d]" : "text-[#ed7088]")} style={{ padding: '0 8px' }}>
+                  {funding >= 0 ? "" : "-"}${formatNumber(Math.abs(funding))}
+                </td>
+                {/* TP/SL — dashes + pencil icon in teal #50d2c1 */}
+                <td className="font-medium" style={{ padding: '0 8px' }}>
+                  <div className="flex items-center gap-1">
+                    <span className="text-[#f6fefd]">-- / --</span>
+                    <Pencil className="w-4 h-4 text-[#50d2c1] cursor-pointer flex-shrink-0" />
+                  </div>
+                </td>
               </tr>
             );
           })}

@@ -136,35 +136,39 @@ export default function TradePage() {
             decimals={decimals}
           />
 
-          {/* Chart area — matches real HL layout:
-              Top bar (38px) + [Left toolbar (52px) | Chart canvas | Right price scale] + Bottom bar (38px)
-              All wrapped in a single rounded container */}
-          <div className="h-[568px] flex-shrink-0 flex flex-col rounded-[5px] bg-[#0f1a1f] overflow-hidden">
-            {/* Top bar with timeframes, candle type, indicators */}
+          {/* Chart container — h=568px matching real HL.
+              Layout: TopBar spans full width ABOVE toolbar+chart (like real HL).
+              Toolbar starts below TopBar, next to chart canvas. */}
+          <div className="h-[568px] flex-shrink-0 flex flex-col rounded-[5px] overflow-hidden bg-[#0f1a1f]">
+            {/* Top bar with timeframes — full width, above toolbar+chart */}
             <ChartTopBar timeframe={timeframe} onTimeframeChange={setTimeframe} />
-            {/* Middle: toolbar + chart */}
+            {/* Toolbar + Chart + BottomBar row */}
             <div className="flex-1 flex min-h-0">
-              {/* Left drawing toolbar — 52px wide like real HL */}
+              {/* Left drawing toolbar — 52px wide, below top bar */}
               <ChartToolbar />
-              {/* Chart canvas */}
-              <div className="flex-1 min-w-0">
-                <TradingViewChart coin={coin} timeframe={timeframe} />
+              {/* Chart + bottom bar */}
+              <div className="flex-1 flex flex-col min-w-0">
+                <div className="flex-1 min-h-0">
+                  <TradingViewChart coin={coin} timeframe={timeframe} />
+                </div>
+                <ChartBottomBar />
               </div>
             </div>
-            {/* Bottom bar with range buttons, time, log/auto */}
-            <ChartBottomBar />
           </div>
 
-          {/* Bottom Panel */}
-          <div className="h-[327px] flex-shrink-0 overflow-auto rounded-[5px] bg-s1">
+          {/* Bottom Panel — independent container, NOT inside toolbar flex */}
+          <div className="h-[327px] flex-shrink-0 overflow-auto bg-s1 rounded-[5px]">
             <BottomTabsPanel
               positions={positions}
               history={history}
               orders={orders}
               currentPrices={prices}
               balance={account?.balance ?? 10000}
+              totalEquity={totalEquity}
+              availableBalance={getAvailableBalance(prices)}
               onClosePosition={handleClosePosition}
               onCancelOrder={cancelOrder}
+              onSelectCoin={(c) => setCoin(c as SupportedCoin)}
             />
           </div>
         </div>
@@ -180,6 +184,7 @@ export default function TradePage() {
                 coin={coin}
                 price={price}
                 availableBalance={getAvailableBalance(prices)}
+                totalBalance={account?.balance ?? 10000}
                 currentPositionSize={currentPosition?.size ?? 0}
                 onPlaceOrder={handlePlaceOrder}
               />
@@ -188,22 +193,42 @@ export default function TradePage() {
 
           {/* Bottom: Order Book — h=670px like real HL */}
           <div className="h-[670px] flex-shrink-0 flex flex-col rounded-[5px] bg-s1 overflow-hidden">
-            <div className="flex items-center justify-between px-2.5 py-1.5 border-b border-brd flex-shrink-0">
-              <div className="flex items-center gap-4">
-                <span className="text-[12px] font-normal text-t1 border-b-2 border-t1 pb-1">Order Book</span>
-                <span className="text-[12px] font-normal text-t3 pb-1 cursor-pointer hover:text-t2">Trades</span>
+            {/* Header: tabs grid (362px) + menu btn (34px) — like real HL */}
+            <div className="grid flex-shrink-0 border-b border-[#303030]" style={{ gridTemplateColumns: '1fr 34px' }}>
+              {/* Tabs: Order Book | Trades — 2 equal cols with teal indicator */}
+              <div className="relative grid grid-cols-2">
+                <div className="flex items-center justify-center h-[42px] text-[12px] font-normal text-[#f6fefd] transition-colors duration-200">
+                  Order Book
+                </div>
+                <div className="flex items-center justify-center h-[42px] text-[12px] font-normal text-[#949e9c] cursor-default transition-colors duration-200">
+                  Trades
+                </div>
+                {/* Teal sliding indicator — always on Order Book (left: 0) */}
+                <div
+                  className="absolute bottom-[7px] left-0 h-[1px] bg-acc transition-all duration-300"
+                  style={{ width: '50%' }}
+                />
               </div>
-              <div className="flex items-center gap-1.5">
-                <select className="bg-s2 border border-brd rounded px-1 py-0.5 text-[12px] text-t2 outline-none">
-                  <option>0,001</option>
-                  <option>0,01</option>
-                  <option>0,1</option>
+              {/* Menu button */}
+              <div className="flex items-center justify-center h-[42px]">
+                <button className="text-t3 hover:text-t2 text-[14px]">⋮</button>
+              </div>
+            </div>
+            {/* Precision selectors row */}
+            <div className="flex items-center justify-between px-2.5 h-[31px] flex-shrink-0">
+              <div className="flex items-center gap-1">
+                <select className="bg-transparent border-none text-[12px] text-[#949e9c] outline-none cursor-pointer">
                   <option>1</option>
+                  <option>0,1</option>
+                  <option>0,01</option>
+                  <option>0,001</option>
                 </select>
-                <select className="bg-s2 border border-brd rounded px-1 py-0.5 text-[12px] text-t2 outline-none">
+              </div>
+              <div className="flex items-center">
+                <select className="bg-transparent border-none text-[12px] text-[#949e9c] outline-none cursor-pointer">
+                  <option>USDC</option>
                   <option>{coin}</option>
                 </select>
-                <button className="text-t3 hover:text-t2 text-[12px]">⋮</button>
               </div>
             </div>
             <div className="flex-1 overflow-y-auto">

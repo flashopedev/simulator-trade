@@ -102,7 +102,7 @@ export default function PortfolioPage() {
   }
 
   const totalEquity = getTotalEquity(prices);
-  const availableBalance = getAvailableBalance();
+  const availableBalance = getAvailableBalance(prices);
 
   let totalUnrealizedPnl = 0;
   positions.forEach((p) => {
@@ -114,6 +114,21 @@ export default function PortfolioPage() {
       p.side === "Long"
     );
   });
+
+  // Calculate total traded volume from trade history
+  const totalVolume = history.reduce((sum, h) => {
+    return sum + h.size * h.exit_price;
+  }, 0);
+
+  // Calculate 14-day volume
+  const fourteenDaysAgo = new Date();
+  fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
+  const volume14d = history
+    .filter((h) => new Date(h.closed_at) >= fourteenDaysAgo)
+    .reduce((sum, h) => sum + h.size * h.exit_price, 0);
+
+  // Total realized PnL from trade history
+  const totalRealizedPnl = history.reduce((sum, h) => sum + h.pnl, 0);
 
   const handleClosePosition = async (position: Position) => {
     const currentPrice = prices[position.coin] || position.entry_price;
@@ -156,7 +171,7 @@ export default function PortfolioPage() {
               {/* 14 Day Volume card - flex-1 to share height equally */}
               <div className="bg-s1 rounded-[10px] p-3 flex-1 flex flex-col">
                 <div className="text-[14px] text-t3 mb-1">14 Day Volume</div>
-                <div className="text-[28px] font-normal text-white leading-[30px]">$0</div>
+                <div className="text-[28px] font-normal text-white leading-[30px]">${formatNumber(volume14d)}</div>
                 <button className="text-[12px] text-[#50D2C1] mt-auto hover:text-[#50D2C1]/80">View Volume</button>
               </div>
 
@@ -188,13 +203,13 @@ export default function PortfolioPage() {
               {/* Stats rows */}
               <div>
                 {[
-                  { label: "PNL", value: formatPnl(totalUnrealizedPnl), color: totalUnrealizedPnl > 0 ? "text-grn" : totalUnrealizedPnl < 0 ? "text-red" : "text-t1" },
-                  { label: "Volume", value: "$0.00" },
-                  { label: "Max Drawdown", value: "0.00%" },
+                  { label: "PNL", value: formatPnl(totalRealizedPnl + totalUnrealizedPnl), color: (totalRealizedPnl + totalUnrealizedPnl) > 0 ? "text-grn" : (totalRealizedPnl + totalUnrealizedPnl) < 0 ? "text-red" : "text-t1" },
+                  { label: "Volume", value: `$${formatNumber(totalVolume)}` },
+                  { label: "Max Drawdown", value: "0,00%" },
                   { label: "Total Equity", value: `$${formatNumber(totalEquity)}` },
                   { label: "Perps Account Equity", value: `$${formatNumber(totalEquity)}` },
-                  { label: "Spot Account Equity", value: "$0.00" },
-                  { label: "Earn Balance", value: "$0.00" },
+                  { label: "Spot Account Equity", value: "$0,00" },
+                  { label: "Earn Balance", value: "$0,00" },
                 ].map((row) => (
                   <div key={row.label} className="flex justify-between py-[5px] text-[12px]">
                     <span className="text-t2">{row.label}</span>
@@ -379,9 +394,9 @@ export default function PortfolioPage() {
                   <tbody>
                     <tr className="border-t border-brd">
                       <td className="py-3 font-medium text-t1">USDC</td>
-                      <td className="py-3 font-tabular text-t1">{formatNumber(account?.balance ?? 10000)}</td>
-                      <td className="py-3 font-tabular text-t2">{formatNumber(availableBalance)}</td>
-                      <td className="py-3 font-tabular text-t1">${formatNumber(account?.balance ?? 10000)}</td>
+                      <td className="py-3 font-tabular text-t1">{formatNumber(totalEquity)} USDC</td>
+                      <td className="py-3 font-tabular text-t2">{formatNumber(availableBalance)} USDC</td>
+                      <td className="py-3 font-tabular text-t1">${formatNumber(totalEquity)}</td>
                       <td className="py-3 font-tabular text-t2">—</td>
                       <td className="py-3 font-tabular text-t2">—</td>
                     </tr>

@@ -40,7 +40,7 @@ export function ChartBottomBar() {
   }, []);
 
   return (
-    <div className="flex items-center h-[38px] bg-[#0f1a1f] flex-shrink-0 border-t border-[#2a3740] select-none">
+    <div className="flex items-center h-[38px] bg-[#0f1a1f] flex-shrink-0 select-none">
       {/* Left: Range buttons */}
       <div className="flex items-center pl-[4px]">
         {RANGE_BUTTONS.map((range) => (

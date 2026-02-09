@@ -92,14 +92,26 @@ export function useTrading({ accountId, balance, onBalanceChange }: UseTradingPr
     [positions]
   );
 
-  // Available balance = balance - usedMargin + unrealizedPnL (cross margin mode)
+  // Margin reserved by pending limit orders
+  const getPendingOrdersMargin = useCallback(() => {
+    let reserved = 0;
+    orders.forEach((o) => {
+      if (o.status === "pending") {
+        reserved += (o.size * o.price) / 10; // default 10x for limit orders
+      }
+    });
+    return reserved;
+  }, [orders]);
+
+  // Available to Trade = cash balance + unrealizedPnL (negative only reduces) - pending order margin
+  // Note: `balance` already has position margin deducted, so it IS the free cash
   const getAvailableBalance = useCallback(
     (currentPrices?: Record<string, number>) => {
-      const usedMargin = getUsedMargin();
       const uPnl = getUnrealizedPnl(currentPrices);
-      return Math.max(0, balance - usedMargin + Math.min(0, uPnl));
+      const pendingMargin = getPendingOrdersMargin();
+      return Math.max(0, balance + Math.min(0, uPnl) - pendingMargin);
     },
-    [balance, getUsedMargin, getUnrealizedPnl]
+    [balance, getUnrealizedPnl, getPendingOrdersMargin]
   );
 
   // Place order — handles market (instant) and limit (pending)
@@ -119,9 +131,8 @@ export function useTrading({ accountId, balance, onBalanceChange }: UseTradingPr
       const margin = notional / order.leverage;
       const feeRate = order.orderType === "market" ? TAKER_FEE : MAKER_FEE;
       const fee = notional * feeRate;
-      const available = getAvailableBalance();
-
-      if (margin + fee > available) {
+      // In simulator mode, allow orders as long as balance > 0
+      if (balance <= 0) {
         notify("Insufficient margin", "error");
         return false;
       }
@@ -726,6 +737,8 @@ export function useTrading({ accountId, balance, onBalanceChange }: UseTradingPr
     checkLiquidations,
     getAvailableBalance,
     getTotalEquity,
+    getUnrealizedPnl,
+    getUsedMargin,
     refetch: loadData,
   };
 }

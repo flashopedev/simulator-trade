@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
 import { AuthForm } from "@/components/AuthForm";
@@ -61,6 +61,10 @@ export default function PortfolioPage() {
     } catch { /* ignore */ }
     return null;
   });
+
+  // Track whether PNL data has been initialized (from localStorage or generated)
+  // so we don't overwrite user-saved data when naturalCombinedPnl changes from price updates
+  const pnlInitialized = useRef(pnlData !== null);
 
   const {
     positions,
@@ -143,28 +147,30 @@ export default function PortfolioPage() {
 
   // Initialize pnlData: realistic daily PNL with wins and losses
   // Some days profit, some days loss, but total = naturalCombinedPnl
+  // Only runs ONCE: either generates fresh data or aligns saved data to current date window
+  // After initialization, pnlData is never overwritten by this effect (user edits are preserved)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
+    // Already initialized — don't touch user-saved data
+    if (pnlInitialized.current) return;
+
     if (pnlData === null && naturalCombinedPnl !== 0) {
-      // Seed-based pseudo-random for consistent results
+      // No saved data — generate realistic distribution
       const seed = 42;
       const seededRandom = (i: number) => {
         const x = Math.sin(seed + i * 127.1) * 43758.5453;
         return x - Math.floor(x);
       };
-      // Generate realistic trading PNL: ~60% win days, ~40% loss days
-      // Wins are generally larger than losses (positive expectancy)
       const rawPnl = allDates.map((_, i) => {
         const r = seededRandom(i);
-        const isWin = r > 0.38; // ~62% win rate
-        const magnitude = seededRandom(i + 1000) * 0.8 + 0.2; // 0.2 to 1.0
+        const isWin = r > 0.38;
+        const magnitude = seededRandom(i + 1000) * 0.8 + 0.2;
         if (isWin) {
-          return magnitude * (1 + seededRandom(i + 2000) * 1.5); // wins: 0.2 to 2.5
+          return magnitude * (1 + seededRandom(i + 2000) * 1.5);
         } else {
-          return -magnitude * (0.5 + seededRandom(i + 3000) * 1.0); // losses: -0.1 to -1.0
+          return -magnitude * (0.5 + seededRandom(i + 3000) * 1.0);
         }
       });
-      // Scale to match total PNL
       const rawSum = rawPnl.reduce((s, v) => s + v, 0);
       const scale = rawSum !== 0 ? naturalCombinedPnl / rawSum : 0;
       const newData = allDates.map((date, i) => ({
@@ -172,8 +178,9 @@ export default function PortfolioPage() {
         pnl: Math.round(rawPnl[i] * scale * 100) / 100,
       }));
       setPnlData(newData);
+      pnlInitialized.current = true;
     } else if (pnlData !== null) {
-      // Align saved data to current date window
+      // Saved data exists — align to current date window (shift dates if needed)
       const savedMap = new Map(pnlData.map((d) => [d.date, d.pnl]));
       const savedDates = new Set(pnlData.map((d) => d.date));
       const hasNewDates = allDates.some((d) => !savedDates.has(d));
@@ -184,7 +191,9 @@ export default function PortfolioPage() {
         }));
         setPnlData(aligned);
       }
+      pnlInitialized.current = true;
     }
+    // pnlData === null && naturalCombinedPnl === 0: wait for data to load
   }, [naturalCombinedPnl]);
 
   // Close time period dropdown on outside click

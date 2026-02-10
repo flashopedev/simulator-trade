@@ -291,8 +291,8 @@ export default function PortfolioPage() {
   const pendingOrders = orders.filter((o) => o.status === "pending");
   const bottomTabs: { key: BottomTab; label: string }[] = [
     { key: "balances", label: `Balances (1)` },
-    { key: "positions", label: `Positions (${positions.length})` },
-    { key: "openOrders", label: `Open Orders (${pendingOrders.length})` },
+    { key: "positions", label: positions.length > 0 ? `Positions (${positions.length})` : "Positions" },
+    { key: "openOrders", label: pendingOrders.length > 0 ? `Open Orders (${pendingOrders.length})` : "Open Orders" },
     { key: "twap", label: "TWAP" },
     { key: "tradeHistory", label: "Trade History" },
     { key: "fundingHistory", label: "Funding History" },
@@ -599,38 +599,46 @@ export default function PortfolioPage() {
           </div>
         </div>
 
-        {/* Bottom tabs - in a card container like real HL */}
+        {/* Bottom tabs - pixel-perfect match to real HL */}
         <div className="max-w-[1312px] mx-auto w-full px-4 mt-2">
-          <div className="bg-s1 rounded-[10px] pb-2">
-            {/* Tabs row */}
-            <div className="flex items-center justify-between px-4 border-b border-brd">
-              <div className="flex items-center">
+          <div className="bg-s1 rounded-[10px]" style={{ paddingBottom: "8px" }}>
+            {/* Tabs row: h=35px, tabs separated by 1px solid #303030 at bottom, active has teal underline */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center" style={{ height: "35px" }}>
                 {bottomTabs.map((tab) => (
-                  <button
+                  <div
                     key={tab.key}
                     onClick={() => setActiveTab(tab.key)}
-                    className={cn(
-                      "px-4 py-3 text-[12px] font-normal whitespace-nowrap border-b-2 -mb-[1px] transition-colors",
-                      activeTab === tab.key
-                        ? "text-t1 border-white"
-                        : "text-t2 border-transparent hover:text-t1"
-                    )}
+                    className="relative cursor-pointer flex items-center whitespace-nowrap"
+                    style={{
+                      height: "35px",
+                      lineHeight: "34px",
+                      padding: "0 12px",
+                      fontSize: "12px",
+                      fontWeight: 400,
+                      color: activeTab === tab.key ? "rgb(246, 254, 253)" : "rgb(148, 158, 156)",
+                      borderBottom: "1px solid rgb(48, 48, 48)",
+                    }}
                   >
                     {tab.label}
-                  </button>
+                    {/* Teal accent underline for active tab — separate div like real HL */}
+                    {activeTab === tab.key && (
+                      <div className="absolute bottom-0 left-0 right-0" style={{ height: "1px", background: "rgb(80, 210, 193)" }} />
+                    )}
+                  </div>
                 ))}
               </div>
-              <div className="flex items-center gap-4">
-                <button className="flex items-center gap-1.5 text-[12px] text-t1 hover:text-t2">
+              <div className="flex items-center" style={{ gap: "16px", height: "35px", borderBottom: "1px solid rgb(48, 48, 48)", paddingRight: "12px" }}>
+                <button className="flex items-center gap-1.5 text-[12px] hover:opacity-80" style={{ color: "rgb(246, 254, 253)", fontWeight: 400 }}>
                   Filter <ChevronDown className="w-4 h-4" />
                 </button>
                 {activeTab === "balances" && (
-                  <label className="flex items-center gap-2 text-[12px] text-t1 cursor-pointer">
+                  <label className="flex items-center gap-2 text-[12px] cursor-pointer" style={{ color: "rgb(246, 254, 253)", fontWeight: 400 }}>
                     <input
                       type="checkbox"
                       checked={hideSmallBalances}
                       onChange={(e) => setHideSmallBalances(e.target.checked)}
-                      className="w-4 h-4 rounded border-brd bg-transparent accent-acc"
+                      className="w-3.5 h-3.5 rounded border-brd bg-transparent accent-acc"
                     />
                     Hide Small Balances
                   </label>
@@ -638,30 +646,30 @@ export default function PortfolioPage() {
               </div>
             </div>
 
-            {/* Tab Content - inside the card */}
-            <div className="px-4 py-4">
+            {/* Tab Content */}
+            <div style={{ padding: "0 12px" }}>
           {/* Positions Tab */}
           {activeTab === "positions" && (
             <div>
               {positions.length === 0 ? (
-                <div className="text-t3 text-[12px]">No open positions yet</div>
+                <div style={{ color: "rgb(148,158,156)", fontSize: "12px", lineHeight: "24px" }}>No open positions yet</div>
               ) : (
-                <table className="w-full text-[12px]">
+                <table className="w-full" style={{ fontSize: "12px", fontWeight: 400, borderCollapse: "collapse", lineHeight: "24px" }}>
                   <thead>
-                    <tr className="text-t2 text-left text-[12px]">
-                      <th className="py-2 font-normal">Coin</th>
-                      <th className="py-2 font-normal">Size</th>
-                      <th className="py-2 font-normal">
-                        <span className="border-b border-dotted border-t3 cursor-pointer">Position Value</span> <ChevronDown className="w-3 h-3 inline text-t3" />
+                    <tr style={{ color: "rgb(148,158,156)", height: "24px", lineHeight: "24px", textAlign: "left" }}>
+                      <th style={{ fontWeight: 400 }}>Coin</th>
+                      <th style={{ fontWeight: 400 }}>Size</th>
+                      <th style={{ fontWeight: 400 }}>
+                        <span className="border-b border-dotted border-current cursor-pointer">Position Value</span> <ChevronDown className="w-3 h-3 inline" />
                       </th>
-                      <th className="py-2 font-normal">Entry Price</th>
-                      <th className="py-2 font-normal">Mark Price</th>
-                      <th className="py-2 font-normal"><span className="border-b border-dotted border-t3">PNL (ROE %)</span></th>
-                      <th className="py-2 font-normal">Liq. Price</th>
-                      <th className="py-2 font-normal"><span className="border-b border-dotted border-t3">Margin</span></th>
-                      <th className="py-2 font-normal"><span className="border-b border-dotted border-t3 cursor-pointer">Funding</span></th>
-                      <th className="py-2 font-normal"><span className="border-b border-dotted border-t3 cursor-pointer">Close All</span></th>
-                      <th className="py-2 font-normal">TP/SL</th>
+                      <th style={{ fontWeight: 400 }}>Entry Price</th>
+                      <th style={{ fontWeight: 400 }}>Mark Price</th>
+                      <th style={{ fontWeight: 400 }}><span className="border-b border-dotted border-current">PNL (ROE %)</span></th>
+                      <th style={{ fontWeight: 400 }}>Liq. Price</th>
+                      <th style={{ fontWeight: 400 }}><span className="border-b border-dotted border-current">Margin</span></th>
+                      <th style={{ fontWeight: 400 }}><span className="border-b border-dotted border-current cursor-pointer">Funding</span></th>
+                      <th style={{ fontWeight: 400 }}><span className="border-b border-dotted border-current cursor-pointer">Close All</span></th>
+                      <th style={{ fontWeight: 400 }}>TP/SL</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -680,29 +688,30 @@ export default function PortfolioPage() {
                         <tr
                           key={p.id}
                           className="border-t border-brd hover:bg-s2"
+                          style={{ height: "24px", lineHeight: "24px" }}
                         >
-                          <td className="py-3">
+                          <td style={{ padding: 0 }}>
                             <span className={cn("font-medium", isLong ? "text-grn" : "text-red")}>{p.coin}</span>
                             <span className="ml-1.5 text-[11px] text-acc">{p.leverage}x</span>
                           </td>
-                          <td className="py-3 font-tabular text-acc">{sizeFormatted} {p.coin}</td>
-                          <td className="py-3 font-tabular text-t1">{formatNumber(positionValue).replace(".", ",")} USDC</td>
-                          <td className="py-3 font-tabular text-t2">{p.entry_price.toFixed(decimals)}</td>
-                          <td className="py-3 font-tabular text-t2">{markPrice.toFixed(decimals)}</td>
-                          <td className={cn("py-3 font-tabular", pnl >= 0 ? "text-grn" : "text-red")}>
+                          <td className="font-tabular text-acc" style={{ padding: 0 }}>{sizeFormatted} {p.coin}</td>
+                          <td className="font-tabular text-t1" style={{ padding: 0 }}>{formatNumber(positionValue).replace(".", ",")} USDC</td>
+                          <td className="font-tabular text-t2" style={{ padding: 0 }}>{p.entry_price.toFixed(decimals)}</td>
+                          <td className="font-tabular text-t2" style={{ padding: 0 }}>{markPrice.toFixed(decimals)}</td>
+                          <td className={cn("font-tabular", pnl >= 0 ? "text-grn" : "text-red")} style={{ padding: 0 }}>
                             {formatPnl(pnl)} ({roe >= 0 ? "+" : ""}{roe.toFixed(1)}%)
                             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="inline ml-1 opacity-50">
                               <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" />
                             </svg>
                           </td>
-                          <td className="py-3 font-tabular text-t2">{p.liquidation_price.toFixed(decimals)}</td>
-                          <td className="py-3 font-tabular text-t2">
+                          <td className="font-tabular text-t2" style={{ padding: 0 }}>{p.liquidation_price.toFixed(decimals)}</td>
+                          <td className="font-tabular text-t2" style={{ padding: 0 }}>
                             ${formatNumber(margin)} ({marginMode === "cross" ? "Cross" : "Isolated"})
                           </td>
-                          <td className="py-3">
+                          <td style={{ padding: 0 }}>
                             <span className="text-grn font-tabular">$0,00</span>
                           </td>
-                          <td className="py-3">
+                          <td style={{ padding: 0 }}>
                             <button
                               onClick={() => handleClosePosition(p)}
                               className="text-[12px] text-acc cursor-pointer"
@@ -710,7 +719,7 @@ export default function PortfolioPage() {
                               Connect
                             </button>
                           </td>
-                          <td className="py-3 text-t3">
+                          <td className="text-t3" style={{ padding: 0 }}>
                             <span className="flex items-center gap-1">
                               -- / --
                               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-acc cursor-pointer hover:text-acc/80">
@@ -730,38 +739,49 @@ export default function PortfolioPage() {
 
           {/* Balances Tab — pixel-perfect match to real HL */}
           {activeTab === "balances" && (
-            <div style={{ padding: "4px 0 0 0" }}>
+            <div>
               {(account?.balance ?? 10000) > 0 || !hideSmallBalances ? (
-                <table className="w-full text-[12px]">
-                  {/* Header row — rgb(148,158,156) gray, h=24px, no borders */}
+                <table className="w-full" style={{ fontSize: "12px", fontWeight: 400, borderCollapse: "collapse", tableLayout: "fixed", lineHeight: "24px" }}>
+                  {/* Column widths matching real HL proportions: 12% 14% 14% 12% 12% 10% 14% 12% */}
+                  <colgroup>
+                    <col style={{ width: "12%" }} />
+                    <col style={{ width: "14%" }} />
+                    <col style={{ width: "14%" }} />
+                    <col style={{ width: "12%" }} />
+                    <col style={{ width: "12%" }} />
+                    <col style={{ width: "10%" }} />
+                    <col style={{ width: "14%" }} />
+                    <col style={{ width: "12%" }} />
+                  </colgroup>
+                  {/* Header row — rgb(148,158,156), h=24px, lineHeight=24px */}
                   <thead>
-                    <tr className="text-left h-[24px]" style={{ color: "rgb(148,158,156)" }}>
-                      <td className="font-normal">Coin</td>
-                      <td className="font-normal">Total Balance</td>
-                      <td className="font-normal">Available Balance</td>
-                      <td className="font-normal">USDC Value <ChevronDown className="w-3 h-3 inline" /></td>
-                      <td className="font-normal"><span className="border-b border-dotted border-current cursor-pointer">PNL (ROE %)</span></td>
-                      <td className="font-normal">Send</td>
-                      <td className="font-normal">Transfer</td>
-                      <td className="font-normal">Contract</td>
+                    <tr style={{ color: "rgb(148,158,156)", height: "24px", lineHeight: "24px", textAlign: "left" }}>
+                      <td style={{ fontWeight: 400, cursor: "pointer" }}>Coin</td>
+                      <td style={{ fontWeight: 400, cursor: "pointer" }}>Total Balance</td>
+                      <td style={{ fontWeight: 400, cursor: "pointer" }}>Available Balance</td>
+                      <td style={{ fontWeight: 400, cursor: "pointer" }}>USDC Value <ChevronDown className="w-3 h-3 inline" /></td>
+                      <td style={{ fontWeight: 400, cursor: "pointer" }}><span className="border-b border-dotted border-current">PNL (ROE %)</span></td>
+                      <td style={{ fontWeight: 400, cursor: "pointer" }}>Send</td>
+                      <td style={{ fontWeight: 400, cursor: "pointer" }}>Transfer</td>
+                      <td style={{ fontWeight: 400, cursor: "pointer" }}>Contract</td>
                     </tr>
                   </thead>
-                  {/* Data row — white, h=24px, no borders */}
+                  {/* Data row — h=24px, lineHeight=24px */}
                   <tbody>
-                    <tr className="h-[24px] text-white">
-                      <td>USDC</td>
-                      <td className="font-tabular">{formatNumber(totalEquity)} USDC</td>
-                      <td className="font-tabular"><span className="border-b border-dotted border-current cursor-pointer">{formatNumber(availableBalance)} USDC</span></td>
-                      <td className="font-tabular">${formatNumber(totalEquity)}</td>
+                    <tr style={{ height: "24px", lineHeight: "24px", color: "rgb(246, 254, 253)" }}>
+                      <td style={{ color: "rgb(246, 254, 253)" }}>USDC</td>
+                      <td className="font-tabular" style={{ color: "rgb(255,255,255)" }}>{formatNumber(totalEquity)} USDC</td>
+                      <td className="font-tabular" style={{ color: "rgb(255,255,255)" }}><span className="border-b border-dotted border-current cursor-pointer">{formatNumber(availableBalance)} USDC</span></td>
+                      <td className="font-tabular" style={{ color: "rgb(255,255,255)" }}>${formatNumber(totalEquity)}</td>
                       <td></td>
-                      <td><span className="text-acc cursor-pointer">Connect</span></td>
-                      <td><span className="text-[#0e3333]">Transfer to Perps</span></td>
+                      <td><span style={{ color: "rgb(80, 210, 193)", cursor: "pointer" }}>Connect</span></td>
+                      <td><span style={{ color: "rgb(14, 51, 51)" }}>Transfer to Perps</span></td>
                       <td></td>
                     </tr>
                   </tbody>
                 </table>
               ) : (
-                <div className="text-t3 text-[12px]">No balances yet</div>
+                <div style={{ color: "rgb(148,158,156)", fontSize: "12px" }}>No balances yet</div>
               )}
             </div>
           )}
@@ -769,27 +789,27 @@ export default function PortfolioPage() {
           {/* Open Orders Tab */}
           {activeTab === "openOrders" && (
             <div>
-              <table className="w-full text-[12px]">
+              <table className="w-full" style={{ fontSize: "12px", fontWeight: 400, borderCollapse: "collapse", lineHeight: "24px" }}>
                 <thead>
-                  <tr className="text-t2 text-left text-[12px]">
-                    <th className="py-2 font-normal">Time</th>
-                    <th className="py-2 font-normal">Type</th>
-                    <th className="py-2 font-normal">Coin</th>
-                    <th className="py-2 font-normal">Direction</th>
-                    <th className="py-2 font-normal">Size</th>
-                    <th className="py-2 font-normal">Original Size</th>
-                    <th className="py-2 font-normal">
+                  <tr style={{ color: "rgb(148,158,156)", height: "24px", lineHeight: "24px", textAlign: "left" }}>
+                    <th style={{ fontWeight: 400 }}>Time</th>
+                    <th style={{ fontWeight: 400 }}>Type</th>
+                    <th style={{ fontWeight: 400 }}>Coin</th>
+                    <th style={{ fontWeight: 400 }}>Direction</th>
+                    <th style={{ fontWeight: 400 }}>Size</th>
+                    <th style={{ fontWeight: 400 }}>Original Size</th>
+                    <th style={{ fontWeight: 400 }}>
                       Order Value <ChevronDown className="w-3 h-3 inline" />
                     </th>
-                    <th className="py-2 font-normal">Price</th>
-                    <th className="py-2 font-normal">Reduce Only</th>
-                    <th className="py-2 font-normal">Trigger Conditions</th>
-                    <th className="py-2 font-normal">TP/SL</th>
+                    <th style={{ fontWeight: 400 }}>Price</th>
+                    <th style={{ fontWeight: 400 }}>Reduce Only</th>
+                    <th style={{ fontWeight: 400 }}>Trigger Conditions</th>
+                    <th style={{ fontWeight: 400 }}>TP/SL</th>
                   </tr>
                 </thead>
               </table>
               {orders.length === 0 && (
-                <div className="text-t3 text-[12px] py-2">No open orders yet</div>
+                <div style={{ color: "rgb(148,158,156)", fontSize: "12px", padding: "4px 0" }}>No open orders yet</div>
               )}
             </div>
           )}
@@ -798,34 +818,34 @@ export default function PortfolioPage() {
           {activeTab === "tradeHistory" && (
             <div>
               {history.length === 0 ? (
-                <div className="text-t3 text-[12px]">No trade history yet</div>
+                <div style={{ color: "rgb(148,158,156)", fontSize: "12px" }}>No trade history yet</div>
               ) : (
-                <table className="w-full text-[12px]">
+                <table className="w-full" style={{ fontSize: "12px", fontWeight: 400, borderCollapse: "collapse", lineHeight: "24px" }}>
                   <thead>
-                    <tr className="text-t2 text-left text-[12px]">
-                      <th className="py-2 font-normal">Time</th>
-                      <th className="py-2 font-normal">Coin</th>
-                      <th className="py-2 font-normal">Side</th>
-                      <th className="py-2 font-normal">Size</th>
-                      <th className="py-2 font-normal">Entry</th>
-                      <th className="py-2 font-normal">Exit</th>
-                      <th className="py-2 font-normal">PNL</th>
+                    <tr style={{ color: "rgb(148,158,156)", height: "24px", lineHeight: "24px", textAlign: "left" }}>
+                      <th style={{ fontWeight: 400 }}>Time</th>
+                      <th style={{ fontWeight: 400 }}>Coin</th>
+                      <th style={{ fontWeight: 400 }}>Side</th>
+                      <th style={{ fontWeight: 400 }}>Size</th>
+                      <th style={{ fontWeight: 400 }}>Entry</th>
+                      <th style={{ fontWeight: 400 }}>Exit</th>
+                      <th style={{ fontWeight: 400 }}>PNL</th>
                     </tr>
                   </thead>
                   <tbody>
                     {history.slice(0, 50).map((h) => {
                       const decimals = COIN_DECIMALS[h.coin] || 2;
                       return (
-                        <tr key={h.id} className="border-t border-brd">
-                          <td className="py-3 text-t3">{new Date(h.closed_at).toLocaleString()}</td>
-                          <td className="py-3 font-medium text-t1">{h.coin}{h.liquidated && " 💀"}</td>
-                          <td className={cn("py-3", h.side === "Long" ? "text-grn" : "text-red")}>
+                        <tr key={h.id} className="border-t border-brd" style={{ height: "24px", lineHeight: "24px" }}>
+                          <td className="text-t3" style={{ padding: 0 }}>{new Date(h.closed_at).toLocaleString()}</td>
+                          <td className="font-medium text-t1" style={{ padding: 0 }}>{h.coin}{h.liquidated && " 💀"}</td>
+                          <td className={cn(h.side === "Long" ? "text-grn" : "text-red")} style={{ padding: 0 }}>
                             {h.leverage}x {h.side}
                           </td>
-                          <td className="py-3 font-tabular text-t2">{h.size.toFixed(4)}</td>
-                          <td className="py-3 font-tabular text-t2">{h.entry_price.toFixed(decimals)}</td>
-                          <td className="py-3 font-tabular text-t2">{h.exit_price.toFixed(decimals)}</td>
-                          <td className={cn("py-3 font-tabular font-medium", h.pnl >= 0 ? "text-grn" : "text-red")}>
+                          <td className="font-tabular text-t2" style={{ padding: 0 }}>{h.size.toFixed(4)}</td>
+                          <td className="font-tabular text-t2" style={{ padding: 0 }}>{h.entry_price.toFixed(decimals)}</td>
+                          <td className="font-tabular text-t2" style={{ padding: 0 }}>{h.exit_price.toFixed(decimals)}</td>
+                          <td className={cn("font-tabular font-medium", h.pnl >= 0 ? "text-grn" : "text-red")} style={{ padding: 0 }}>
                             {formatPnl(h.pnl)}
                           </td>
                         </tr>
@@ -838,23 +858,23 @@ export default function PortfolioPage() {
           )}
 
           {activeTab === "fundingHistory" && (
-            <div className="text-t3 text-[12px]">No funding history</div>
+            <div style={{ color: "rgb(148,158,156)", fontSize: "12px" }}>No funding history</div>
           )}
 
           {activeTab === "orderHistory" && (
-            <div className="text-t3 text-[12px]">No order history</div>
+            <div style={{ color: "rgb(148,158,156)", fontSize: "12px" }}>No order history</div>
           )}
 
           {activeTab === "twap" && (
-            <div className="text-t3 text-[12px]">No TWAP orders</div>
+            <div style={{ color: "rgb(148,158,156)", fontSize: "12px" }}>No TWAP orders</div>
           )}
 
           {activeTab === "interest" && (
-            <div className="text-t3 text-[12px]">No interest history</div>
+            <div style={{ color: "rgb(148,158,156)", fontSize: "12px" }}>No interest history</div>
           )}
 
           {activeTab === "deposits" && (
-            <div className="text-t3 text-[12px]">No deposits or withdrawals</div>
+            <div style={{ color: "rgb(148,158,156)", fontSize: "12px" }}>No deposits or withdrawals</div>
           )}
             </div>
           </div>

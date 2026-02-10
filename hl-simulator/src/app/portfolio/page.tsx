@@ -155,10 +155,23 @@ export default function PortfolioPage() {
   // After initialization, pnlData is never overwritten by this effect (user edits are preserved)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    // Already initialized — don't touch user-saved data
-    if (pnlInitialized.current) return;
-
-    if (pnlData === null && naturalCombinedPnl !== 0) {
+    if (pnlData !== null) {
+      // Saved data exists — check if we need to backfill volume or align dates
+      const savedMap = new Map(pnlData.map((d) => [d.date, d]));
+      const savedDates = new Set(pnlData.map((d) => d.date));
+      const hasNewDates = allDates.some((d) => !savedDates.has(d));
+      const needsVolumeBackfill = pnlData.some((d) => !d.volume && d.volume !== 0);
+      if (hasNewDates || pnlData.length !== TOTAL_DAYS || needsVolumeBackfill) {
+        const aligned = allDates.map((date, i) => {
+          const existing = savedMap.get(date);
+          const pnl = existing?.pnl ?? 0;
+          const volume = (existing?.volume != null && existing.volume > 0) ? existing.volume : volumeFromPnl(pnl, i);
+          return { date, pnl, volume };
+        });
+        setPnlData(aligned);
+      }
+      pnlInitialized.current = true;
+    } else if (!pnlInitialized.current && naturalCombinedPnl !== 0) {
       // No saved data — generate realistic distribution
       const seed = 42;
       const seededRandom = (i: number) => {
@@ -182,23 +195,6 @@ export default function PortfolioPage() {
         return { date, pnl, volume: volumeFromPnl(pnl, i) };
       });
       setPnlData(newData);
-      pnlInitialized.current = true;
-    } else if (pnlData !== null) {
-      // Saved data exists — align to current date window (shift dates if needed)
-      // Also backfill volume for old data that doesn't have it
-      const savedMap = new Map(pnlData.map((d) => [d.date, d]));
-      const savedDates = new Set(pnlData.map((d) => d.date));
-      const hasNewDates = allDates.some((d) => !savedDates.has(d));
-      const needsVolumeBackfill = pnlData.some((d) => d.volume === undefined || d.volume === null);
-      if (hasNewDates || pnlData.length !== TOTAL_DAYS || needsVolumeBackfill) {
-        const aligned = allDates.map((date, i) => {
-          const existing = savedMap.get(date);
-          const pnl = existing?.pnl ?? 0;
-          const volume = (existing?.volume != null && existing.volume > 0) ? existing.volume : volumeFromPnl(pnl, i);
-          return { date, pnl, volume };
-        });
-        setPnlData(aligned);
-      }
       pnlInitialized.current = true;
     }
     // pnlData === null && naturalCombinedPnl === 0: wait for data to load

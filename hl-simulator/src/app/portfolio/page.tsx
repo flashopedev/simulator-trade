@@ -43,19 +43,19 @@ export default function PortfolioPage() {
   const [hideSmallBalances, setHideSmallBalances] = useState(false);
   const [chartTab, setChartTab] = useState<"value" | "pnl">("value");
   const [showPnlModal, setShowPnlModal] = useState(false);
-  const [modalEditData, setModalEditData] = useState<{ date: string; pnl: number }[] | null>(null);
+  const [modalEditData, setModalEditData] = useState<{ date: string; pnl: number; volume: number }[] | null>(null);
   const [timePeriod, setTimePeriod] = useState<TimePeriod>("30D");
   const [showTimePeriodDropdown, setShowTimePeriodDropdown] = useState(false);
 
-  // PNL data points for chart — stored as { date: string, pnl: number }[]
+  // PNL + Volume data points — stored as { date, pnl, volume }[]
+  // Volume is derived from PNL: realistic multiplier (volume >> pnl since PNL is the diff)
   // Persisted in localStorage so data survives page reloads
-  // On load: read from localStorage, align to current 30-day window (add new days, drop old)
-  const [pnlData, setPnlData] = useState<{ date: string; pnl: number }[] | null>(() => {
+  const [pnlData, setPnlData] = useState<{ date: string; pnl: number; volume: number }[] | null>(() => {
     if (typeof window === "undefined") return null;
     try {
       const saved = localStorage.getItem("hl_sim_pnl_data");
       if (saved) {
-        const parsed = JSON.parse(saved) as { date: string; pnl: number }[];
+        const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) return parsed;
       }
     } catch { /* ignore */ }
@@ -118,14 +118,6 @@ export default function PortfolioPage() {
     );
   });
 
-  const totalVolume = history.reduce((sum, h) => sum + h.size * h.exit_price, 0);
-
-  const fourteenDaysAgo = new Date();
-  fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
-  const volume14d = history
-    .filter((h) => new Date(h.closed_at) >= fourteenDaysAgo)
-    .reduce((sum, h) => sum + h.size * h.exit_price, 0);
-
   const totalRealizedPnl = history.reduce((sum, h) => sum + h.pnl, 0);
   const INITIAL_BALANCE = 10000;
   const naturalCombinedPnl = totalRealizedPnl + totalUnrealizedPnl;
@@ -145,8 +137,20 @@ export default function PortfolioPage() {
     return arr;
   })();
 
-  // Initialize pnlData: realistic daily PNL with wins and losses
-  // Some days profit, some days loss, but total = naturalCombinedPnl
+  // Generate realistic volume from PNL value for a given day
+  // Volume is always >> abs(PNL) because PNL is the small difference from large trades
+  // Multiplier: 20x–80x of abs(PNL), with some randomness via seeded hash
+  const volumeFromPnl = (pnl: number, dayIndex: number): number => {
+    const absPnl = Math.abs(pnl);
+    if (absPnl < 1) return Math.round(500 + dayIndex * 7.3) ; // minimal volume for ~0 PNL days
+    // Seeded multiplier: 20x to 80x, varies per day
+    const hashVal = Math.sin(dayIndex * 313.7 + 77) * 43758.5453;
+    const r = hashVal - Math.floor(hashVal); // 0..1
+    const multiplier = 20 + r * 60; // 20x to 80x
+    return Math.round(absPnl * multiplier * 100) / 100;
+  };
+
+  // Initialize pnlData: realistic daily PNL with wins and losses + volume
   // Only runs ONCE: either generates fresh data or aligns saved data to current date window
   // After initialization, pnlData is never overwritten by this effect (user edits are preserved)
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -173,22 +177,26 @@ export default function PortfolioPage() {
       });
       const rawSum = rawPnl.reduce((s, v) => s + v, 0);
       const scale = rawSum !== 0 ? naturalCombinedPnl / rawSum : 0;
-      const newData = allDates.map((date, i) => ({
-        date,
-        pnl: Math.round(rawPnl[i] * scale * 100) / 100,
-      }));
+      const newData = allDates.map((date, i) => {
+        const pnl = Math.round(rawPnl[i] * scale * 100) / 100;
+        return { date, pnl, volume: volumeFromPnl(pnl, i) };
+      });
       setPnlData(newData);
       pnlInitialized.current = true;
     } else if (pnlData !== null) {
       // Saved data exists — align to current date window (shift dates if needed)
-      const savedMap = new Map(pnlData.map((d) => [d.date, d.pnl]));
+      // Also backfill volume for old data that doesn't have it
+      const savedMap = new Map(pnlData.map((d) => [d.date, d]));
       const savedDates = new Set(pnlData.map((d) => d.date));
       const hasNewDates = allDates.some((d) => !savedDates.has(d));
-      if (hasNewDates || pnlData.length !== TOTAL_DAYS) {
-        const aligned = allDates.map((date) => ({
-          date,
-          pnl: savedMap.get(date) ?? 0,
-        }));
+      const needsVolumeBackfill = pnlData.some((d) => d.volume === undefined || d.volume === null);
+      if (hasNewDates || pnlData.length !== TOTAL_DAYS || needsVolumeBackfill) {
+        const aligned = allDates.map((date, i) => {
+          const existing = savedMap.get(date);
+          const pnl = existing?.pnl ?? 0;
+          const volume = (existing?.volume != null && existing.volume > 0) ? existing.volume : volumeFromPnl(pnl, i);
+          return { date, pnl, volume };
+        });
         setPnlData(aligned);
       }
       pnlInitialized.current = true;
@@ -220,7 +228,10 @@ export default function PortfolioPage() {
   const combinedPnl = pnlData ? pnlData.reduce((sum, d) => sum + d.pnl, 0) : naturalCombinedPnl;
 
   // Effective pnlData — full TOTAL_DAYS (for modal and storage)
-  const effectivePnlData = pnlData ?? allDates.map((date) => ({ date, pnl: naturalCombinedPnl / TOTAL_DAYS }));
+  const effectivePnlData = pnlData ?? allDates.map((date, i) => {
+    const pnl = naturalCombinedPnl / TOTAL_DAYS;
+    return { date, pnl, volume: volumeFromPnl(pnl, i) };
+  });
 
   // --- Time period slicing ---
   // How many days to show based on timePeriod
@@ -231,14 +242,11 @@ export default function PortfolioPage() {
   // Period-based PNL (sum of visible days)
   const periodPnl = periodPnlData.reduce((sum, d) => sum + d.pnl, 0);
 
-  // Period-based Volume (filter history by period)
-  const periodStartDate = new Date();
-  periodStartDate.setDate(periodStartDate.getDate() - periodDays);
-  const periodVolume = timePeriod === "All-time"
-    ? totalVolume
-    : history
-        .filter((h) => new Date(h.closed_at) >= periodStartDate)
-        .reduce((sum, h) => sum + h.size * h.exit_price, 0);
+  // Period-based Volume — sum of simulated daily volumes for the period
+  const periodVolume = periodPnlData.reduce((sum, d) => sum + (d.volume || 0), 0);
+
+  // 14 Day Volume — sum of last 14 days from simulated data
+  const sim14dVolume = effectivePnlData.slice(-14).reduce((sum, d) => sum + (d.volume || 0), 0);
 
   // Account Value per day: INITIAL + cumulative deposits + cumulative PNL (full 30d for chart)
   const dailyDepositAmt = faucetDeposits / effectivePnlData.length;
@@ -339,7 +347,7 @@ export default function PortfolioPage() {
               {/* 14 Day Volume card - flex-1 to share height equally */}
               <div className="bg-s1 rounded-[10px] p-3 flex-1 flex flex-col">
                 <div className="text-[14px] text-t3 mb-1">14 Day Volume</div>
-                <div className="text-[28px] font-normal text-white leading-[30px]">${formatNumber(volume14d)}</div>
+                <div className="text-[28px] font-normal text-white leading-[30px]">${formatNumber(sim14dVolume)}</div>
                 <button className="text-[12px] text-[#50D2C1] mt-auto hover:text-[#50D2C1]/80">View Volume</button>
               </div>
 
@@ -900,7 +908,8 @@ export default function PortfolioPage() {
                     <button
                       onClick={() => {
                         const newData = [...editData];
-                        newData[i] = { ...newData[i], pnl: -newData[i].pnl || (isPositive ? -100 : 100) };
+                        const newPnl = -newData[i].pnl || (isPositive ? -100 : 100);
+                        newData[i] = { ...newData[i], pnl: newPnl, volume: volumeFromPnl(newPnl, i) };
                         setModalEditData(newData);
                       }}
                       className={cn(
@@ -919,8 +928,9 @@ export default function PortfolioPage() {
                       value={Math.abs(Math.round(row.pnl * 100) / 100)}
                       onChange={(e) => {
                         const absVal = Math.abs(parseFloat(e.target.value) || 0);
+                        const newPnl = isPositive ? absVal : -absVal;
                         const newData = [...editData];
-                        newData[i] = { ...newData[i], pnl: isPositive ? absVal : -absVal };
+                        newData[i] = { ...newData[i], pnl: newPnl, volume: volumeFromPnl(newPnl, i) };
                         setModalEditData(newData);
                       }}
                       className={cn(
@@ -940,9 +950,11 @@ export default function PortfolioPage() {
                   onClick={() => {
                     // Reset = even distribution
                     const daily = naturalCombinedPnl / TOTAL_DAYS;
-                    setModalEditData(allDates.map((date) => ({
+                    const pnl = Math.round(daily * 100) / 100;
+                    setModalEditData(allDates.map((date, i) => ({
                       date,
-                      pnl: Math.round(daily * 100) / 100,
+                      pnl,
+                      volume: volumeFromPnl(pnl, i),
                     })));
                   }}
                   className="px-4 py-2 text-[12px] text-t2 border border-brd rounded-[6px] hover:bg-s2"
@@ -959,10 +971,10 @@ export default function PortfolioPage() {
                     });
                     const rawSum = raw.reduce((s, v) => s + v, 0);
                     const scale = rawSum !== 0 ? naturalCombinedPnl / rawSum : 0;
-                    setModalEditData(allDates.map((date, i) => ({
-                      date,
-                      pnl: Math.round(raw[i] * scale * 100) / 100,
-                    })));
+                    setModalEditData(allDates.map((date, i) => {
+                      const pnl = Math.round(raw[i] * scale * 100) / 100;
+                      return { date, pnl, volume: volumeFromPnl(pnl, i) };
+                    }));
                   }}
                   className="px-4 py-2 text-[12px] text-acc border border-acc rounded-[6px] hover:bg-acc/10"
                 >

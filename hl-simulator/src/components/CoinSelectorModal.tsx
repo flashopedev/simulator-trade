@@ -290,9 +290,9 @@ export function CoinSelectorModal({
         {/* Category tabs */}
         <div className="flex items-center gap-1 px-4 py-2 border-b border-brd overflow-x-auto">
           {[
-            { id: "all", label: "All" },
-            { id: "perps", label: "Perps" },
-            { id: "tradfi", label: "Tradfi" },
+            { id: "all", label: "All", disabled: false },
+            { id: "perps", label: "Perps", disabled: false },
+            { id: "tradfi", label: "Tradfi", disabled: false },
             { id: "spot", label: "Spot", disabled: true },
             { id: "hip3", label: "HIP-3", disabled: true },
             { id: "trending", label: "Trending", disabled: true },
@@ -300,7 +300,9 @@ export function CoinSelectorModal({
           ].map(tab => (
             <button
               key={tab.id}
-              onClick={() => !tab.disabled && setActiveTab(tab.id)}
+              onClick={() => {
+                if (!tab.disabled) setActiveTab(tab.id);
+              }}
               disabled={tab.disabled}
               className={cn(
                 "px-3 py-1.5 text-[12px] font-medium rounded transition-colors whitespace-nowrap",

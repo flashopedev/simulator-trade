@@ -8,7 +8,7 @@ interface FooterProps {
 
 export function Footer({ isConnected = false }: FooterProps) {
   return (
-    <footer className="fixed bottom-0 left-0 right-0 h-[28px] flex items-center justify-between px-4 bg-bg border-t border-brd text-[12px] text-t3 z-40">
+    <footer className="h-[28px] flex items-center justify-between px-4 bg-bg border-t border-brd text-[12px] text-t3 flex-shrink-0">
       {/* FIX 4: Left side - Online badge */}
       <div className={cn(
         "flex items-center gap-1.5 rounded-full px-3 py-0.5 border",

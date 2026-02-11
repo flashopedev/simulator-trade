@@ -23,6 +23,7 @@ interface OrderBookTabsProps {
   midPrice: number | null;
   trades: Trade[];
   decimals: number;
+  coin?: string;
 }
 
 export function OrderBookTabs({
@@ -31,35 +32,37 @@ export function OrderBookTabs({
   midPrice,
   trades,
   decimals,
+  coin,
 }: OrderBookTabsProps) {
   const [activeTab, setActiveTab] = useState<"book" | "trades">("book");
 
   return (
-    <div className="flex flex-col border-t border-brd flex-1 min-h-0">
-      {/* Tabs — real HL: h=42px, lineHeight=41px, 12px, borderBottom 1px solid #303030 */}
-      <div className="flex" style={{ borderBottom: "1px solid rgb(48, 48, 48)" }}>
-        {(["book", "trades"] as const).map((tab) => (
-          <div
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className="relative cursor-pointer flex items-center"
-            style={{
-              height: "42px",
-              lineHeight: "41px",
-              padding: "0 12px",
-              fontSize: "12px",
-              fontWeight: 400,
-              color: activeTab === tab ? "rgb(246, 254, 253)" : "rgb(148, 158, 156)",
-            }}
-          >
-            {tab === "book" ? "Order Book" : "Trades"}
-            {activeTab === tab && (
-              <div className="absolute bottom-0 left-0 right-0" style={{ height: "1px", background: "rgb(80, 210, 193)" }} />
-            )}
-          </div>
-        ))}
-        {/* Three dots menu on the right */}
-        <div className="flex-1" />
+    <div className="flex flex-col flex-1 min-h-0">
+      {/* Tab row with controls — matching real HL */}
+      <div className="flex items-center justify-between flex-shrink-0" style={{ borderBottom: "1px solid rgb(48, 48, 48)" }}>
+        <div className="flex items-center">
+          {(["book", "trades"] as const).map((tab) => (
+            <div
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className="relative cursor-pointer flex items-center"
+              style={{
+                height: "42px",
+                lineHeight: "41px",
+                padding: "0 12px",
+                fontSize: "12px",
+                fontWeight: 400,
+                color: activeTab === tab ? "rgb(246, 254, 253)" : "rgb(148, 158, 156)",
+              }}
+            >
+              {tab === "book" ? "Order Book" : "Trades"}
+              {activeTab === tab && (
+                <div className="absolute bottom-0 left-0 right-0" style={{ height: "1px", background: "rgb(80, 210, 193)" }} />
+              )}
+            </div>
+          ))}
+        </div>
+        {/* Right controls — three dots */}
         <div className="flex items-center pr-2 cursor-pointer" style={{ color: "rgb(148, 158, 156)", fontSize: "14px" }}>
           ⋮
         </div>

@@ -119,11 +119,11 @@ export function CoinInfoBar({
 
   return (
     <>
-      {/* Star/Favorites row - matches real HL: 40px height, rounded-[5px], no borders */}
-      <div className="h-[40px] flex items-center px-4 bg-s1 rounded-[5px]">
+      <div className="relative z-10 flex items-center h-[48px] px-4 gap-4 bg-s1 overflow-x-auto border-b border-brd">
+        {/* Star */}
         <button
           onClick={() => setIsFavorite(!isFavorite)}
-          className="flex items-center"
+          className="flex items-center flex-shrink-0"
         >
           <Star
             className={cn(
@@ -132,22 +132,18 @@ export function CoinInfoBar({
             )}
           />
         </button>
-      </div>
 
-      <div className="relative z-10 flex items-center h-[63px] px-4 gap-4 bg-s1 rounded-[5px] overflow-x-auto">
         {/* Coin selector */}
         <button
           onClick={() => setShowCoinSelector(true)}
           className="flex items-center gap-2 flex-shrink-0"
         >
-          {/* Coin icon — real SVG from Hyperliquid, 20x20 like original */}
           <CoinIcon coin={selectedCoin} size={20} />
-          {/* Name + dropdown */}
           <span className="text-[20px] font-normal text-t1 leading-none">{selectedCoin}-USDC</span>
           <ChevronDown className="w-4 h-4 text-t3 -ml-0.5" />
         </button>
 
-        {/* Leverage badge - matching real HL: 16px, white, dark teal bg, rounded-[5px] */}
+        {/* Leverage badge */}
         <span className="px-1 bg-[#0e3333] text-white text-[16px] font-normal rounded-[5px] flex-shrink-0 leading-[20px]">
           {COIN_LEVERAGE[selectedCoin]}
         </span>

@@ -6,11 +6,14 @@ import { Footer } from "@/components/Footer";
 import { CoinInfoBar } from "@/components/CoinInfoBar";
 import { TradingViewChart } from "@/components/TradingViewChart";
 import { OrderForm } from "@/components/OrderForm";
-import { OrderBook } from "@/components/OrderBook";
+import { OrderBookTabs } from "@/components/OrderBookTabs";
 import { BottomTabsPanel } from "@/components/BottomTabsPanel";
 import { AuthForm } from "@/components/AuthForm";
 import { NotificationContainer } from "@/components/Notification";
 import { ChartToolbar } from "@/components/ChartToolbar";
+import { ChartTopBar } from "@/components/ChartTopBar";
+import { ChartBottomBar } from "@/components/ChartBottomBar";
+import { ChartLegendOverlay } from "@/components/ChartLegendOverlay";
 import { useAuth } from "@/hooks/useAuth";
 import { useTrading } from "@/hooks/useTrading";
 import { useMarketData } from "@/hooks/useMarketData";
@@ -117,18 +120,16 @@ export default function TradePage() {
   const totalEquity = getTotalEquity(prices);
 
   return (
-    <div className="min-h-screen flex flex-col bg-bg">
+    <div className="h-screen flex flex-col bg-bg overflow-hidden">
       <NotificationContainer />
 
-      {/* Header - sticky */}
-      <div className="sticky top-0 z-50">
-        <Navigation
-          balance={totalEquity}
-          isConnected={isConnected}
-          connectionMode={connectionMode}
-          onSignOut={signOut}
-        />
-      </div>
+      {/* Header */}
+      <Navigation
+        balance={totalEquity}
+        isConnected={isConnected}
+        connectionMode={connectionMode}
+        onSignOut={signOut}
+      />
 
       {/* Coin Info Bar */}
       <CoinInfoBar
@@ -140,16 +141,21 @@ export default function TradePage() {
       />
 
       {/* Main Layout: 2-column grid (chart + sidebar) - sidebar 396px like real HL */}
-      <div className="flex-1 flex flex-col md:grid md:grid-cols-[1fr_396px]">
-        {/* Left column: ChartToolbar + Chart + Bottom Panel */}
-        <div className="flex flex-col">
+      <div className="flex-1 flex flex-col md:grid md:grid-cols-[1fr_396px] min-h-0">
+        {/* Left column: Chart area + Bottom Panel */}
+        <div className="flex flex-col min-h-0">
           {/* Chart area with toolbar */}
-          <div className="h-[500px] md:h-[calc(100vh-350px)] min-h-[400px] flex">
+          <div className="flex-1 flex min-h-0">
             {/* Left toolbar - matching real HL */}
             <ChartToolbar />
-            {/* Chart */}
-            <div className="flex-1">
-              <TradingViewChart coin={coin} />
+            {/* Chart column: TopBar + Chart + BottomBar */}
+            <div className="flex-1 flex flex-col min-h-0">
+              <ChartTopBar timeframe={timeframe} onTimeframeChange={setTimeframe} />
+              <div className="flex-1 relative min-h-0">
+                <ChartLegendOverlay coin={coin} timeframe={timeframe} price={price} />
+                <TradingViewChart coin={coin} timeframe={timeframe} />
+              </div>
+              <ChartBottomBar />
             </div>
           </div>
 
@@ -169,9 +175,9 @@ export default function TradePage() {
         </div>
 
         {/* Right Sidebar - OrderForm + OrderBook */}
-        <div className="flex flex-col border-l border-brd bg-s1">
+        <div className="flex flex-col border-l border-brd bg-s1 min-h-0">
           {/* Order Form - scrollable if needed */}
-          <div className="flex-shrink-0 border-b border-brd overflow-y-auto max-h-[70vh]">
+          <div className="flex-shrink-0 border-b border-brd overflow-y-auto max-h-[60vh]">
             <OrderForm
               coin={coin}
               price={price}
@@ -182,43 +188,19 @@ export default function TradePage() {
             />
           </div>
 
-          {/* Order Book with tabs */}
-          <div className="flex-1 min-h-[250px] flex flex-col">
-            <div className="flex items-center justify-between px-2.5 py-1.5 border-b border-brd flex-shrink-0">
-              <div className="flex items-center gap-4">
-                <span className="text-[11px] font-medium text-t1 border-b-2 border-t1 pb-1">Order Book</span>
-                <span className="text-[11px] font-medium text-t3 pb-1 cursor-pointer hover:text-t2">Trades</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <select className="bg-s2 border border-brd rounded px-1 py-0.5 text-[10px] text-t2 outline-none">
-                  <option>0,001</option>
-                  <option>0,01</option>
-                  <option>0,1</option>
-                  <option>1</option>
-                </select>
-                <select className="bg-s2 border border-brd rounded px-1 py-0.5 text-[10px] text-t2 outline-none">
-                  <option>{coin}</option>
-                </select>
-                <button className="text-t3 hover:text-t2 text-[13px]">⋮</button>
-              </div>
-            </div>
-            <div className="flex-1 overflow-y-auto">
-              <OrderBook
-                asks={asks}
-                bids={bids}
-                midPrice={price}
-                decimals={decimals}
-              />
-            </div>
-          </div>
+          {/* Order Book / Trades with tabs */}
+          <OrderBookTabs
+            asks={asks}
+            bids={bids}
+            midPrice={price}
+            trades={trades}
+            decimals={decimals}
+          />
         </div>
       </div>
 
       {/* Footer */}
       <Footer isConnected={isConnected} />
-
-      {/* Mobile bottom nav spacer */}
-      <div className="h-14 md:hidden" />
     </div>
   );
 }

@@ -228,17 +228,16 @@ export function CoinSelectorModal({
   if (!isOpen) return null;
 
   return (
-    <div
-      className="fixed inset-0 z-[100] flex items-start justify-center pt-[8vh]"
-      onClick={onClose}
-    >
-      {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/70 z-0" />
+    <div className="fixed inset-0 z-[100] flex items-start justify-center pt-[8vh]">
+      {/* Backdrop — click to close */}
+      <div
+        className="absolute inset-0 bg-black/70"
+        onClick={onClose}
+      />
 
       {/* Modal */}
       <div
         className="relative z-10 w-[860px] max-w-[92vw] max-h-[75vh] bg-s1 border border-brd rounded-lg overflow-hidden flex flex-col"
-        onClick={e => e.stopPropagation()}
       >
         {/* Header with search */}
         <div className="flex items-center gap-3 px-4 py-3 border-b border-brd">
@@ -289,25 +288,31 @@ export function CoinSelectorModal({
 
         {/* Category tabs */}
         <div className="flex items-center gap-1 px-4 py-2 border-b border-brd overflow-x-auto">
-          {[
-            { id: "all", label: "All", disabled: false },
-            { id: "perps", label: "Perps", disabled: false },
-            { id: "tradfi", label: "Tradfi", disabled: false },
+          {([
+            { id: "all", label: "All" },
+            { id: "perps", label: "Perps" },
+            { id: "tradfi", label: "Tradfi" },
             { id: "spot", label: "Spot", disabled: true },
             { id: "hip3", label: "HIP-3", disabled: true },
             { id: "trending", label: "Trending", disabled: true },
             { id: "prelaunch", label: "Pre-launch", disabled: true },
-          ].map(tab => (
+          ] as Array<{ id: string; label: string; disabled?: boolean }>).map((tab) => (
             <button
               key={tab.id}
+              type="button"
               onClick={() => {
-                if (!tab.disabled) setActiveTab(tab.id);
+                if (!tab.disabled) {
+                  setActiveTab(tab.id);
+                }
               }}
-              disabled={tab.disabled}
+              disabled={!!tab.disabled}
               className={cn(
                 "px-3 py-1.5 text-[12px] font-medium rounded transition-colors whitespace-nowrap",
-                activeTab === tab.id ? "bg-s3 text-t1" : "text-t3 hover:text-t2",
-                tab.disabled && "opacity-40 cursor-not-allowed"
+                activeTab === tab.id
+                  ? "bg-s3 text-t1"
+                  : tab.disabled
+                    ? "text-t4 opacity-40 cursor-not-allowed"
+                    : "text-t3 hover:text-t2 hover:bg-s2 cursor-pointer"
               )}
             >
               {tab.label}

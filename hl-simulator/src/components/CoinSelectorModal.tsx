@@ -233,11 +233,11 @@ export function CoinSelectorModal({
       onClick={onClose}
     >
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/70" />
+      <div className="absolute inset-0 bg-black/70 z-0" />
 
       {/* Modal */}
       <div
-        className="relative w-[860px] max-w-[92vw] max-h-[75vh] bg-s1 border border-brd rounded-lg overflow-hidden flex flex-col"
+        className="relative z-10 w-[860px] max-w-[92vw] max-h-[75vh] bg-s1 border border-brd rounded-lg overflow-hidden flex flex-col"
         onClick={e => e.stopPropagation()}
       >
         {/* Header with search */}

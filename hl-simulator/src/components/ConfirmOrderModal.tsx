@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { X } from "lucide-react";
-import { cn, formatNumber } from "@/lib/utils";
+import { cn, formatNumber, isTradifiCoin, getTradifiSymbol } from "@/lib/utils";
 
 interface ConfirmOrderModalProps {
   isOpen: boolean;
@@ -79,7 +79,7 @@ export function ConfirmOrderModal({
             <div className="flex justify-between text-[14px]">
               <span className="text-t3">Size</span>
               <span className="text-acc font-medium">
-                {size.toFixed(5)} {coin}
+                {size.toFixed(5)} {isTradifiCoin(coin) ? getTradifiSymbol(coin) : coin}
               </span>
             </div>
 

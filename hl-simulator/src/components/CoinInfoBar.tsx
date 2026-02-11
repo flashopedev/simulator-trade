@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { cn, type SupportedCoin } from "@/lib/utils";
+import { cn, type SupportedCoin, isTradifiCoin, getTradifiSymbol, TRADIFI_MAX_LEVERAGE } from "@/lib/utils";
 import type { CoinStats } from "@/hooks/useCoinStats";
 import { Star, ChevronDown } from "lucide-react";
 import { CoinSelectorModal } from "./CoinSelectorModal";
@@ -87,6 +87,13 @@ export function CoinInfoBar({
     return () => clearInterval(timer);
   }, [coinStats.nextFundingTime]);
 
+  // Determine display name and leverage for the coin
+  const isTradifi = isTradifiCoin(selectedCoin);
+  const displayCoinName = isTradifi ? `${getTradifiSymbol(selectedCoin)}-USD` : `${selectedCoin}-USDC`;
+  const coinLeverage = isTradifi
+    ? `${TRADIFI_MAX_LEVERAGE[selectedCoin] || 10}x`
+    : COIN_LEVERAGE[selectedCoin] || "10x";
+
   // Use Binance spot price as mark, Binance Futures index as oracle
   const markPrice = price;
   const oraclePrice = coinStats.oraclePrice;
@@ -139,13 +146,13 @@ export function CoinInfoBar({
           className="flex items-center gap-2 flex-shrink-0"
         >
           <CoinIcon coin={selectedCoin} size={20} />
-          <span className="text-[20px] font-normal text-t1 leading-none">{selectedCoin}-USDC</span>
+          <span className="text-[20px] font-normal text-t1 leading-none">{displayCoinName}</span>
           <ChevronDown className="w-4 h-4 text-t3 -ml-0.5" />
         </button>
 
         {/* Leverage badge */}
         <span className="px-1 bg-[#0e3333] text-white text-[16px] font-normal rounded-[5px] flex-shrink-0 leading-[20px]">
-          {COIN_LEVERAGE[selectedCoin]}
+          {coinLeverage}
         </span>
 
         {/* Divider */}

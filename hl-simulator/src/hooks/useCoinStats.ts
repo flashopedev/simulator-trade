@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { SupportedCoin } from "@/lib/utils";
+import { isTradifiCoin, type SupportedCoin } from "@/lib/utils";
+import { fetchDeployerMetaAndAssetCtxs } from "@/lib/hyperliquid";
 
 const BINANCE_FUTURES = "https://fapi.binance.com/fapi/v1";
 
@@ -45,8 +46,9 @@ function safeFloat(v: string | undefined | null): number | null {
 }
 
 /**
- * Fetches per-coin market stats from Binance Futures.
- * All coins including HYPE are on Binance Futures (fapi).
+ * Fetches per-coin market stats.
+ * Crypto coins: Binance Futures (fapi).
+ * Tradifi coins (xyz:): Hyperliquid deployer API.
  * Polls every 5 seconds.
  */
 export function useCoinStats(coin: SupportedCoin) {
@@ -56,15 +58,76 @@ export function useCoinStats(coin: SupportedCoin) {
 
   useEffect(() => {
     mountedRef.current = true;
-    const is1000x = BINANCE_1000X_COINS[coin] ?? false;
-    const symbol = is1000x ? `1000${coin}USDT` : `${coin}USDT`;
 
-    const fetchStats = async () => {
+    // Choose fetch strategy based on coin type
+    const isTradifi = isTradifiCoin(coin);
+
+    const fetchTradifiStats = async () => {
       try {
+        const dex = coin.split(":")[0]; // "xyz"
+        const data = await fetchDeployerMetaAndAssetCtxs(dex);
+        if (!data) return;
+
+        const coinIndex = data.universe.findIndex((u) => u.name === coin);
+        if (coinIndex < 0 || !data.assetCtxs[coinIndex]) return;
+
+        const ctx = data.assetCtxs[coinIndex];
+        const midPrice = safeFloat(ctx.midPx) ?? safeFloat(ctx.markPx);
+        const prevDayPx = safeFloat(ctx.prevDayPx);
+        const oraclePx = safeFloat(ctx.oraclePx);
+        const markPx = safeFloat(ctx.markPx);
+        const funding = safeFloat(ctx.funding);
+        const oiRaw = safeFloat(ctx.openInterest);
+        const dayVlm = safeFloat(ctx.dayNtlVlm);
+
+        const newStats: CoinStats = { ...EMPTY_STATS };
+
+        // 24h change
+        if (midPrice !== null && prevDayPx !== null && prevDayPx > 0) {
+          newStats.change24h = ((midPrice - prevDayPx) / prevDayPx) * 100;
+          newStats.change24hAbs = midPrice - prevDayPx;
+        }
+
+        // Volume (dayNtlVlm is already in USD notional)
+        newStats.volume24h = dayVlm;
+
+        // OI (openInterest is in coin units, multiply by price for USD)
+        if (oiRaw !== null && midPrice !== null) {
+          newStats.openInterest = oiRaw * midPrice;
+        }
+
+        // Funding rate
+        newStats.fundingRate = funding;
+
+        // Funding countdown: tradifi funding is every 1 hour on HL
+        // Estimate next hour mark
+        const now = Date.now();
+        const d = new Date();
+        d.setMinutes(0, 0, 0);
+        d.setTime(d.getTime() + 3600000); // next hour
+        if (d.getTime() <= now) d.setTime(d.getTime() + 3600000);
+        newStats.nextFundingTime = d.getTime();
+
+        // Oracle and mark
+        newStats.oraclePrice = oraclePx;
+        newStats.markPrice = markPx;
+
+        if (mountedRef.current) {
+          setStats(newStats);
+        }
+      } catch {
+        // Silent — keep previous stats
+      }
+    };
+
+    const fetchBinanceStats = async () => {
+      try {
+        const is1000x = BINANCE_1000X_COINS[coin] ?? false;
+        const symbol = is1000x ? `1000${coin}USDT` : `${coin}USDT`;
+
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 8000);
 
-        // Fetch all three endpoints in parallel, parse JSON immediately
         const [ticker, oi, premium] = await Promise.all([
           fetch(`${BINANCE_FUTURES}/ticker/24hr?symbol=${symbol}`, { signal: controller.signal })
             .then(r => r.ok ? r.json() : null).catch(() => null),
@@ -77,14 +140,10 @@ export function useCoinStats(coin: SupportedCoin) {
         clearTimeout(timeout);
 
         const newStats: CoinStats = { ...EMPTY_STATS };
-
-        // Divisor for 1000X coins (prices are 1000x larger on Binance)
         const div = is1000x ? 1000 : 1;
 
-        // Parse 24hr ticker
         if (ticker) {
           newStats.change24h = safeFloat(ticker.priceChangePercent);
-          // Absolute change needs dividing for 1000X coins
           const absChange = safeFloat(ticker.priceChange);
           newStats.change24hAbs = absChange !== null ? absChange / div : null;
           newStats.volume24h = safeFloat(ticker.quoteVolume);
@@ -94,7 +153,6 @@ export function useCoinStats(coin: SupportedCoin) {
           newStats.low24h = low !== null ? low / div : null;
         }
 
-        // Parse premium index (funding + oracle)
         if (premium) {
           newStats.fundingRate = safeFloat(premium.lastFundingRate);
           newStats.nextFundingTime = premium.nextFundingTime || null;
@@ -104,10 +162,8 @@ export function useCoinStats(coin: SupportedCoin) {
           newStats.markPrice = markPx !== null ? markPx / div : null;
         }
 
-        // Parse open interest (multiply by raw Binance price for USD value)
         if (oi) {
           const oiAmount = safeFloat(oi.openInterest);
-          // Use raw futures price (not divided) since OI units match futures contract
           const rawMark = premium ? safeFloat(premium.markPrice) : null;
           const rawLast = ticker ? safeFloat(ticker.lastPrice) : null;
           const priceForOi = rawMark ?? rawLast;
@@ -123,6 +179,8 @@ export function useCoinStats(coin: SupportedCoin) {
         // Silent — keep previous stats
       }
     };
+
+    const fetchStats = isTradifi ? fetchTradifiStats : fetchBinanceStats;
 
     // Fetch immediately, then poll every 5 seconds
     fetchStats();

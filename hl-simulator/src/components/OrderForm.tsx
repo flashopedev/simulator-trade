@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { cn, calculateLiquidationPrice, formatNumber, COIN_DECIMALS } from "@/lib/utils";
+import { cn, calculateLiquidationPrice, formatNumber, COIN_DECIMALS, isTradifiCoin, getTradifiSymbol, TRADIFI_MAX_LEVERAGE } from "@/lib/utils";
 import { ChevronDown } from "lucide-react";
 import { ConfirmOrderModal } from "./ConfirmOrderModal";
 import { AdjustLeverageModal } from "./AdjustLeverageModal";
@@ -66,7 +66,8 @@ export function OrderForm({
   const [showLeverageModal, setShowLeverageModal] = useState(false);
 
   const decimals = COIN_DECIMALS[coin] || 2;
-  const maxLeverage = COIN_MAX_LEVERAGE[coin] || 10;
+  const maxLeverage = isTradifiCoin(coin) ? (TRADIFI_MAX_LEVERAGE[coin] || 10) : (COIN_MAX_LEVERAGE[coin] || 10);
+  const coinDisplayName = isTradifiCoin(coin) ? getTradifiSymbol(coin) : coin;
   const sizeNum = parseFloat(size) || 0;
   const orderType = orderTab;
   const execPrice = orderType === "limit" || orderType === "pro" ? parseFloat(limitPrice) || price || 0 : price || 0;
@@ -251,7 +252,7 @@ export function OrderForm({
               "font-tabular",
               currentPositionSize > 0 ? "text-acc" : currentPositionSize < 0 ? "text-red" : "text-t1"
             )}>
-              {currentPositionSize !== 0 ? `${currentPositionSize.toFixed(2).replace(".", ",")} ${coin}` : `0,00 ${coin}`}
+              {currentPositionSize !== 0 ? `${currentPositionSize.toFixed(2).replace(".", ",")} ${coinDisplayName}` : `0,00 ${coinDisplayName}`}
             </span>
           </div>
 
@@ -286,7 +287,7 @@ export function OrderForm({
               className="flex-1 bg-transparent text-[12px] font-medium outline-none font-tabular text-t1 text-right"
             />
             <div className="flex items-center gap-1 text-[12px] text-t1 ml-2">
-              <span>{coin}</span>
+              <span>{coinDisplayName}</span>
               <ChevronDown className="w-3 h-3" />
             </div>
           </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { type SupportedCoin, type Timeframe } from "@/lib/utils";
+import { type SupportedCoin, type Timeframe, isTradifiCoin, getTradifiSymbol } from "@/lib/utils";
 
 /**
  * Chart legend overlay — replicates real Hyperliquid's chart legend.
@@ -67,26 +67,62 @@ function useKlineOHLC(coin: SupportedCoin, timeframe: Timeframe): OHLCData | nul
   const intervalRef = useRef<ReturnType<typeof setInterval>>();
 
   const fetchKline = useCallback(async () => {
-    const symbol = BINANCE_SYMBOL[coin];
-    if (!symbol) return;
-    const interval = BINANCE_INTERVAL[timeframe];
-    try {
-      const res = await fetch(
-        `https://fapi.binance.com/fapi/v1/klines?symbol=${symbol}&interval=${interval}&limit=1`
-      );
-      if (!res.ok) return;
-      const data = await res.json();
-      if (data && data[0]) {
-        const [, open, high, low, close] = data[0];
-        setOhlc({
-          open: parseFloat(open),
-          high: parseFloat(high),
-          low: parseFloat(low),
-          close: parseFloat(close),
+    const isTradifi = isTradifiCoin(coin);
+
+    if (isTradifi) {
+      // Tradifi: fetch from Hyperliquid candle API
+      try {
+        const now = Date.now();
+        const intervalMs: Record<string, number> = {
+          "1m": 60000, "5m": 300000, "15m": 900000,
+          "1h": 3600000, "4h": 14400000, "1d": 86400000,
+        };
+        const ms = intervalMs[timeframe] || 900000;
+        const res = await fetch("https://api.hyperliquid.xyz/info", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            type: "candleSnapshot",
+            req: { coin, interval: timeframe, startTime: now - ms * 2, endTime: now },
+          }),
         });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data && data.length > 0) {
+          const last = data[data.length - 1];
+          setOhlc({
+            open: parseFloat(last.o),
+            high: parseFloat(last.h),
+            low: parseFloat(last.l),
+            close: parseFloat(last.c),
+          });
+        }
+      } catch {
+        // silently fail
       }
-    } catch {
-      // silently fail
+    } else {
+      // Crypto: fetch from Binance Futures klines
+      const symbol = BINANCE_SYMBOL[coin];
+      if (!symbol) return;
+      const interval = BINANCE_INTERVAL[timeframe];
+      try {
+        const res = await fetch(
+          `https://fapi.binance.com/fapi/v1/klines?symbol=${symbol}&interval=${interval}&limit=1`
+        );
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data && data[0]) {
+          const [, open, high, low, close] = data[0];
+          setOhlc({
+            open: parseFloat(open),
+            high: parseFloat(high),
+            low: parseFloat(low),
+            close: parseFloat(close),
+          });
+        }
+      } catch {
+        // silently fail
+      }
     }
   }, [coin, timeframe]);
 
@@ -123,7 +159,8 @@ interface ChartLegendOverlayProps {
 
 export function ChartLegendOverlay({ coin, timeframe }: ChartLegendOverlayProps) {
   const tfLabel = TIMEFRAME_LABEL[timeframe] || timeframe;
-  const symbolName = `${coin}USD`;
+  const isTradifi = isTradifiCoin(coin);
+  const symbolName = isTradifi ? `${getTradifiSymbol(coin)}USD` : `${coin}USD`;
   const ohlc = useKlineOHLC(coin, timeframe);
 
   // Calculate change and percentage

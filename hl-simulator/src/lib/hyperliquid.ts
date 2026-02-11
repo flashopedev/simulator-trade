@@ -30,28 +30,19 @@ export interface Trade {
 
 // Fallback prices when API is unavailable (approximate, updated Feb 2026)
 export const FALLBACK_PRICES: Record<string, number> = {
-  HYPE: 31,
-  BTC: 97000,
-  ETH: 2700,
-  SOL: 87,
-  DOGE: 0.26,
-  AVAX: 38,
-  LINK: 19,
-  ARB: 0.82,
-  OP: 1.85,
-  SUI: 3.5,
-  WIF: 1.2,
-  PEPE: 0.00001234,
-  JUP: 0.87,
-  TIA: 4.5,
-  SEI: 0.34,
-  INJ: 24,
-  RENDER: 7.2,
-  FET: 1.5,
-  ONDO: 1.2,
-  STX: 1.8,
-  NEAR: 5.2,
-  BONK: 0.00002345,
+  HYPE: 31, BTC: 97000, ETH: 2700, SOL: 87, DOGE: 0.26, AVAX: 38,
+  LINK: 19, ARB: 0.82, OP: 1.85, SUI: 3.5, WIF: 1.2, PEPE: 0.00001234,
+  JUP: 0.87, TIA: 4.5, SEI: 0.34, INJ: 24, RENDER: 7.2, FET: 1.5,
+  ONDO: 1.2, STX: 1.8, NEAR: 5.2, BONK: 0.00002345,
+  "xyz:TSLA": 423, "xyz:NVDA": 192, "xyz:AAPL": 279, "xyz:MSFT": 403,
+  "xyz:GOOGL": 311, "xyz:AMZN": 204, "xyz:META": 661, "xyz:HOOD": 75,
+  "xyz:PLTR": 134, "xyz:COIN": 149, "xyz:INTC": 48, "xyz:AMD": 211,
+  "xyz:MU": 403, "xyz:SNDK": 598, "xyz:MSTR": 125, "xyz:CRCL": 56,
+  "xyz:NFLX": 80, "xyz:ORCL": 156, "xyz:TSM": 377, "xyz:BABA": 164,
+  "xyz:RIVN": 14, "xyz:CRWV": 93, "xyz:USAR": 21, "xyz:URNM": 71,
+  "xyz:XYZ100": 25162, "xyz:GOLD": 5089, "xyz:SILVER": 84,
+  "xyz:CL": 65, "xyz:COPPER": 6, "xyz:NATGAS": 3, "xyz:PLATINUM": 2142,
+  "xyz:JPY": 153, "xyz:EUR": 1.19,
 };
 
 const INTERVAL_MS: Record<string, number> = {
@@ -387,4 +378,21 @@ export function getWebSocket(): HyperliquidWebSocket {
     wsInstance = new HyperliquidWebSocket();
   }
   return wsInstance;
+}
+
+// Fetch deployer (HIP-3) perp meta and asset contexts
+// dex: "xyz", "flx", "vntl", "km", "cash"
+export async function fetchDeployerMetaAndAssetCtxs(dex: string): Promise<{
+  universe: Array<{ name: string; maxLeverage: number; szDecimals: number; isDelisted?: boolean }>;
+  assetCtxs: AssetCtx[];
+} | null> {
+  try {
+    const [meta, ctxs] = await apiPost<[
+      { universe: Array<{ name: string; maxLeverage: number; szDecimals: number; isDelisted?: boolean }> },
+      AssetCtx[]
+    ]>({ type: "metaAndAssetCtxs", dex }, 10000);
+    return { universe: meta.universe, assetCtxs: ctxs };
+  } catch {
+    return null;
+  }
 }

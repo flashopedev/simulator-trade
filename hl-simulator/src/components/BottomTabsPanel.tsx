@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { cn, formatPnl, formatNumber, calculatePnl, calculateRoe, COIN_DECIMALS } from "@/lib/utils";
+import { cn, formatPnl, formatNumber, calculatePnl, calculateRoe, COIN_DECIMALS, isTradifiCoin, getTradifiSymbol } from "@/lib/utils";
 import type { Position, TradeHistory, OrderHistory } from "@/lib/supabase/types";
 import { ChevronDown, Pencil, ExternalLink } from "lucide-react";
 import { MarketCloseModal } from "./MarketCloseModal";
@@ -157,6 +157,11 @@ export function BottomTabsPanel({
   );
 }
 
+// Helper: display clean coin name (removes "xyz:" prefix for tradifi)
+function displayCoin(coin: string): string {
+  return isTradifiCoin(coin) ? getTradifiSymbol(coin) : coin;
+}
+
 /* --- Sub-components --- */
 
 function DisabledTabContent({ tabName }: { tabName: string }) {
@@ -284,7 +289,7 @@ function PositionsContent({
                     style={{ fontWeight: 800 }}
                     onClick={() => onSelectCoin?.(p.coin)}
                   >
-                    {p.coin}
+                    {displayCoin(p.coin)}
                   </span>
                   <span className={cn("ml-1.5 font-medium", isLong ? "text-[#50d2c1]" : "text-[#ed7088]")}>
                     {p.leverage}x
@@ -292,7 +297,7 @@ function PositionsContent({
                 </td>
                 {/* Size — position-colored like real HL */}
                 <td className={cn("font-tabular font-medium", isLong ? "text-[#1fa67d]" : "text-[#ed7088]")} style={{ padding: '0 8px' }}>
-                  {p.size.toFixed(sizeDecimals).replace('.', ',')} {p.coin}
+                  {p.size.toFixed(sizeDecimals).replace('.', ',')} {displayCoin(p.coin)}
                 </td>
                 {/* Position Value */}
                 <td className="font-tabular font-medium text-[#f6fefd]" style={{ padding: '0 8px' }}>{formatNumber(posValue)} USDC</td>
@@ -372,7 +377,7 @@ function OrdersContent({ orders, onCancelOrder }: { orders: OrderHistory[]; onCa
                   {new Date(o.created_at).toLocaleDateString()} - {new Date(o.created_at).toLocaleTimeString()}
                 </td>
                 <td className="px-1 text-[#f6fefd] capitalize">{o.order_type}</td>
-                <td className="px-1 font-normal text-[#f6fefd] font-semibold">{o.coin}</td>
+                <td className="px-1 font-normal text-[#f6fefd] font-semibold">{displayCoin(o.coin)}</td>
                 <td className={cn("px-1", o.side === "Long" ? "text-[#50d2c1]" : "text-[#ed7088]")}>{o.side}</td>
                 <td className="px-1 font-tabular text-[#f6fefd]">{o.size.toFixed(2)}</td>
                 <td className="px-1 font-tabular text-[#f6fefd]">{o.size.toFixed(2)}</td>
@@ -431,7 +436,7 @@ function HistoryContent({ history }: { history: TradeHistory[] }) {
               <tr key={h.id} className="h-[24px] hover:bg-[#1b2429]">
                 <td className="px-1 text-[#949e9c]">{new Date(h.closed_at).toLocaleTimeString()}</td>
                 <td className="px-1 text-[#f6fefd]">
-                  {h.coin}{h.liquidated ? " 💀" : ""}
+                  {displayCoin(h.coin)}{h.liquidated ? " 💀" : ""}
                 </td>
                 <td className={cn("px-1", h.side === "Long" ? "text-[#50d2c1]" : "text-[#ed7088]")}>
                   {h.leverage}x {h.side}
@@ -477,7 +482,7 @@ function OrderHistoryContent({ orders }: { orders: OrderHistory[] }) {
             <tr key={o.id} className="h-[24px] hover:bg-[#1b2429]">
               <td className="px-1 text-[#949e9c]">{new Date(o.created_at).toLocaleTimeString()}</td>
               <td className="px-1 text-[#f6fefd] capitalize">{o.order_type}</td>
-              <td className="px-1 text-[#f6fefd]">{o.coin}</td>
+              <td className="px-1 text-[#f6fefd]">{displayCoin(o.coin)}</td>
               <td className={cn("px-1", o.side === "Long" ? "text-[#50d2c1]" : "text-[#ed7088]")}>{o.side}</td>
               <td className="px-1 font-tabular text-[#f6fefd]">{o.size.toFixed(5)}</td>
               <td className="px-1 font-tabular text-[#f6fefd]">{o.price.toFixed(2)}</td>

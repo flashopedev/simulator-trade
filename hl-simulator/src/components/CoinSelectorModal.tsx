@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { cn, type SupportedCoin, SUPPORTED_COINS, COIN_DECIMALS } from "@/lib/utils";
+import { cn, type SupportedCoin, SUPPORTED_COINS, TRADIFI_COINS, TRADIFI_NAMES, TRADIFI_MAX_LEVERAGE, isTradifiCoin, getTradifiSymbol } from "@/lib/utils";
 import { Search, Star, X, Settings, Maximize2 } from "lucide-react";
 import { CoinIcon } from "./CoinIcon";
-import { fetchMetaAndAssetCtxs, type AssetCtx } from "@/lib/hyperliquid";
+import { fetchMetaAndAssetCtxs, fetchDeployerMetaAndAssetCtxs, type AssetCtx } from "@/lib/hyperliquid";
 
 // Leverage per coin (max leverage from real HL)
 const COIN_LEVERAGE: Record<string, string> = {
@@ -25,6 +25,8 @@ interface CoinMarketData {
   volume: number;
   openInterest: number;
   tradeable: boolean;
+  category?: "crypto" | "tradfi";
+  subCategory?: string;
 }
 
 interface CoinSelectorModalProps {
@@ -42,7 +44,8 @@ function formatVolume(v: number): string {
 }
 
 function formatPrice(price: number): string {
-  if (price >= 1000) return price.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  if (price >= 10000) return price.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  if (price >= 1000) return price.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
   if (price >= 1) return price.toFixed(2);
   if (price >= 0.001) return price.toFixed(4);
   return price.toFixed(8);
@@ -58,21 +61,28 @@ export function CoinSelectorModal({
   const [activeTab, setActiveTab] = useState<string>("perps");
   const [favorites, setFavorites] = useState<Set<string>>(() => new Set(["HYPE"]));
   const [filterMode, setFilterMode] = useState<"strict" | "all">("all");
-  const [coins, setCoins] = useState<CoinMarketData[]>([]);
+  const [cryptoCoins, setCryptoCoins] = useState<CoinMarketData[]>([]);
+  const [tradifiCoins, setTradifiCoins] = useState<CoinMarketData[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch real market data from HL API
+  // Fetch real market data from HL API — crypto perps + tradifi xyz: deployer
   useEffect(() => {
     if (!isOpen) return;
 
     const fetchData = async () => {
       setLoading(true);
       try {
-        const data = await fetchMetaAndAssetCtxs();
-        if (data) {
+        // Fetch crypto and tradifi in parallel
+        const [cryptoData, tradifiData] = await Promise.all([
+          fetchMetaAndAssetCtxs(),
+          fetchDeployerMetaAndAssetCtxs("xyz"),
+        ]);
+
+        // Process crypto perps
+        if (cryptoData) {
           const coinMap = new Map<string, AssetCtx>();
-          data.universe.forEach((u, i) => {
-            coinMap.set(u.name, data.assetCtxs[i]);
+          cryptoData.universe.forEach((u, i) => {
+            coinMap.set(u.name, cryptoData.assetCtxs[i]);
           });
 
           const marketData: CoinMarketData[] = SUPPORTED_COINS.map((symbol) => {
@@ -80,8 +90,8 @@ export function CoinSelectorModal({
             const midPrice = ctx ? parseFloat(ctx.midPx) : 0;
             const prevDayPx = ctx ? parseFloat(ctx.prevDayPx) : 0;
             const change24h = prevDayPx > 0 ? ((midPrice - prevDayPx) / prevDayPx) * 100 : 0;
-            const funding = ctx ? parseFloat(ctx.funding) * 100 : 0; // convert to %
-            const oi = ctx ? parseFloat(ctx.openInterest) * midPrice : 0; // OI in USD
+            const funding = ctx ? parseFloat(ctx.funding) * 100 : 0;
+            const oi = ctx ? parseFloat(ctx.openInterest) * midPrice : 0;
             const volume = ctx ? parseFloat(ctx.dayNtlVlm) : 0;
 
             return {
@@ -90,27 +100,65 @@ export function CoinSelectorModal({
               leverage: COIN_LEVERAGE[symbol] || "10x",
               price: midPrice,
               change24h,
-              funding8h: funding * 8, // 8h funding = hourly * 8
+              funding8h: funding * 8,
               volume,
               openInterest: oi,
               tradeable: true,
+              category: "crypto" as const,
             };
           });
+          setCryptoCoins(marketData);
+        }
 
-          setCoins(marketData);
+        // Process tradifi perps (xyz: deployer)
+        if (tradifiData) {
+          const tradifiMap = new Map<string, { ctx: AssetCtx; meta: { name: string; maxLeverage: number; isDelisted?: boolean } }>();
+          tradifiData.universe.forEach((u, i) => {
+            tradifiMap.set(u.name, { ctx: tradifiData.assetCtxs[i], meta: u });
+          });
+
+          const tradifiMarketData: CoinMarketData[] = TRADIFI_COINS
+            .filter(symbol => {
+              const entry = tradifiMap.get(symbol);
+              return entry && !entry.meta.isDelisted;
+            })
+            .map((symbol) => {
+              const entry = tradifiMap.get(symbol)!;
+              const ctx = entry.ctx;
+              const midPrice = parseFloat(ctx.midPx || ctx.markPx || "0");
+              const prevDayPx = parseFloat(ctx.prevDayPx || "0");
+              const change24h = prevDayPx > 0 ? ((midPrice - prevDayPx) / prevDayPx) * 100 : 0;
+              const funding = parseFloat(ctx.funding || "0") * 100;
+              const oi = parseFloat(ctx.openInterest || "0") * midPrice;
+              const volume = parseFloat(ctx.dayNtlVlm || "0");
+              const shortSym = getTradifiSymbol(symbol);
+              const name = TRADIFI_NAMES[symbol] || shortSym;
+              const maxLev = TRADIFI_MAX_LEVERAGE[symbol] || entry.meta.maxLeverage || 10;
+
+              return {
+                symbol,
+                displayName: `${shortSym}-USD`,
+                leverage: `${maxLev}x`,
+                price: midPrice,
+                change24h,
+                funding8h: funding * 8,
+                volume,
+                openInterest: oi,
+                tradeable: true,
+                category: "tradfi" as const,
+                subCategory: name,
+              };
+            });
+          setTradifiCoins(tradifiMarketData);
         }
       } catch {
-        // Fallback: show coins with zero data
-        setCoins(SUPPORTED_COINS.map((symbol) => ({
+        // Fallback: crypto only
+        setCryptoCoins(SUPPORTED_COINS.map((symbol) => ({
           symbol,
           displayName: `${symbol}-USDC`,
           leverage: COIN_LEVERAGE[symbol] || "10x",
-          price: 0,
-          change24h: 0,
-          funding8h: 0,
-          volume: 0,
-          openInterest: 0,
-          tradeable: true,
+          price: 0, change24h: 0, funding8h: 0, volume: 0, openInterest: 0,
+          tradeable: true, category: "crypto" as const,
         })));
       } finally {
         setLoading(false);
@@ -148,11 +196,23 @@ export function CoinSelectorModal({
     }
   };
 
-  // Filter coins
-  const filteredCoins = coins.filter(coin => {
+  // Determine displayed coins based on active tab
+  const getDisplayedCoins = (): CoinMarketData[] => {
+    if (activeTab === "tradfi") return tradifiCoins;
+    if (activeTab === "perps") return cryptoCoins;
+    // "all" tab: crypto + tradifi
+    return [...cryptoCoins, ...tradifiCoins];
+  };
+
+  const displayedCoins = getDisplayedCoins();
+
+  // Filter coins by search query
+  const filteredCoins = displayedCoins.filter(coin => {
     if (searchQuery) {
-      return coin.symbol.toLowerCase().includes(searchQuery.toLowerCase()) ||
-             coin.displayName.toLowerCase().includes(searchQuery.toLowerCase());
+      const q = searchQuery.toLowerCase();
+      return coin.symbol.toLowerCase().includes(q) ||
+             coin.displayName.toLowerCase().includes(q) ||
+             (coin.subCategory && coin.subCategory.toLowerCase().includes(q));
     }
     return true;
   });
@@ -232,9 +292,8 @@ export function CoinSelectorModal({
           {[
             { id: "all", label: "All" },
             { id: "perps", label: "Perps" },
+            { id: "tradfi", label: "Tradfi" },
             { id: "spot", label: "Spot", disabled: true },
-            { id: "crypto", label: "Crypto", disabled: true },
-            { id: "tradfi", label: "Tradfi", disabled: true },
             { id: "hip3", label: "HIP-3", disabled: true },
             { id: "trending", label: "Trending", disabled: true },
             { id: "prelaunch", label: "Pre-launch", disabled: true },
@@ -269,6 +328,8 @@ export function CoinSelectorModal({
         <div className="flex-1 overflow-y-auto">
           {loading ? (
             <div className="flex items-center justify-center py-8 text-t3 text-[12px]">Loading market data...</div>
+          ) : sortedCoins.length === 0 ? (
+            <div className="flex items-center justify-center py-8 text-t3 text-[12px]">No results found</div>
           ) : sortedCoins.map(coin => (
             <div
               key={coin.symbol}
@@ -295,10 +356,13 @@ export function CoinSelectorModal({
               </button>
 
               {/* Symbol with icon and leverage badge */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 min-w-0">
                 <CoinIcon coin={coin.symbol} size={20} />
-                <span className="text-[13px] font-medium text-t1">{coin.displayName}</span>
-                <span className="px-1.5 py-0.5 bg-acc/20 text-acc text-[10px] font-medium rounded">
+                <span className="text-[13px] font-medium text-t1 truncate">{coin.displayName}</span>
+                {coin.subCategory && isTradifiCoin(coin.symbol) && (
+                  <span className="text-[10px] text-t4 truncate">{coin.subCategory}</span>
+                )}
+                <span className="px-1.5 py-0.5 bg-acc/20 text-acc text-[10px] font-medium rounded flex-shrink-0">
                   {coin.leverage}
                 </span>
               </div>

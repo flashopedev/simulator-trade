@@ -11,7 +11,8 @@ import {
   FALLBACK_PRICES,
   type Candle,
 } from "@/lib/hyperliquid";
-import { COIN_DECIMALS, SUPPORTED_COINS, type SupportedCoin, type Timeframe } from "@/lib/utils";
+import { COIN_DECIMALS, SUPPORTED_COINS, isTradifiCoin, type SupportedCoin, type Timeframe } from "@/lib/utils";
+import { fetchDeployerMetaAndAssetCtxs } from "@/lib/hyperliquid";
 
 interface OrderBookLevel {
   price: number;
@@ -149,22 +150,40 @@ export function useMarketData(coin: SupportedCoin, timeframe: Timeframe) {
     setConnectionMode("polling");
     setStatus("Polling (REST)");
 
+    const isTradifi = isTradifiCoin(coin);
+
     // Price polling — every 2 seconds
     const pollPrices = async () => {
       try {
+        // Fetch native perps prices
         const mids = await fetchAllMids();
+        const newPrices: Record<string, number> = {};
         if (mids) {
-          // Update price for all supported coins
-          const newPrices: Record<string, number> = {};
           for (const c of SUPPORTED_COINS) {
             const mid = mids[c];
             if (mid) {
               newPrices[c] = parseFloat(mid);
             }
           }
-          setAllPrices((prev) => ({ ...prev, ...newPrices }));
+        }
 
-          // Update current coin price
+        // For tradifi coins, also fetch from deployer API
+        if (isTradifi) {
+          const dex = coin.split(":")[0];
+          const data = await fetchDeployerMetaAndAssetCtxs(dex);
+          if (data) {
+            data.universe.forEach((u, i) => {
+              const ctx = data.assetCtxs[i];
+              if (ctx) {
+                const px = parseFloat(ctx.midPx || ctx.markPx || "0");
+                if (px > 0) newPrices[u.name] = px;
+              }
+            });
+          }
+        }
+
+        if (Object.keys(newPrices).length > 0) {
+          setAllPrices((prev) => ({ ...prev, ...newPrices }));
           if (newPrices[coin]) {
             setPrice(newPrices[coin]);
           }
@@ -402,6 +421,30 @@ export function useMarketData(coin: SupportedCoin, timeframe: Timeframe) {
     ws.subscribe({ type: "l2Book", coin });
     ws.subscribe({ type: "candle", coin, interval: timeframe });
 
+    // For tradifi coins, WS allMids doesn't include deployer prices
+    // So we poll the deployer API separately every 3s for the current tradifi coin
+    let tradifiPollingTimer: NodeJS.Timeout | null = null;
+    if (isTradifiCoin(coin)) {
+      const pollTradifiPrice = async () => {
+        try {
+          const dex = coin.split(":")[0];
+          const data = await fetchDeployerMetaAndAssetCtxs(dex);
+          if (data) {
+            const idx = data.universe.findIndex((u) => u.name === coin);
+            if (idx >= 0 && data.assetCtxs[idx]) {
+              const px = parseFloat(data.assetCtxs[idx].midPx || data.assetCtxs[idx].markPx || "0");
+              if (px > 0) {
+                setPrice(px);
+                setAllPrices((prev) => ({ ...prev, [coin]: px }));
+              }
+            }
+          }
+        } catch { /* silent */ }
+      };
+      pollTradifiPrice();
+      tradifiPollingTimer = setInterval(pollTradifiPrice, 3000);
+    }
+
     // Safety net: if not connected after 8 seconds, fall back to polling
     const safetyTimer = setTimeout(() => {
       if (!ws.connected) {
@@ -412,6 +455,7 @@ export function useMarketData(coin: SupportedCoin, timeframe: Timeframe) {
 
     return () => {
       clearTimeout(safetyTimer);
+      if (tradifiPollingTimer) clearInterval(tradifiPollingTimer);
 
       ws.off("connected", handleConnected as (data: unknown) => void);
       ws.off("maxReconnectFailed", handleMaxReconnectFailed as (data: unknown) => void);
@@ -429,18 +473,34 @@ export function useMarketData(coin: SupportedCoin, timeframe: Timeframe) {
     };
   }, [coin, timeframe, startPolling, stopPolling, stopSimulation]);
 
-  // Fetch real funding rates from HL API
+  // Fetch real funding rates from HL API (native or deployer)
   const loadMarketContext = useCallback(async () => {
     try {
-      const data = await fetchMetaAndAssetCtxs();
-      if (data) {
-        const coinIndex = data.universe.findIndex((u) => u.name === coin);
-        if (coinIndex >= 0 && data.assetCtxs[coinIndex]) {
-          const ctx = data.assetCtxs[coinIndex];
-          setStats((prev) => ({
-            ...prev,
-            fundingRate: parseFloat(ctx.funding),
-          }));
+      if (isTradifiCoin(coin)) {
+        // For tradifi coins, fetch from deployer API
+        const dex = coin.split(":")[0]; // "xyz"
+        const data = await fetchDeployerMetaAndAssetCtxs(dex);
+        if (data) {
+          const coinIndex = data.universe.findIndex((u) => u.name === coin);
+          if (coinIndex >= 0 && data.assetCtxs[coinIndex]) {
+            const ctx = data.assetCtxs[coinIndex];
+            setStats((prev) => ({
+              ...prev,
+              fundingRate: parseFloat(ctx.funding),
+            }));
+          }
+        }
+      } else {
+        const data = await fetchMetaAndAssetCtxs();
+        if (data) {
+          const coinIndex = data.universe.findIndex((u) => u.name === coin);
+          if (coinIndex >= 0 && data.assetCtxs[coinIndex]) {
+            const ctx = data.assetCtxs[coinIndex];
+            setStats((prev) => ({
+              ...prev,
+              fundingRate: parseFloat(ctx.funding),
+            }));
+          }
         }
       }
     } catch {

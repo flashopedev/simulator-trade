@@ -33,11 +33,14 @@ export function calculateLiquidationPrice(
   isLong: boolean,
   leverage: number
 ): number {
-  const maintenanceMargin = 0.95 / leverage;
+  // Real HL formula: maintenance margin ~0.5% for most assets
+  // Liquidation when: initialMargin + unrealizedPnL <= maintenanceMargin
+  const initialMarginRate = 1 / leverage;
+  const maintenanceMarginRate = 0.005; // 0.5% maintenance margin (real HL standard)
   if (isLong) {
-    return entryPrice * (1 - maintenanceMargin);
+    return entryPrice * (1 - initialMarginRate + maintenanceMarginRate);
   }
-  return entryPrice * (1 + maintenanceMargin);
+  return entryPrice * (1 + initialMarginRate - maintenanceMarginRate);
 }
 
 export function calculatePnl(

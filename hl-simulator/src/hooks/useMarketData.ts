@@ -5,6 +5,7 @@ import {
   fetchCandles,
   fetchL2Book,
   fetchAllMids,
+  fetchMetaAndAssetCtxs,
   generateFakeOrderBook,
   getWebSocket,
   FALLBACK_PRICES,
@@ -79,12 +80,12 @@ export function useMarketData(coin: SupportedCoin, timeframe: Timeframe) {
         });
 
         const change = ((lastCandle.c - firstCandle.o) / firstCandle.o) * 100;
-        setStats({
+        setStats((prev) => ({
+          ...prev,
           change24h: change,
           high24h: high,
           low24h: low,
-          fundingRate: 0.000013, // 0.0013% like real HL
-        });
+        }));
 
         setStatus(`${data.length} candles loaded`);
       }
@@ -428,12 +429,32 @@ export function useMarketData(coin: SupportedCoin, timeframe: Timeframe) {
     };
   }, [coin, timeframe, startPolling, stopPolling, stopSimulation]);
 
+  // Fetch real funding rates from HL API
+  const loadMarketContext = useCallback(async () => {
+    try {
+      const data = await fetchMetaAndAssetCtxs();
+      if (data) {
+        const coinIndex = data.universe.findIndex((u) => u.name === coin);
+        if (coinIndex >= 0 && data.assetCtxs[coinIndex]) {
+          const ctx = data.assetCtxs[coinIndex];
+          setStats((prev) => ({
+            ...prev,
+            fundingRate: parseFloat(ctx.funding),
+          }));
+        }
+      }
+    } catch {
+      // Keep existing stats on error
+    }
+  }, [coin]);
+
   // Initial data load
   useEffect(() => {
     loadCandles();
     loadOrderBook();
+    loadMarketContext();
     setTrades([]);
-  }, [loadCandles, loadOrderBook]);
+  }, [loadCandles, loadOrderBook, loadMarketContext]);
 
   // Update candle with current price (keeps chart live)
   useEffect(() => {

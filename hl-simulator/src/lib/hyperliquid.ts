@@ -135,6 +135,28 @@ export async function fetchAllMids(): Promise<Record<string, string> | null> {
   }
 }
 
+// Fetch market context including funding rates, mark prices, oracle prices
+export interface AssetCtx {
+  funding: string;
+  openInterest: string;
+  prevDayPx: string;
+  dayNtlVlm: string;
+  premium: string;
+  oraclePx: string;
+  markPx: string;
+  midPx: string;
+  impactPxs: [string, string];
+}
+
+export async function fetchMetaAndAssetCtxs(): Promise<{ universe: Array<{ name: string }>; assetCtxs: AssetCtx[] } | null> {
+  try {
+    const [meta, ctxs] = await apiPost<[{ universe: Array<{ name: string }> }, AssetCtx[]]>({ type: "metaAndAssetCtxs" }, 8000);
+    return { universe: meta.universe, assetCtxs: ctxs };
+  } catch {
+    return null;
+  }
+}
+
 function generateFakeCandles(coin: string, count: number): Candle[] {
   const base = FALLBACK_PRICES[coin] || 20;
   const candles: Candle[] = [];

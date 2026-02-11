@@ -1,76 +1,51 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { cn, type SupportedCoin } from "@/lib/utils";
+import { cn, type SupportedCoin, SUPPORTED_COINS, COIN_DECIMALS } from "@/lib/utils";
 import { Search, Star, X, Settings, Maximize2 } from "lucide-react";
 import { CoinIcon } from "./CoinIcon";
+import { fetchMetaAndAssetCtxs, type AssetCtx } from "@/lib/hyperliquid";
 
-// Real HL doesn't use category color tags - removed
+// Leverage per coin (max leverage from real HL)
+const COIN_LEVERAGE: Record<string, string> = {
+  HYPE: "10x", BTC: "50x", ETH: "50x", SOL: "25x", DOGE: "20x",
+  AVAX: "20x", LINK: "20x", ARB: "15x", OP: "15x", SUI: "15x",
+  WIF: "10x", PEPE: "10x", JUP: "10x", TIA: "15x", SEI: "10x",
+  INJ: "15x", RENDER: "10x", FET: "10x", ONDO: "10x", STX: "10x",
+  NEAR: "15x", BONK: "5x",
+};
 
-interface CoinData {
-  symbol: SupportedCoin;
-  displayName: string;
-  leverage: string;
-  price: number;
-  change24h: number;
-  funding8h: number;
-  volume: string;
-  openInterest: string;
-  isFavorite?: boolean;
-  categories?: string[];
-}
-
-const COINS_DATA: CoinData[] = [
-  { symbol: "HYPE", displayName: "HYPE-USDC", leverage: "10x", price: 33.07, change24h: -3.22, funding8h: 0.0100, volume: "$254M", openInterest: "$156M", categories: ["DeFi", "L1"] },
-  { symbol: "BTC", displayName: "BTC-USDC", leverage: "50x", price: 98000, change24h: 1.50, funding8h: 0.0050, volume: "$1.2B", openInterest: "$890M", categories: ["L1"] },
-  { symbol: "ETH", displayName: "ETH-USDC", leverage: "50x", price: 3200, change24h: -0.80, funding8h: 0.0080, volume: "$450M", openInterest: "$320M", categories: ["L1"] },
-  { symbol: "SOL", displayName: "SOL-USDC", leverage: "25x", price: 180, change24h: 2.10, funding8h: 0.0120, volume: "$120M", openInterest: "$78M", categories: ["L1"] },
-];
-
-// Extended list of display-only coins (not tradeable but shown in selector like real HL)
-interface DisplayCoin {
+interface CoinMarketData {
   symbol: string;
   displayName: string;
   leverage: string;
   price: number;
   change24h: number;
   funding8h: number;
-  volume: string;
-  openInterest: string;
-  categories?: string[];
+  volume: number;
+  openInterest: number;
   tradeable: boolean;
 }
-
-const ALL_COINS: DisplayCoin[] = [
-  { symbol: "HYPE", displayName: "HYPE-USDC", leverage: "10x", price: 33.07, change24h: -3.22, funding8h: 0.0100, volume: "$254M", openInterest: "$156M", categories: ["DeFi", "L1"], tradeable: true },
-  { symbol: "BTC", displayName: "BTC-USDC", leverage: "50x", price: 98245, change24h: 1.50, funding8h: 0.0050, volume: "$1.2B", openInterest: "$890M", categories: ["L1"], tradeable: true },
-  { symbol: "ETH", displayName: "ETH-USDC", leverage: "50x", price: 2756, change24h: -0.80, funding8h: 0.0080, volume: "$450M", openInterest: "$320M", categories: ["L1"], tradeable: true },
-  { symbol: "SOL", displayName: "SOL-USDC", leverage: "25x", price: 206.5, change24h: 2.10, funding8h: 0.0120, volume: "$120M", openInterest: "$78M", categories: ["L1"], tradeable: true },
-  { symbol: "DOGE", displayName: "DOGE-USDC", leverage: "20x", price: 0.2634, change24h: 5.42, funding8h: 0.0085, volume: "$89M", openInterest: "$45M", categories: [], tradeable: true },
-  { symbol: "AVAX", displayName: "AVAX-USDC", leverage: "20x", price: 37.82, change24h: -1.15, funding8h: 0.0065, volume: "$67M", openInterest: "$34M", categories: [], tradeable: true },
-  { symbol: "LINK", displayName: "LINK-USDC", leverage: "20x", price: 19.45, change24h: 3.78, funding8h: 0.0072, volume: "$58M", openInterest: "$29M", categories: [], tradeable: true },
-  { symbol: "ARB", displayName: "ARB-USDC", leverage: "15x", price: 0.8234, change24h: -2.45, funding8h: 0.0045, volume: "$45M", openInterest: "$22M", categories: [], tradeable: true },
-  { symbol: "OP", displayName: "OP-USDC", leverage: "15x", price: 1.856, change24h: 1.22, funding8h: 0.0055, volume: "$38M", openInterest: "$19M", categories: [], tradeable: true },
-  { symbol: "SUI", displayName: "SUI-USDC", leverage: "15x", price: 3.542, change24h: 8.34, funding8h: 0.0150, volume: "$156M", openInterest: "$67M", categories: [], tradeable: true },
-  { symbol: "WIF", displayName: "WIF-USDC", leverage: "10x", price: 1.234, change24h: -6.78, funding8h: -0.0120, volume: "$78M", openInterest: "$34M", categories: [], tradeable: true },
-  { symbol: "PEPE", displayName: "PEPE-USDC", leverage: "10x", price: 0.00001234, change24h: 12.45, funding8h: 0.0200, volume: "$134M", openInterest: "$56M", categories: [], tradeable: true },
-  { symbol: "JUP", displayName: "JUP-USDC", leverage: "10x", price: 0.876, change24h: -1.56, funding8h: 0.0034, volume: "$23M", openInterest: "$11M", categories: [], tradeable: true },
-  { symbol: "TIA", displayName: "TIA-USDC", leverage: "15x", price: 4.567, change24h: -3.21, funding8h: 0.0089, volume: "$45M", openInterest: "$23M", categories: [], tradeable: true },
-  { symbol: "SEI", displayName: "SEI-USDC", leverage: "10x", price: 0.3421, change24h: 4.56, funding8h: 0.0067, volume: "$34M", openInterest: "$16M", categories: [], tradeable: true },
-  { symbol: "INJ", displayName: "INJ-USDC", leverage: "15x", price: 24.56, change24h: 2.34, funding8h: 0.0078, volume: "$56M", openInterest: "$28M", categories: [], tradeable: true },
-  { symbol: "RENDER", displayName: "RENDER-USDC", leverage: "10x", price: 7.234, change24h: -4.12, funding8h: 0.0056, volume: "$34M", openInterest: "$17M", categories: [], tradeable: true },
-  { symbol: "FET", displayName: "FET-USDC", leverage: "10x", price: 1.567, change24h: 6.78, funding8h: 0.0123, volume: "$45M", openInterest: "$22M", categories: [], tradeable: true },
-  { symbol: "ONDO", displayName: "ONDO-USDC", leverage: "10x", price: 1.234, change24h: 3.45, funding8h: 0.0067, volume: "$28M", openInterest: "$14M", categories: [], tradeable: true },
-  { symbol: "STX", displayName: "STX-USDC", leverage: "10x", price: 1.876, change24h: -1.23, funding8h: 0.0045, volume: "$19M", openInterest: "$9M", categories: [], tradeable: true },
-  { symbol: "NEAR", displayName: "NEAR-USDC", leverage: "15x", price: 5.234, change24h: 1.89, funding8h: 0.0056, volume: "$34M", openInterest: "$17M", categories: [], tradeable: true },
-  { symbol: "BONK", displayName: "BONK-USDC", leverage: "5x", price: 0.00002345, change24h: -8.45, funding8h: -0.0089, volume: "$67M", openInterest: "$28M", categories: [], tradeable: true },
-];
 
 interface CoinSelectorModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSelectCoin: (coin: SupportedCoin) => void;
   selectedCoin: SupportedCoin;
+}
+
+function formatVolume(v: number): string {
+  if (v >= 1e9) return `$${(v / 1e9).toFixed(1)}B`;
+  if (v >= 1e6) return `$${(v / 1e6).toFixed(0)}M`;
+  if (v >= 1e3) return `$${(v / 1e3).toFixed(0)}K`;
+  return `$${v.toFixed(0)}`;
+}
+
+function formatPrice(price: number): string {
+  if (price >= 1000) return price.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  if (price >= 1) return price.toFixed(2);
+  if (price >= 0.001) return price.toFixed(4);
+  return price.toFixed(8);
 }
 
 export function CoinSelectorModal({
@@ -83,6 +58,67 @@ export function CoinSelectorModal({
   const [activeTab, setActiveTab] = useState<string>("perps");
   const [favorites, setFavorites] = useState<Set<string>>(() => new Set(["HYPE"]));
   const [filterMode, setFilterMode] = useState<"strict" | "all">("all");
+  const [coins, setCoins] = useState<CoinMarketData[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch real market data from HL API
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const data = await fetchMetaAndAssetCtxs();
+        if (data) {
+          const coinMap = new Map<string, AssetCtx>();
+          data.universe.forEach((u, i) => {
+            coinMap.set(u.name, data.assetCtxs[i]);
+          });
+
+          const marketData: CoinMarketData[] = SUPPORTED_COINS.map((symbol) => {
+            const ctx = coinMap.get(symbol);
+            const midPrice = ctx ? parseFloat(ctx.midPx) : 0;
+            const prevDayPx = ctx ? parseFloat(ctx.prevDayPx) : 0;
+            const change24h = prevDayPx > 0 ? ((midPrice - prevDayPx) / prevDayPx) * 100 : 0;
+            const funding = ctx ? parseFloat(ctx.funding) * 100 : 0; // convert to %
+            const oi = ctx ? parseFloat(ctx.openInterest) * midPrice : 0; // OI in USD
+            const volume = ctx ? parseFloat(ctx.dayNtlVlm) : 0;
+
+            return {
+              symbol,
+              displayName: `${symbol}-USDC`,
+              leverage: COIN_LEVERAGE[symbol] || "10x",
+              price: midPrice,
+              change24h,
+              funding8h: funding * 8, // 8h funding = hourly * 8
+              volume,
+              openInterest: oi,
+              tradeable: true,
+            };
+          });
+
+          setCoins(marketData);
+        }
+      } catch {
+        // Fallback: show coins with zero data
+        setCoins(SUPPORTED_COINS.map((symbol) => ({
+          symbol,
+          displayName: `${symbol}-USDC`,
+          leverage: COIN_LEVERAGE[symbol] || "10x",
+          price: 0,
+          change24h: 0,
+          funding8h: 0,
+          volume: 0,
+          openInterest: 0,
+          tradeable: true,
+        })));
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [isOpen]);
 
   // Handle escape key
   useEffect(() => {
@@ -99,16 +135,13 @@ export function CoinSelectorModal({
     e.stopPropagation();
     setFavorites(prev => {
       const next = new Set(prev);
-      if (next.has(symbol)) {
-        next.delete(symbol);
-      } else {
-        next.add(symbol);
-      }
+      if (next.has(symbol)) next.delete(symbol);
+      else next.add(symbol);
       return next;
     });
   }, []);
 
-  const handleSelectCoin = (coin: DisplayCoin) => {
+  const handleSelectCoin = (coin: CoinMarketData) => {
     if (coin.tradeable) {
       onSelectCoin(coin.symbol as SupportedCoin);
       onClose();
@@ -116,7 +149,7 @@ export function CoinSelectorModal({
   };
 
   // Filter coins
-  const filteredCoins = ALL_COINS.filter(coin => {
+  const filteredCoins = coins.filter(coin => {
     if (searchQuery) {
       return coin.symbol.toLowerCase().includes(searchQuery.toLowerCase()) ||
              coin.displayName.toLowerCase().includes(searchQuery.toLowerCase());
@@ -124,12 +157,12 @@ export function CoinSelectorModal({
     return true;
   });
 
-  // Sort: favorites first, then by volume
+  // Sort: favorites first, then by volume descending
   const sortedCoins = [...filteredCoins].sort((a, b) => {
     const aFav = favorites.has(a.symbol) ? 1 : 0;
     const bFav = favorites.has(b.symbol) ? 1 : 0;
     if (bFav !== aFav) return bFav - aFav;
-    return 0;
+    return b.volume - a.volume;
   });
 
   if (!isOpen) return null;
@@ -226,7 +259,7 @@ export function CoinSelectorModal({
           <span></span>
           <span>Symbol</span>
           <span className="text-right">Last Price</span>
-          <span className="text-right">24H Change ▽</span>
+          <span className="text-right">24H Change</span>
           <span className="text-right">8H Funding</span>
           <span className="text-right">Volume</span>
           <span className="text-right">OI</span>
@@ -234,7 +267,9 @@ export function CoinSelectorModal({
 
         {/* Coins list */}
         <div className="flex-1 overflow-y-auto">
-          {sortedCoins.map(coin => (
+          {loading ? (
+            <div className="flex items-center justify-center py-8 text-t3 text-[12px]">Loading market data...</div>
+          ) : sortedCoins.map(coin => (
             <div
               key={coin.symbol}
               onClick={() => handleSelectCoin(coin)}
@@ -259,7 +294,7 @@ export function CoinSelectorModal({
                 />
               </button>
 
-              {/* Symbol with icon and leverage badge - matching real HL */}
+              {/* Symbol with icon and leverage badge */}
               <div className="flex items-center gap-2">
                 <CoinIcon coin={coin.symbol} size={20} />
                 <span className="text-[13px] font-medium text-t1">{coin.displayName}</span>
@@ -270,12 +305,7 @@ export function CoinSelectorModal({
 
               {/* Last Price */}
               <span className="text-right text-[12px] text-t1 font-tabular self-center">
-                {coin.price >= 1
-                  ? coin.price.toLocaleString(undefined, { minimumFractionDigits: coin.price < 100 ? 2 : 0, maximumFractionDigits: coin.price < 100 ? 2 : 0 })
-                  : coin.price < 0.001
-                    ? coin.price.toFixed(8)
-                    : coin.price.toFixed(4)
-                }
+                {formatPrice(coin.price)}
               </span>
 
               {/* 24H Change */}
@@ -296,12 +326,12 @@ export function CoinSelectorModal({
 
               {/* Volume */}
               <span className="text-right text-[12px] text-t2 font-tabular self-center">
-                {coin.volume}
+                {formatVolume(coin.volume)}
               </span>
 
               {/* Open Interest */}
               <span className="text-right text-[12px] text-t2 font-tabular self-center">
-                {coin.openInterest}
+                {formatVolume(coin.openInterest)}
               </span>
             </div>
           ))}

@@ -14,6 +14,7 @@ import { ChartToolbar } from "@/components/ChartToolbar";
 import { useAuth } from "@/hooks/useAuth";
 import { useTrading } from "@/hooks/useTrading";
 import { useMarketData } from "@/hooks/useMarketData";
+import { useCoinStats } from "@/hooks/useCoinStats";
 import { COIN_DECIMALS, type SupportedCoin, type Timeframe } from "@/lib/utils";
 import type { Position } from "@/lib/supabase/types";
 
@@ -53,6 +54,7 @@ export default function TradePage() {
   } = useMarketData(coin, timeframe);
 
   const decimals = COIN_DECIMALS[coin] || 2;
+  const coinStats = useCoinStats(coin);
 
   // Merge all prices
   const [prices, setPrices] = useState<Record<string, number>>({});
@@ -81,8 +83,10 @@ export default function TradePage() {
       size: number;
       price: number;
       leverage: number;
-      orderType: "market" | "limit";
+      orderType: "market" | "limit" | "pro";
       marginMode: "cross" | "isolated";
+      tpPrice?: number;
+      slPrice?: number;
     }) => {
       await placeOrder({ ...order, coin });
     },
@@ -130,7 +134,8 @@ export default function TradePage() {
       <CoinInfoBar
         selectedCoin={coin}
         onSelectCoin={setCoin}
-        stats={stats}
+        price={price}
+        coinStats={coinStats}
         decimals={decimals}
       />
 
@@ -156,6 +161,8 @@ export default function TradePage() {
               orders={orders}
               currentPrices={prices}
               balance={account?.balance ?? 10000}
+              totalEquity={totalEquity}
+              availableBalance={getAvailableBalance(prices)}
               onClosePosition={handleClosePosition}
             />
           </div>
@@ -169,6 +176,7 @@ export default function TradePage() {
               coin={coin}
               price={price}
               availableBalance={getAvailableBalance(prices)}
+              totalBalance={account?.balance ?? 10000}
               currentPositionSize={currentPosition?.size ?? 0}
               onPlaceOrder={handlePlaceOrder}
             />

@@ -39,14 +39,9 @@ export function Navigation({
   return (
     <>
       <nav className="flex items-center h-[56px] px-4 border-b border-brd bg-s1 sticky top-0 z-50">
-        {/* Logo - white like real HL */}
-        <Link href="/trade" className="flex items-center gap-2 mr-8">
-          {/* Two circles logo like Hyperliquid - WHITE */}
-          <svg width="22" height="22" viewBox="0 0 20 20" className="flex-shrink-0">
-            <circle cx="6" cy="10" r="4" fill="#ffffff" />
-            <circle cx="14" cy="10" r="4" fill="#ffffff" />
-          </svg>
-          <span className="font-light text-[15px] tracking-tight text-white italic leading-none">Hyperliquid</span>
+        {/* Logo — exact SVG from real Hyperliquid */}
+        <Link href="/trade" className="flex items-center mr-8">
+          <img src="/images/hl-logo.svg" alt="Hyperliquid" width={115} height={32} />
         </Link>
 
         {/* Navigation Links - wider spacing like real HL */}

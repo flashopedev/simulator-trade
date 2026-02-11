@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { cn } from "@/lib/utils";
 import { OrderBook } from "./OrderBook";
 import { RecentTrades } from "./RecentTrades";
 
@@ -37,30 +36,33 @@ export function OrderBookTabs({
 
   return (
     <div className="flex flex-col border-t border-brd flex-1 min-h-0">
-      {/* Tabs */}
-      <div className="flex border-b border-brd bg-s1">
-        <button
-          onClick={() => setActiveTab("book")}
-          className={cn(
-            "px-3 py-2 text-[11px] font-medium border-b-2 transition-colors",
-            activeTab === "book"
-              ? "text-t1 border-acc"
-              : "text-t3 border-transparent hover:text-t2"
-          )}
-        >
-          Order Book
-        </button>
-        <button
-          onClick={() => setActiveTab("trades")}
-          className={cn(
-            "px-3 py-2 text-[11px] font-medium border-b-2 transition-colors",
-            activeTab === "trades"
-              ? "text-t1 border-acc"
-              : "text-t3 border-transparent hover:text-t2"
-          )}
-        >
-          Trades
-        </button>
+      {/* Tabs — real HL: h=42px, lineHeight=41px, 12px, borderBottom 1px solid #303030 */}
+      <div className="flex" style={{ borderBottom: "1px solid rgb(48, 48, 48)" }}>
+        {(["book", "trades"] as const).map((tab) => (
+          <div
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className="relative cursor-pointer flex items-center"
+            style={{
+              height: "42px",
+              lineHeight: "41px",
+              padding: "0 12px",
+              fontSize: "12px",
+              fontWeight: 400,
+              color: activeTab === tab ? "rgb(246, 254, 253)" : "rgb(148, 158, 156)",
+            }}
+          >
+            {tab === "book" ? "Order Book" : "Trades"}
+            {activeTab === tab && (
+              <div className="absolute bottom-0 left-0 right-0" style={{ height: "1px", background: "rgb(80, 210, 193)" }} />
+            )}
+          </div>
+        ))}
+        {/* Three dots menu on the right */}
+        <div className="flex-1" />
+        <div className="flex items-center pr-2 cursor-pointer" style={{ color: "rgb(148, 158, 156)", fontSize: "14px" }}>
+          ⋮
+        </div>
       </div>
 
       {/* Content */}

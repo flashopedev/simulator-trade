@@ -14,6 +14,7 @@ import { ChartToolbar } from "@/components/ChartToolbar";
 import { ChartTopBar } from "@/components/ChartTopBar";
 import { ChartBottomBar } from "@/components/ChartBottomBar";
 import { ChartLegendOverlay } from "@/components/ChartLegendOverlay";
+import { PositionOverlay } from "@/components/PositionOverlay";
 import { useAuth } from "@/hooks/useAuth";
 import { useTrading } from "@/hooks/useTrading";
 import { useMarketData } from "@/hooks/useMarketData";
@@ -153,6 +154,8 @@ export default function TradePage() {
                   <TradingViewChart coin={coin} timeframe={timeframe} />
                   {/* HL-style chart legend overlay */}
                   <ChartLegendOverlay coin={coin} timeframe={timeframe} price={price} />
+                  {/* Position entry price line + PNL overlay */}
+                  <PositionOverlay position={currentPosition} currentPrice={price} coin={coin} timeframe={timeframe} />
                 </div>
                 <ChartBottomBar />
               </div>

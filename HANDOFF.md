@@ -4,13 +4,42 @@
 
 ---
 
+## 🌐 ОПРЕДЕЛИ СВОЮ СРЕДУ
+
+Проект работает в ДВУХ средах. Определи где ты:
+
+### Среда A: Mac (Claude Code CLI на Mac пользователя)
+- **Путь проекта:** `/Users/mac/Desktop/гит/simulator-trade/`
+- **MCP префикс:** `mcp__Claude_in_Chrome__*`
+- **MCP инструменты:** `tabs_context_mcp`, `navigate`, `screenshot`, `click`, `evaluate`, и т.д.
+- **Dev server:** `cd /Users/mac/Desktop/гит/simulator-trade/hl-simulator && npm run dev`
+- **Chrome:** управляется через Claude Desktop App SDK → Chrome Extension
+
+### Среда B: Sandbox (удалённый Linux)
+- **Путь проекта:** `/home/user/simulator-trade/`
+- **MCP префикс:** `mcp__chrome-devtools__*`
+- **MCP инструменты:** `list_pages`, `navigate_page`, `take_screenshot`, `click`, `evaluate_script`, и т.д.
+- **Dev server:** `cd /home/user/simulator-trade/hl-simulator && npm run dev`
+- **Chrome:** управляется через `npx chrome-devtools-mcp@latest` → Chrome DevTools Protocol
+
+### Как определить:
+- Запусти `pwd` — если `/Users/mac/...` → Среда A (Mac), если `/home/user/...` → Среда B (Sandbox)
+- Проверь доступные MCP: если есть `mcp__Claude_in_Chrome__*` → Mac, если `mcp__chrome-devtools__*` → Sandbox
+
+**В обоих случаях:** localhost:3000 = dev server, все MCP команды работают с Chrome на Mac пользователя.
+
+---
+
 ## 🚨 ПЕРВОЕ ЧТО НУЖНО СДЕЛАТЬ
 
 1. Прочитай этот файл ПОЛНОСТЬЮ
-2. Проверь Chrome MCP: `mcp__chrome-devtools__list_pages()` — должен показать открытые вкладки
-3. Запусти dev сервер: `cd /home/user/simulator-trade/hl-simulator && npm run dev`
-4. Открой `http://localhost:3000/trade` через Chrome MCP
-5. Проведи визуальный аудит — сравни с https://app.hyperliquid.xyz/trade
+2. Определи свою среду (Mac или Sandbox) — см. секцию выше
+3. Проверь Chrome MCP:
+   - Mac: `mcp__Claude_in_Chrome__tabs_context_mcp({ createIfEmpty: true })`
+   - Sandbox: `mcp__chrome-devtools__list_pages()`
+4. Запусти dev сервер: `cd <путь-проекта>/hl-simulator && npm run dev`
+5. Открой `http://localhost:3000/trade` через Chrome MCP
+6. Проведи визуальный аудит — сравни с https://app.hyperliquid.xyz/trade
 
 ---
 
@@ -325,6 +354,8 @@ c688048 feat: major layout improvements matching real Hyperliquid
 
 Это самый важный навык для pixel-perfect копирования. Используй Chrome MCP чтобы открывать реальный HL и извлекать ВСЁ.
 
+> **ПРИМЕЧАНИЕ:** Примеры ниже используют `mcp__chrome-devtools__*` (Sandbox). Если ты на Mac, замени на `mcp__Claude_in_Chrome__*` и соответствующие названия инструментов (navigate вместо navigate_page, screenshot вместо take_screenshot, и т.д.)
+
 ### Шаг 1: Открой реальный HL для сравнения
 
 ```
@@ -554,8 +585,9 @@ mcp__chrome-devtools__emulate({ viewport: null })
 
 ### При старте:
 - [ ] Прочитать HANDOFF.md
-- [ ] Проверить Chrome MCP: `mcp__chrome-devtools__list_pages()`
-- [ ] Запустить dev server: `cd /home/user/simulator-trade/hl-simulator && npm run dev`
+- [ ] Определить среду (Mac или Sandbox) — запустить `pwd`
+- [ ] Проверить Chrome MCP (Mac: `mcp__Claude_in_Chrome__tabs_context_mcp`, Sandbox: `mcp__chrome-devtools__list_pages`)
+- [ ] Запустить dev server: `cd <путь-проекта>/hl-simulator && npm run dev`
 - [ ] Открыть localhost:3000/trade через navigate
 - [ ] Проверить что основной UI работает
 
@@ -576,12 +608,22 @@ mcp__chrome-devtools__emulate({ viewport: null })
 
 ## 🏗️ ENVIRONMENT
 
-### Chrome MCP инструменты:
+### Chrome MCP — ДВА варианта (зависит от среды):
+
+**Mac (Claude Code CLI):**
+- Префикс: `mcp__Claude_in_Chrome__*`
+- Инструменты: `tabs_context_mcp`, `navigate`, `screenshot`, `click`, `evaluate`, `fill`
+- Подключение: `mcp__Claude_in_Chrome__tabs_context_mcp({ createIfEmpty: true })`
+- MCP работает через Claude Desktop App SDK → Chrome Extension
+- Путь проекта: `/Users/mac/Desktop/гит/simulator-trade/`
+
+**Sandbox (Linux):**
 - Префикс: `mcp__chrome-devtools__*`
-- Основные: `list_pages`, `select_page`, `navigate_page`, `new_page`, `take_screenshot`, `take_snapshot`, `click`, `fill`, `hover`, `evaluate_script`, `press_key`, `emulate`
-- MCP сервер запускается на Mac пользователя через `npx chrome-devtools-mcp@latest`
-- Код выполняется в sandbox (Linux `/root/...`), но MCP управляет Chrome на Mac
-- `localhost:3000` в Chrome = dev server на Mac (или туннель)
+- Инструменты: `list_pages`, `select_page`, `navigate_page`, `new_page`, `take_screenshot`, `take_snapshot`, `click`, `fill`, `hover`, `evaluate_script`, `press_key`, `emulate`
+- MCP сервер: `npx chrome-devtools-mcp@latest`
+- Путь проекта: `/home/user/simulator-trade/`
+
+**В обоих случаях:** `localhost:3000` в Chrome = dev server. Все MCP управляют Chrome на Mac пользователя.
 
 ### Dev Server:
 ```bash

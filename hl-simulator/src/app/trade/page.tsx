@@ -132,19 +132,18 @@ export default function TradePage() {
         onSignOut={signOut}
       />
 
-      {/* Coin Info Bar */}
-      <CoinInfoBar
-        selectedCoin={coin}
-        onSelectCoin={setCoin}
-        price={price}
-        coinStats={coinStats}
-        decimals={decimals}
-      />
-
       {/* Main Layout: 2-column grid (chart + sidebar) - sidebar 396px like real HL */}
       <div className="flex-1 flex flex-col md:grid md:grid-cols-[1fr_396px] min-h-0">
-        {/* Left column: Chart area + Bottom Panel */}
+        {/* Left column: CoinInfoBar + Chart area + Bottom Panel */}
         <div className="flex flex-col min-h-0">
+          {/* Coin Info Bar - inside left column only, like real HL */}
+          <CoinInfoBar
+            selectedCoin={coin}
+            onSelectCoin={setCoin}
+            price={price}
+            coinStats={coinStats}
+            decimals={decimals}
+          />
           {/* Chart area with toolbar */}
           <div className="flex-1 flex min-h-0">
             {/* Left toolbar - matching real HL */}

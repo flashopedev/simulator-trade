@@ -7,7 +7,7 @@
 ## 🚨 ПЕРВОЕ ЧТО НУЖНО СДЕЛАТЬ
 
 1. Прочитай этот файл ПОЛНОСТЬЮ
-2. Запусти `mcp__Claude_in_Chrome__tabs_context_mcp(createIfEmpty: true)` для подключения к Chrome
+2. Проверь Chrome MCP: `mcp__chrome-devtools__list_pages()` — должен показать открытые вкладки
 3. Запусти dev сервер: `cd /home/user/simulator-trade/hl-simulator && npm run dev`
 4. Открой `http://localhost:3000/trade` через Chrome MCP
 5. Проведи визуальный аудит — сравни с https://app.hyperliquid.xyz/trade
@@ -321,11 +321,240 @@ c688048 feat: major layout improvements matching real Hyperliquid
 
 ---
 
+## 🔍 ИЗВЛЕЧЕНИЕ ВИЗУАЛЬНОЙ ИНФОРМАЦИИ С РЕАЛЬНОГО HYPERLIQUID
+
+Это самый важный навык для pixel-perfect копирования. Используй Chrome MCP чтобы открывать реальный HL и извлекать ВСЁ.
+
+### Шаг 1: Открой реальный HL для сравнения
+
+```
+mcp__chrome-devtools__new_page({ url: "https://app.hyperliquid.xyz/trade" })
+```
+
+Держи ДВУХ вкладки одновременно:
+- Вкладка 1: `http://localhost:3000/trade` (наш симулятор)
+- Вкладка 2: `https://app.hyperliquid.xyz/trade` (реальный HL)
+
+Переключайся между ними через `mcp__chrome-devtools__select_page({ pageId: N })`.
+
+### Шаг 2: Скриншоты для визуального сравнения
+
+**Полная страница:**
+```
+mcp__chrome-devtools__take_screenshot()
+mcp__chrome-devtools__take_screenshot({ fullPage: true })
+```
+
+**Конкретный элемент по uid:**
+```
+// Сначала получи snapshot
+mcp__chrome-devtools__take_snapshot()
+// Найди uid нужного элемента, потом скриншот именно его
+mcp__chrome-devtools__take_screenshot({ uid: "abc123" })
+```
+
+**Сравнение: делай скриншоты ОБЕИХ вкладок и сравнивай:**
+1. `select_page({ pageId: 1 })` → `take_screenshot()` → наш UI
+2. `select_page({ pageId: 2 })` → `take_screenshot()` → реальный HL
+3. Сравни визуально: шрифты, цвета, отступы, размеры, расположение
+
+### Шаг 3: Извлечение CSS стилей через JavaScript
+
+Используй `evaluate_script` чтобы вытащить computed styles любого элемента:
+
+```javascript
+// Получить все computed styles элемента
+mcp__chrome-devtools__evaluate_script({
+  function: `(el) => {
+    const s = getComputedStyle(el);
+    return {
+      color: s.color,
+      backgroundColor: s.backgroundColor,
+      fontSize: s.fontSize,
+      fontWeight: s.fontWeight,
+      fontFamily: s.fontFamily,
+      padding: s.padding,
+      margin: s.margin,
+      border: s.border,
+      borderRadius: s.borderRadius,
+      lineHeight: s.lineHeight,
+      letterSpacing: s.letterSpacing,
+      gap: s.gap,
+      width: s.width,
+      height: s.height,
+    };
+  }`,
+  args: [{ uid: "element-uid" }]
+})
+```
+
+**Пример: вытащить стиль кнопки Buy/Sell на реальном HL:**
+1. Открой реальный HL
+2. `take_snapshot()` — найди uid кнопки
+3. `evaluate_script(...)` с uid — получи все CSS свойства
+4. Примени к нашему компоненту
+
+### Шаг 4: Извлечение SVG иконок
+
+**Получить innerHTML SVG элемента:**
+```javascript
+mcp__chrome-devtools__evaluate_script({
+  function: `(el) => {
+    // Если сам элемент SVG
+    if (el.tagName === 'svg' || el.tagName === 'SVG') return el.outerHTML;
+    // Если SVG внутри
+    const svg = el.querySelector('svg');
+    return svg ? svg.outerHTML : 'no SVG found';
+  }`,
+  args: [{ uid: "icon-uid" }]
+})
+```
+
+**Найти ВСЕ SVG на странице:**
+```javascript
+mcp__chrome-devtools__evaluate_script({
+  function: `() => {
+    const svgs = document.querySelectorAll('svg');
+    return Array.from(svgs).map((svg, i) => ({
+      index: i,
+      width: svg.getAttribute('width'),
+      height: svg.getAttribute('height'),
+      viewBox: svg.getAttribute('viewBox'),
+      classList: Array.from(svg.classList),
+      parentText: svg.parentElement?.textContent?.trim()?.slice(0, 50)
+    }));
+  }`
+})
+```
+
+**Скачать SVG как файл:**
+```javascript
+mcp__chrome-devtools__evaluate_script({
+  function: `(el) => {
+    const svg = el.querySelector('svg') || el;
+    return svg.outerHTML;
+  }`,
+  args: [{ uid: "svg-container-uid" }]
+})
+// Затем сохрани результат в файл через Write tool
+```
+
+### Шаг 5: Извлечение структуры DOM
+
+**Получить HTML-структуру секции:**
+```javascript
+mcp__chrome-devtools__evaluate_script({
+  function: `(el) => {
+    return el.innerHTML.slice(0, 5000); // первые 5000 символов
+  }`,
+  args: [{ uid: "section-uid" }]
+})
+```
+
+**Получить список классов и атрибутов:**
+```javascript
+mcp__chrome-devtools__evaluate_script({
+  function: `(el) => {
+    const children = el.querySelectorAll('*');
+    return Array.from(children).slice(0, 30).map(c => ({
+      tag: c.tagName,
+      classes: c.className,
+      text: c.textContent?.slice(0, 40)
+    }));
+  }`,
+  args: [{ uid: "container-uid" }]
+})
+```
+
+### Шаг 6: Извлечение цветовой палитры
+
+**Собрать все уникальные цвета на странице:**
+```javascript
+mcp__chrome-devtools__evaluate_script({
+  function: `() => {
+    const elements = document.querySelectorAll('*');
+    const colors = new Set();
+    const bgColors = new Set();
+    elements.forEach(el => {
+      const s = getComputedStyle(el);
+      if (s.color !== 'rgb(0, 0, 0)') colors.add(s.color);
+      if (s.backgroundColor !== 'rgba(0, 0, 0, 0)') bgColors.add(s.backgroundColor);
+    });
+    return {
+      textColors: [...colors].slice(0, 20),
+      bgColors: [...bgColors].slice(0, 20)
+    };
+  }`
+})
+```
+
+### Шаг 7: Snapshot + Click для навигации
+
+**Текстовый snapshot вместо скриншота (быстрее, содержит uid):**
+```
+mcp__chrome-devtools__take_snapshot()
+```
+Возвращает дерево a11y элементов с uid. Используй uid для click, fill, hover.
+
+**Клик по элементу:**
+```
+mcp__chrome-devtools__click({ uid: "element-uid" })
+```
+
+**Hover для проверки hover-стилей:**
+```
+mcp__chrome-devtools__hover({ uid: "element-uid" })
+// Потом take_screenshot() чтобы увидеть hover state
+```
+
+### Шаг 8: Полный workflow визуального аудита
+
+1. Открой обе вкладки (наш + реальный HL)
+2. На реальном HL: `take_snapshot()` → изучи структуру
+3. На реальном HL: `take_screenshot()` → визуальный референс
+4. На реальном HL: `evaluate_script()` → извлеки стили, SVG, цвета
+5. Переключись на наш: `take_screenshot()` → текущее состояние
+6. Сравни и найди отличия
+7. Внеси правки в код
+8. Перезагрузи нашу вкладку: `navigate_page({ type: "reload" })`
+9. `take_screenshot()` → проверь что стало лучше
+10. Повтори пока не будет pixel-perfect
+
+### Шаг 9: Если элемент не виден на скриншоте
+
+**Скролл к элементу:**
+```javascript
+mcp__chrome-devtools__evaluate_script({
+  function: `(el) => { el.scrollIntoView({ block: 'center' }); return 'scrolled'; }`,
+  args: [{ uid: "element-uid" }]
+})
+```
+
+**Изменить viewport для мобильного вида:**
+```
+mcp__chrome-devtools__emulate({ viewport: { width: 375, height: 812 } })
+```
+
+**Вернуть обычный viewport:**
+```
+mcp__chrome-devtools__emulate({ viewport: null })
+```
+
+### ВАЖНО: Правила визуального аудита
+
+- **ВСЕГДА** делай скриншот ПОСЛЕ каждого изменения кода
+- **ВСЕГДА** сравнивай с реальным HL а не "по памяти"
+- Реальный HL может обновиться — если что-то выглядит иначе чем в HANDOFF, верь скриншоту
+- Если не можешь разглядеть деталь — увеличь конкретный элемент через uid screenshot
+- Сохраняй скриншоты для показа пользователю
+
+---
+
 ## 📋 CHECKLIST ДЛЯ НОВОГО АГЕНТА
 
 ### При старте:
 - [ ] Прочитать HANDOFF.md
-- [ ] Подключить Chrome MCP: `mcp__Claude_in_Chrome__tabs_context_mcp(createIfEmpty: true)`
+- [ ] Проверить Chrome MCP: `mcp__chrome-devtools__list_pages()`
 - [ ] Запустить dev server: `cd /home/user/simulator-trade/hl-simulator && npm run dev`
 - [ ] Открыть localhost:3000/trade через navigate
 - [ ] Проверить что основной UI работает
@@ -347,14 +576,12 @@ c688048 feat: major layout improvements matching real Hyperliquid
 
 ## 🏗️ ENVIRONMENT
 
-### Если ты в sandbox (Linux `/root/...`):
-- MCP Chrome НЕ БУДЕТ работать
-- Нужна локальная сессия через Claude Desktop App без sandbox
-
-### Если ты локально на Mac (`/Users/...`):
-- MCP Chrome работает через SDK
-- `mcp__Claude_in_Chrome__*` инструменты доступны
-- Проект: `/Users/mac/...` (путь к git clone)
+### Chrome MCP инструменты:
+- Префикс: `mcp__chrome-devtools__*`
+- Основные: `list_pages`, `select_page`, `navigate_page`, `new_page`, `take_screenshot`, `take_snapshot`, `click`, `fill`, `hover`, `evaluate_script`, `press_key`, `emulate`
+- MCP сервер запускается на Mac пользователя через `npx chrome-devtools-mcp@latest`
+- Код выполняется в sandbox (Linux `/root/...`), но MCP управляет Chrome на Mac
+- `localhost:3000` в Chrome = dev server на Mac (или туннель)
 
 ### Dev Server:
 ```bash

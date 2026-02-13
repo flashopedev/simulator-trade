@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { cn, formatPnl, formatNumber, calculatePnl, calculateRoe, COIN_DECIMALS } from "@/lib/utils";
+import { cn, formatPnl, formatNumber, calculatePnl, calculateRoe, COIN_DECIMALS, coinDisplayName } from "@/lib/utils";
 import type { Position, TradeHistory, OrderHistory } from "@/lib/supabase/types";
 import { ChevronDown, Pencil, ExternalLink } from "lucide-react";
 import { MarketCloseModal } from "./MarketCloseModal";
@@ -219,19 +219,31 @@ function PositionsContent({
 }) {
   return (
     <div className="overflow-x-auto">
-      <table className="w-full text-[12px] min-w-[900px]" style={{ borderCollapse: 'collapse' }}>
+      <table className="w-full text-[12px] min-w-[900px]" style={{ borderCollapse: 'collapse', tableLayout: 'fixed' }}>
+        <colgroup>
+          <col style={{ width: '7%' }} />   {/* Coin */}
+          <col style={{ width: '10%' }} />  {/* Size */}
+          <col style={{ width: '14%' }} />  {/* Position Value */}
+          <col style={{ width: '8%' }} />   {/* Entry Price */}
+          <col style={{ width: '8%' }} />   {/* Mark Price */}
+          <col style={{ width: '16%' }} />  {/* PNL (ROE %) */}
+          <col style={{ width: '7%' }} />   {/* Liq. Price */}
+          <col style={{ width: '14%' }} />  {/* Margin */}
+          <col style={{ width: '8%' }} />   {/* Funding */}
+          <col style={{ width: '8%' }} />   {/* TP/SL */}
+        </colgroup>
         <thead>
           <tr className="text-[#949e9c] text-left h-[24px]">
-            <th className="font-normal" style={{ paddingLeft: 12, paddingRight: 8 }}>Coin</th>
-            <th className="font-normal" style={{ padding: '0 8px' }}>Size</th>
-            <th className="font-normal" style={{ padding: '0 8px' }}>Position Value <ChevronDown className="inline w-3 h-3 opacity-50" /></th>
-            <th className="font-normal" style={{ padding: '0 8px' }}>Entry Price</th>
-            <th className="font-normal" style={{ padding: '0 8px' }}>Mark Price</th>
-            <th className="font-normal whitespace-nowrap" style={{ padding: '0 8px', textDecoration: 'underline dashed', textUnderlineOffset: '3px', textDecorationColor: '#949e9c' }}>PNL (ROE %)</th>
-            <th className="font-normal" style={{ padding: '0 8px' }}>Liq. Price</th>
-            <th className="font-normal" style={{ padding: '0 8px' }}>Margin</th>
-            <th className="font-normal" style={{ padding: '0 8px' }}>Funding</th>
-            <th className="font-normal" style={{ padding: '0 8px' }}>TP/SL</th>
+            <th className="font-normal truncate" style={{ paddingLeft: 12, paddingRight: 8 }}>Coin</th>
+            <th className="font-normal truncate" style={{ padding: '0 8px' }}>Size</th>
+            <th className="font-normal truncate" style={{ padding: '0 8px' }}>Position Value <ChevronDown className="inline w-3 h-3 opacity-50" /></th>
+            <th className="font-normal truncate" style={{ padding: '0 8px' }}>Entry Price</th>
+            <th className="font-normal truncate" style={{ padding: '0 8px' }}>Mark Price</th>
+            <th className="font-normal whitespace-nowrap truncate" style={{ padding: '0 8px', textDecoration: 'underline dashed', textUnderlineOffset: '3px', textDecorationColor: '#949e9c' }}>PNL (ROE %)</th>
+            <th className="font-normal truncate" style={{ padding: '0 8px' }}>Liq. Price</th>
+            <th className="font-normal truncate" style={{ padding: '0 8px' }}>Margin</th>
+            <th className="font-normal truncate" style={{ padding: '0 8px' }}>Funding</th>
+            <th className="font-normal truncate" style={{ padding: '0 8px' }}>TP/SL</th>
           </tr>
         </thead>
         <tbody>
@@ -284,43 +296,43 @@ function PositionsContent({
                     style={{ fontWeight: 800 }}
                     onClick={() => onSelectCoin?.(p.coin)}
                   >
-                    {p.coin}
+                    {coinDisplayName(p.coin)}
                   </span>
                   <span className={cn("ml-1.5 font-medium", isLong ? "text-[#50d2c1]" : "text-[#ed7088]")}>
                     {p.leverage}x
                   </span>
                 </td>
                 {/* Size — position-colored like real HL */}
-                <td className={cn("font-tabular font-medium", isLong ? "text-[#1fa67d]" : "text-[#ed7088]")} style={{ padding: '0 8px' }}>
-                  {p.size.toFixed(sizeDecimals).replace('.', ',')} {p.coin}
+                <td className={cn("font-tabular font-medium truncate", isLong ? "text-[#1fa67d]" : "text-[#ed7088]")} style={{ padding: '0 8px', overflow: 'hidden' }}>
+                  {p.size.toFixed(sizeDecimals).replace('.', ',')} {coinDisplayName(p.coin)}
                 </td>
                 {/* Position Value */}
-                <td className="font-tabular font-medium text-[#f6fefd]" style={{ padding: '0 8px' }}>{formatNumber(posValue)} USDC</td>
+                <td className="font-tabular font-medium text-[#f6fefd] truncate" style={{ padding: '0 8px', overflow: 'hidden' }}>{formatNumber(posValue)} USDC</td>
                 {/* Entry Price */}
-                <td className="font-tabular font-medium text-[#f6fefd]" style={{ padding: '0 8px' }}>{formatNumber(p.entry_price, decimals)}</td>
+                <td className="font-tabular font-medium text-[#f6fefd] truncate" style={{ padding: '0 8px', overflow: 'hidden' }}>{formatNumber(p.entry_price, decimals)}</td>
                 {/* Mark Price */}
-                <td className="font-tabular font-medium text-[#f6fefd]" style={{ padding: '0 8px' }}>{formatNumber(markPrice, decimals)}</td>
+                <td className="font-tabular font-medium text-[#f6fefd] truncate" style={{ padding: '0 8px', overflow: 'hidden' }}>{formatNumber(markPrice, decimals)}</td>
                 {/* PNL (ROE %) + share icon in teal #50d2c1 */}
-                <td className={cn("font-tabular font-medium", pnl >= 0 ? "text-[#1fa67d]" : "text-[#ed7088]")} style={{ padding: '0 8px' }}>
-                  <div className="flex items-center gap-1">
-                    <span>{formatPnl(pnl)} ({roe >= 0 ? "+" : ""}{roe.toFixed(1).replace('.', ',')}%)</span>
+                <td className={cn("font-tabular font-medium", pnl >= 0 ? "text-[#1fa67d]" : "text-[#ed7088]")} style={{ padding: '0 8px', overflow: 'hidden' }}>
+                  <div className="flex items-center gap-1 overflow-hidden">
+                    <span className="truncate">{formatPnl(pnl)} ({roe >= 0 ? "+" : ""}{roe.toFixed(1).replace('.', ',')}%)</span>
                     <ExternalLink onClick={() => onMarketClose(p)} className="w-[14px] h-[14px] text-[#50d2c1] cursor-pointer flex-shrink-0" />
                   </div>
                 </td>
                 {/* Liquidation Price */}
-                <td className="font-tabular font-medium text-[#f6fefd]" style={{ padding: '0 8px' }}>
+                <td className="font-tabular font-medium text-[#f6fefd] truncate" style={{ padding: '0 8px', overflow: 'hidden' }}>
                   {p.liquidation_price ? formatNumber(p.liquidation_price, decimals || 2) : "N/A"}
                 </td>
                 {/* Margin — (Cross) */}
-                <td className="font-tabular font-medium text-[#f6fefd]" style={{ padding: '0 8px' }}>
+                <td className="font-tabular font-medium text-[#f6fefd] truncate" style={{ padding: '0 8px', overflow: 'hidden' }}>
                   ${formatNumber(margin)} (Cross)
                 </td>
                 {/* Funding — colored by sign */}
-                <td className={cn("font-tabular font-medium", funding >= 0 ? "text-[#1fa67d]" : "text-[#ed7088]")} style={{ padding: '0 8px' }}>
+                <td className={cn("font-tabular font-medium truncate", funding >= 0 ? "text-[#1fa67d]" : "text-[#ed7088]")} style={{ padding: '0 8px', overflow: 'hidden' }}>
                   {funding >= 0 ? "" : "-"}${formatNumber(Math.abs(funding))}
                 </td>
                 {/* TP/SL — dashes + pencil icon in teal #50d2c1 */}
-                <td className="font-medium" style={{ padding: '0 8px' }}>
+                <td className="font-medium" style={{ padding: '0 8px', overflow: 'hidden' }}>
                   <div className="flex items-center gap-1">
                     <span className="text-[#f6fefd]">-- / --</span>
                     <Pencil className="w-4 h-4 text-[#50d2c1] cursor-pointer flex-shrink-0" />
@@ -372,7 +384,7 @@ function OrdersContent({ orders, onCancelOrder }: { orders: OrderHistory[]; onCa
                   {new Date(o.created_at).toLocaleDateString()} - {new Date(o.created_at).toLocaleTimeString()}
                 </td>
                 <td className="px-1 text-[#f6fefd] capitalize">{o.order_type}</td>
-                <td className="px-1 font-normal text-[#f6fefd] font-semibold">{o.coin}</td>
+                <td className="px-1 font-normal text-[#f6fefd] font-semibold">{coinDisplayName(o.coin)}</td>
                 <td className={cn("px-1", o.side === "Long" ? "text-[#50d2c1]" : "text-[#ed7088]")}>{o.side}</td>
                 <td className="px-1 font-tabular text-[#f6fefd]">{o.size.toFixed(2)}</td>
                 <td className="px-1 font-tabular text-[#f6fefd]">{o.size.toFixed(2)}</td>
@@ -431,7 +443,7 @@ function HistoryContent({ history }: { history: TradeHistory[] }) {
               <tr key={h.id} className="h-[24px] hover:bg-[#1b2429]">
                 <td className="px-1 text-[#949e9c]">{new Date(h.closed_at).toLocaleTimeString()}</td>
                 <td className="px-1 text-[#f6fefd]">
-                  {h.coin}{h.liquidated ? " 💀" : ""}
+                  {coinDisplayName(h.coin)}{h.liquidated ? " 💀" : ""}
                 </td>
                 <td className={cn("px-1", h.side === "Long" ? "text-[#50d2c1]" : "text-[#ed7088]")}>
                   {h.leverage}x {h.side}
@@ -477,7 +489,7 @@ function OrderHistoryContent({ orders }: { orders: OrderHistory[] }) {
             <tr key={o.id} className="h-[24px] hover:bg-[#1b2429]">
               <td className="px-1 text-[#949e9c]">{new Date(o.created_at).toLocaleTimeString()}</td>
               <td className="px-1 text-[#f6fefd] capitalize">{o.order_type}</td>
-              <td className="px-1 text-[#f6fefd]">{o.coin}</td>
+              <td className="px-1 text-[#f6fefd]">{coinDisplayName(o.coin)}</td>
               <td className={cn("px-1", o.side === "Long" ? "text-[#50d2c1]" : "text-[#ed7088]")}>{o.side}</td>
               <td className="px-1 font-tabular text-[#f6fefd]">{o.size.toFixed(5)}</td>
               <td className="px-1 font-tabular text-[#f6fefd]">{o.price.toFixed(2)}</td>

@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { cn, type SupportedCoin } from "@/lib/utils";
+import { cn, coinDisplayName, isTradfiCoin, TRADFI_COINS, TRADFI_NAMES, TRADFI_MAX_LEVERAGE, FALLBACK_PRICES, type SupportedCoin } from "@/lib/utils";
+import { fetchDeployerMetaAndAssetCtxs } from "@/lib/hyperliquid";
 import { Search, Star, X, Settings, Maximize2 } from "lucide-react";
 import { CoinIcon } from "./CoinIcon";
 
@@ -69,8 +70,8 @@ const ALL_COINS: DisplayCoin[] = [
 interface CoinSelectorModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelectCoin: (coin: SupportedCoin) => void;
-  selectedCoin: SupportedCoin;
+  onSelectCoin: (coin: string) => void;
+  selectedCoin: string;
 }
 
 export function CoinSelectorModal({
@@ -83,6 +84,61 @@ export function CoinSelectorModal({
   const [activeTab, setActiveTab] = useState<string>("perps");
   const [favorites, setFavorites] = useState<Set<string>>(() => new Set(["HYPE"]));
   const [filterMode, setFilterMode] = useState<"strict" | "all">("all");
+  // Build static fallback tradfi coins from TRADFI_COINS + FALLBACK_PRICES
+  const fallbackTradfiCoins: DisplayCoin[] = TRADFI_COINS.map((symbol) => {
+    const displayName = coinDisplayName(symbol);
+    return {
+      symbol,
+      displayName: `${displayName}-USDC`,
+      leverage: `${TRADFI_MAX_LEVERAGE[symbol] || 10}x`,
+      price: FALLBACK_PRICES[symbol] || 0,
+      change24h: 0,
+      funding8h: 0,
+      volume: "—",
+      openInterest: "—",
+      tradeable: true,
+    };
+  });
+
+  const [tradfiCoins, setTradfiCoins] = useState<DisplayCoin[]>(fallbackTradfiCoins);
+
+  // Load tradfi coins from API (updates fallback with live data)
+  useEffect(() => {
+    if (!isOpen) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const data = await fetchDeployerMetaAndAssetCtxs("xyz");
+        if (!data || cancelled) return;
+        const coins: DisplayCoin[] = [];
+        data.universe.forEach((u, i) => {
+          // Only include coins from our TRADFI_COINS list
+          if (!TRADFI_COINS.includes(u.name as typeof TRADFI_COINS[number])) return;
+          const ctx = data.assetCtxs[i];
+          const markPx = parseFloat(ctx?.markPx || "0");
+          const prevDayPx = parseFloat(ctx?.prevDayPx || "0");
+          const change = prevDayPx > 0 ? ((markPx - prevDayPx) / prevDayPx) * 100 : 0;
+          const funding = parseFloat(ctx?.funding || "0") * 100;
+          const volume = parseFloat(ctx?.dayNtlVlm || "0");
+          const oi = parseFloat(ctx?.openInterest || "0") * markPx;
+          const displayName = coinDisplayName(u.name);
+          coins.push({
+            symbol: u.name,
+            displayName: `${displayName}-USDC`,
+            leverage: `${TRADFI_MAX_LEVERAGE[u.name] || u.maxLeverage || 10}x`,
+            price: markPx,
+            change24h: change,
+            funding8h: funding,
+            volume: volume >= 1e6 ? `$${(volume / 1e6).toFixed(0)}M` : `$${(volume / 1e3).toFixed(0)}K`,
+            openInterest: oi >= 1e6 ? `$${(oi / 1e6).toFixed(0)}M` : `$${(oi / 1e3).toFixed(0)}K`,
+            tradeable: true,
+          });
+        });
+        if (!cancelled && coins.length > 0) setTradfiCoins(coins);
+      } catch { /* silent — keep fallback data */ }
+    })();
+    return () => { cancelled = true; };
+  }, [isOpen]);
 
   // Handle escape key
   useEffect(() => {
@@ -110,16 +166,25 @@ export function CoinSelectorModal({
 
   const handleSelectCoin = (coin: DisplayCoin) => {
     if (coin.tradeable) {
-      onSelectCoin(coin.symbol as SupportedCoin);
+      onSelectCoin(coin.symbol);
       onClose();
     }
   };
 
-  // Filter coins
-  const filteredCoins = ALL_COINS.filter(coin => {
+  // Combine crypto + tradfi coins
+  const combinedCoins = [...ALL_COINS, ...tradfiCoins];
+
+  // Filter coins by tab and search
+  const filteredCoins = combinedCoins.filter(coin => {
+    // Tab filter
+    if (activeTab === "perps" && isTradfiCoin(coin.symbol)) return false;
+    if (activeTab === "tradfi" && !isTradfiCoin(coin.symbol)) return false;
+    // Search filter
     if (searchQuery) {
-      return coin.symbol.toLowerCase().includes(searchQuery.toLowerCase()) ||
-             coin.displayName.toLowerCase().includes(searchQuery.toLowerCase());
+      const q = searchQuery.toLowerCase();
+      const display = coinDisplayName(coin.symbol).toLowerCase();
+      return display.includes(q) || coin.displayName.toLowerCase().includes(q) ||
+             (TRADFI_NAMES[coin.symbol] || "").toLowerCase().includes(q);
     }
     return true;
   });
@@ -201,7 +266,7 @@ export function CoinSelectorModal({
             { id: "perps", label: "Perps" },
             { id: "spot", label: "Spot", disabled: true },
             { id: "crypto", label: "Crypto", disabled: true },
-            { id: "tradfi", label: "Tradfi", disabled: true },
+            { id: "tradfi", label: "Tradfi" },
             { id: "hip3", label: "HIP-3", disabled: true },
             { id: "trending", label: "Trending", disabled: true },
             { id: "prelaunch", label: "Pre-launch", disabled: true },
@@ -266,6 +331,12 @@ export function CoinSelectorModal({
                 <span className="px-1.5 py-0.5 bg-acc/20 text-acc text-[10px] font-medium rounded">
                   {coin.leverage}
                 </span>
+                {/* xyz deployer tag for tradfi coins — matches real HL */}
+                {isTradfiCoin(coin.symbol) && (
+                  <span className="px-1.5 py-0.5 bg-[#0e3333] text-[#4be0a8] text-[10px] font-medium rounded">
+                    xyz
+                  </span>
+                )}
               </div>
 
               {/* Last Price */}

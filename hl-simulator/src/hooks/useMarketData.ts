@@ -5,13 +5,14 @@ import {
   fetchCandles,
   fetchL2Book,
   fetchAllMids,
+  fetchDeployerAllMids,
   fetchMetaAndAssetCtxs,
   generateFakeOrderBook,
   getWebSocket,
   FALLBACK_PRICES,
   type Candle,
 } from "@/lib/hyperliquid";
-import { COIN_DECIMALS, SUPPORTED_COINS, type SupportedCoin, type Timeframe } from "@/lib/utils";
+import { COIN_DECIMALS, SUPPORTED_COINS, TRADFI_COINS, isTradfiCoin, type SupportedCoin, type Timeframe } from "@/lib/utils";
 
 interface OrderBookLevel {
   price: number;
@@ -28,7 +29,7 @@ interface Trade {
 
 type ConnectionMode = "ws" | "polling" | "simulation";
 
-export function useMarketData(coin: SupportedCoin, timeframe: Timeframe) {
+export function useMarketData(coin: string, timeframe: Timeframe) {
   const [candles, setCandles] = useState<Candle[]>([]);
   const [price, setPrice] = useState<number | null>(null);
   const [allPrices, setAllPrices] = useState<Record<string, number>>({});
@@ -69,7 +70,9 @@ export function useMarketData(coin: SupportedCoin, timeframe: Timeframe) {
 
       if (data.length > 0) {
         const lastCandle = data[data.length - 1];
-        setPrice(lastCandle.c);
+        // Only set initial price from candles if we don't have a live price yet.
+        // This prevents a stale candle-close price from overwriting a fresh WS/REST price.
+        setPrice((prev) => prev ?? lastCandle.c);
 
         // Calculate 24h stats
         const firstCandle = data[0];
@@ -152,16 +155,35 @@ export function useMarketData(coin: SupportedCoin, timeframe: Timeframe) {
     // Price polling — every 2 seconds
     const pollPrices = async () => {
       try {
-        const mids = await fetchAllMids();
+        // Fetch crypto + tradfi mids in parallel
+        const [mids, tradfiMids] = await Promise.all([
+          fetchAllMids(),
+          fetchDeployerAllMids("xyz"),
+        ]);
+
+        const newPrices: Record<string, number> = {};
+
+        // Crypto mids
         if (mids) {
-          // Update price for all supported coins
-          const newPrices: Record<string, number> = {};
           for (const c of SUPPORTED_COINS) {
             const mid = mids[c];
             if (mid) {
               newPrices[c] = parseFloat(mid);
             }
           }
+        }
+
+        // Tradfi mids
+        if (tradfiMids) {
+          for (const c of TRADFI_COINS) {
+            const mid = tradfiMids[c];
+            if (mid) {
+              newPrices[c] = parseFloat(mid);
+            }
+          }
+        }
+
+        if (Object.keys(newPrices).length > 0) {
           setAllPrices((prev) => ({ ...prev, ...newPrices }));
 
           // Update current coin price
@@ -212,10 +234,10 @@ export function useMarketData(coin: SupportedCoin, timeframe: Timeframe) {
         return base + change;
       });
 
-      // Update allPrices for all coins
+      // Update allPrices for all coins (crypto + tradfi)
       setAllPrices((prev) => {
         const updated = { ...prev };
-        for (const c of SUPPORTED_COINS) {
+        for (const c of [...SUPPORTED_COINS, ...TRADFI_COINS]) {
           const base = updated[c] || FALLBACK_PRICES[c] || 20;
           const change = (Math.random() - 0.49) * base * 0.001;
           updated[c] = base + change;
@@ -410,8 +432,33 @@ export function useMarketData(coin: SupportedCoin, timeframe: Timeframe) {
       }
     }, 8000);
 
+    // Tradfi mids don't come via standard WS — poll them separately every 3s
+    let tradfiPollTimer: NodeJS.Timeout | null = null;
+    const pollTradfiMids = async () => {
+      try {
+        const tradfiMids = await fetchDeployerAllMids("xyz");
+        if (tradfiMids) {
+          const newPrices: Record<string, number> = {};
+          for (const c of TRADFI_COINS) {
+            const mid = tradfiMids[c];
+            if (mid) newPrices[c] = parseFloat(mid);
+          }
+          if (Object.keys(newPrices).length > 0) {
+            setAllPrices((prev) => ({ ...prev, ...newPrices }));
+            // Update current coin price if it's a tradfi coin
+            if (isTradfiCoin(coin) && newPrices[coin]) {
+              setPrice(newPrices[coin]);
+            }
+          }
+        }
+      } catch { /* silent */ }
+    };
+    pollTradfiMids();
+    tradfiPollTimer = setInterval(pollTradfiMids, 3000);
+
     return () => {
       clearTimeout(safetyTimer);
+      if (tradfiPollTimer) clearInterval(tradfiPollTimer);
 
       ws.off("connected", handleConnected as (data: unknown) => void);
       ws.off("maxReconnectFailed", handleMaxReconnectFailed as (data: unknown) => void);

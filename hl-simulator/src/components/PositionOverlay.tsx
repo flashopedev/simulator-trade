@@ -1,6 +1,6 @@
 "use client";
 
-import { type SupportedCoin, type Timeframe, calculatePnl, COIN_DECIMALS } from "@/lib/utils";
+import { type Timeframe, calculatePnl, COIN_DECIMALS } from "@/lib/utils";
 import { type Position } from "@/lib/supabase/types";
 import { useChartPriceRange } from "@/hooks/useChartPriceRange";
 
@@ -13,7 +13,7 @@ import { useChartPriceRange } from "@/hooks/useChartPriceRange";
 interface PositionOverlayProps {
   position: Position | undefined;
   currentPrice: number | null;
-  coin: SupportedCoin;
+  coin: string;
   timeframe: Timeframe;
 }
 

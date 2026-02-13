@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { cn, type SupportedCoin } from "@/lib/utils";
+import { cn, coinDisplayName, isTradfiCoin, TRADFI_MAX_LEVERAGE } from "@/lib/utils";
 import type { CoinStats } from "@/hooks/useCoinStats";
 import { Star, ChevronDown } from "lucide-react";
 import { CoinSelectorModal } from "./CoinSelectorModal";
@@ -36,8 +36,8 @@ const COIN_LEVERAGE: Record<string, string> = {
 // COIN_COLORS removed — now using real SVG icons from Hyperliquid
 
 interface CoinInfoBarProps {
-  selectedCoin: SupportedCoin;
-  onSelectCoin: (coin: SupportedCoin) => void;
+  selectedCoin: string;
+  onSelectCoin: (coin: string) => void;
   price: number | null;
   coinStats: CoinStats;
   decimals: number;
@@ -87,8 +87,10 @@ export function CoinInfoBar({
     return () => clearInterval(timer);
   }, [coinStats.nextFundingTime]);
 
-  // Use Binance spot price as mark, Binance Futures index as oracle
-  const markPrice = price;
+  // Both Mark and Oracle come from HL metaAndAssetCtxs — same source, same update cycle.
+  // This prevents price jumping between different data sources.
+  // Fall back to WS/REST price only if HL API hasn't responded yet.
+  const markPrice = coinStats.markPrice ?? price;
   const oraclePrice = coinStats.oraclePrice;
   const openInterest = coinStats.openInterest;
   const volume24h = coinStats.volume24h;
@@ -143,13 +145,13 @@ export function CoinInfoBar({
           {/* Coin icon — real SVG from Hyperliquid, 20x20 like original */}
           <CoinIcon coin={selectedCoin} size={20} />
           {/* Name + dropdown */}
-          <span className="text-[20px] font-normal text-t1 leading-none">{selectedCoin}-USDC</span>
+          <span className="text-[20px] font-normal text-t1 leading-none">{coinDisplayName(selectedCoin)}-USDC</span>
           <ChevronDown className="w-4 h-4 text-t3 -ml-0.5" />
         </button>
 
         {/* Leverage badge - matching real HL: 16px, white, dark teal bg, rounded-[5px] */}
         <span className="px-1 bg-[#0e3333] text-white text-[16px] font-normal rounded-[5px] flex-shrink-0 leading-[20px]">
-          {COIN_LEVERAGE[selectedCoin]}
+          {COIN_LEVERAGE[selectedCoin] || (isTradfiCoin(selectedCoin) ? `${TRADFI_MAX_LEVERAGE[selectedCoin] || 10}x` : "10x")}
         </span>
 
         {/* Divider */}

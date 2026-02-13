@@ -15,8 +15,9 @@ import {
   calculateRoe,
   COIN_DECIMALS,
   FALLBACK_PRICES,
+  coinDisplayName,
 } from "@/lib/utils";
-import { fetchAllMids } from "@/lib/hyperliquid";
+import { fetchAllMids, fetchDeployerAllMids } from "@/lib/hyperliquid";
 import type { Position } from "@/lib/supabase/types";
 import { ChevronDown, X } from "lucide-react";
 
@@ -83,12 +84,22 @@ export default function PortfolioPage() {
     let active = true;
     const pollPrices = async () => {
       try {
-        const mids = await fetchAllMids();
-        if (mids && active) {
+        const [mids, tradfiMids] = await Promise.all([
+          fetchAllMids(),
+          fetchDeployerAllMids("xyz"),
+        ]);
+        if (active) {
           const updated: Record<string, number> = { ...FALLBACK_PRICES };
-          Object.entries(mids).forEach(([coin, mid]) => {
-            if (mid) updated[coin] = parseFloat(mid);
-          });
+          if (mids) {
+            Object.entries(mids).forEach(([coin, mid]) => {
+              if (mid) updated[coin] = parseFloat(mid);
+            });
+          }
+          if (tradfiMids) {
+            Object.entries(tradfiMids).forEach(([coin, mid]) => {
+              if (mid) updated[coin] = parseFloat(mid);
+            });
+          }
           setPrices(updated);
         }
       } catch {
@@ -691,10 +702,10 @@ export default function PortfolioPage() {
                           style={{ height: "24px", lineHeight: "24px" }}
                         >
                           <td style={{ padding: 0 }}>
-                            <span className={cn("font-medium", isLong ? "text-grn" : "text-red")}>{p.coin}</span>
+                            <span className={cn("font-medium", isLong ? "text-grn" : "text-red")}>{coinDisplayName(p.coin)}</span>
                             <span className="ml-1.5 text-[11px] text-acc">{p.leverage}x</span>
                           </td>
-                          <td className="font-tabular text-acc" style={{ padding: 0 }}>{sizeFormatted} {p.coin}</td>
+                          <td className="font-tabular text-acc" style={{ padding: 0 }}>{sizeFormatted} {coinDisplayName(p.coin)}</td>
                           <td className="font-tabular text-t1" style={{ padding: 0 }}>{formatNumber(positionValue).replace(".", ",")} USDC</td>
                           <td className="font-tabular text-t2" style={{ padding: 0 }}>{p.entry_price.toFixed(decimals)}</td>
                           <td className="font-tabular text-t2" style={{ padding: 0 }}>{markPrice.toFixed(decimals)}</td>
@@ -838,7 +849,7 @@ export default function PortfolioPage() {
                       return (
                         <tr key={h.id} className="border-t border-brd" style={{ height: "24px", lineHeight: "24px" }}>
                           <td className="text-t3" style={{ padding: 0 }}>{new Date(h.closed_at).toLocaleString()}</td>
-                          <td className="font-medium text-t1" style={{ padding: 0 }}>{h.coin}{h.liquidated && " 💀"}</td>
+                          <td className="font-medium text-t1" style={{ padding: 0 }}>{coinDisplayName(h.coin)}{h.liquidated && " 💀"}</td>
                           <td className={cn(h.side === "Long" ? "text-grn" : "text-red")} style={{ padding: 0 }}>
                             {h.leverage}x {h.side}
                           </td>

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { X } from "lucide-react";
-import { cn, formatNumber } from "@/lib/utils";
+import { cn, formatNumber, coinDisplayName } from "@/lib/utils";
 import type { Position } from "@/lib/supabase/types";
 
 interface MarketCloseModalProps {
@@ -77,7 +77,7 @@ export function MarketCloseModal({
             <div className="flex justify-between text-[14px]">
               <span className="text-t3">Size</span>
               <span className="text-acc font-medium">
-                {closeSize.toFixed(5)} {position.coin}
+                {closeSize.toFixed(5)} {coinDisplayName(position.coin)}
               </span>
             </div>
 

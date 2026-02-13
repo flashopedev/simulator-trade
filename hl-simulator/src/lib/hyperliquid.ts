@@ -52,6 +52,10 @@ export const FALLBACK_PRICES: Record<string, number> = {
   STX: 1.8,
   NEAR: 5.2,
   BONK: 0.00002345,
+  // Tradfi fallback prices
+  "xyz:TSLA": 417, "xyz:NVDA": 189, "xyz:AAPL": 265, "xyz:GOOGL": 313, "xyz:AMZN": 199,
+  "xyz:META": 653, "xyz:MSFT": 401, "xyz:COIN": 140, "xyz:PLTR": 127, "xyz:HOOD": 71,
+  "xyz:AMD": 207, "xyz:NFLX": 800, "xyz:GOLD": 4960, "xyz:MSTR": 121, "xyz:INTC": 47,
 };
 
 const INTERVAL_MS: Record<string, number> = {
@@ -148,10 +152,29 @@ export interface AssetCtx {
   impactPxs: [string, string];
 }
 
-export async function fetchMetaAndAssetCtxs(): Promise<{ universe: Array<{ name: string }>; assetCtxs: AssetCtx[] } | null> {
+export async function fetchMetaAndAssetCtxs(): Promise<{ universe: Array<{ name: string; maxLeverage?: number }>; assetCtxs: AssetCtx[] } | null> {
   try {
-    const [meta, ctxs] = await apiPost<[{ universe: Array<{ name: string }> }, AssetCtx[]]>({ type: "metaAndAssetCtxs" }, 8000);
+    const [meta, ctxs] = await apiPost<[{ universe: Array<{ name: string; maxLeverage?: number }> }, AssetCtx[]]>({ type: "metaAndAssetCtxs" }, 8000);
     return { universe: meta.universe, assetCtxs: ctxs };
+  } catch {
+    return null;
+  }
+}
+
+// Fetch deployer (tradfi) market data
+export async function fetchDeployerMetaAndAssetCtxs(dex = "xyz"): Promise<{ universe: Array<{ name: string; maxLeverage?: number }>; assetCtxs: AssetCtx[] } | null> {
+  try {
+    const [meta, ctxs] = await apiPost<[{ universe: Array<{ name: string; maxLeverage?: number }> }, AssetCtx[]]>({ type: "metaAndAssetCtxs", dex }, 8000);
+    return { universe: meta.universe, assetCtxs: ctxs };
+  } catch {
+    return null;
+  }
+}
+
+// Fetch all mid-market prices for deployer (tradfi) coins
+export async function fetchDeployerAllMids(dex = "xyz"): Promise<Record<string, string> | null> {
+  try {
+    return await apiPost<Record<string, string>>({ type: "allMids", dex }, 5000);
   } catch {
     return null;
   }

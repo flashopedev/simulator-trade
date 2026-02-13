@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { cn, calculateLiquidationPrice, formatNumber, COIN_DECIMALS } from "@/lib/utils";
+import { cn, calculateLiquidationPrice, formatNumber, COIN_DECIMALS, coinDisplayName } from "@/lib/utils";
 import { ChevronDown } from "lucide-react";
 import { ConfirmOrderModal } from "./ConfirmOrderModal";
 import { AdjustLeverageModal } from "./AdjustLeverageModal";
@@ -17,6 +17,10 @@ const COIN_MAX_LEVERAGE: Record<string, number> = {
   LINK: 20, ARB: 15, OP: 15, SUI: 15, WIF: 10, PEPE: 10,
   JUP: 10, TIA: 15, SEI: 10, INJ: 15, RENDER: 10, FET: 10,
   ONDO: 10, STX: 10, NEAR: 15, BONK: 5,
+  // Tradfi coins
+  "xyz:TSLA": 10, "xyz:NVDA": 10, "xyz:AAPL": 10, "xyz:GOOGL": 10, "xyz:AMZN": 10,
+  "xyz:META": 10, "xyz:MSFT": 10, "xyz:COIN": 10, "xyz:PLTR": 10, "xyz:HOOD": 10,
+  "xyz:AMD": 10, "xyz:NFLX": 10, "xyz:GOLD": 20, "xyz:MSTR": 10, "xyz:INTC": 10,
 };
 
 // Real HL fee rates
@@ -251,7 +255,7 @@ export function OrderForm({
               "font-tabular",
               currentPositionSize > 0 ? "text-acc" : currentPositionSize < 0 ? "text-red" : "text-t1"
             )}>
-              {currentPositionSize !== 0 ? `${currentPositionSize.toFixed(2).replace(".", ",")} ${coin}` : `0,00 ${coin}`}
+              {currentPositionSize !== 0 ? `${currentPositionSize.toFixed(2).replace(".", ",")} ${coinDisplayName(coin)}` : `0,00 ${coinDisplayName(coin)}`}
             </span>
           </div>
 
@@ -286,7 +290,7 @@ export function OrderForm({
               className="flex-1 bg-transparent text-[12px] font-medium outline-none font-tabular text-t1 text-right"
             />
             <div className="flex items-center gap-1 text-[12px] text-t1 ml-2">
-              <span>{coin}</span>
+              <span>{coinDisplayName(coin)}</span>
               <ChevronDown className="w-3 h-3" />
             </div>
           </div>

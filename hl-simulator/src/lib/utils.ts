@@ -87,6 +87,10 @@ export const COIN_DECIMALS: Record<string, number> = {
   STX: 3,
   NEAR: 3,
   BONK: 8,
+  // Tradfi coins (stocks use 2 decimals, gold uses 1)
+  "xyz:TSLA": 2, "xyz:NVDA": 2, "xyz:AAPL": 2, "xyz:GOOGL": 2, "xyz:AMZN": 2,
+  "xyz:META": 2, "xyz:MSFT": 2, "xyz:COIN": 2, "xyz:PLTR": 2, "xyz:HOOD": 2,
+  "xyz:AMD": 2, "xyz:NFLX": 2, "xyz:GOLD": 1, "xyz:MSTR": 2, "xyz:INTC": 2,
 };
 
 export const COIN_ICONS: Record<string, string> = {
@@ -120,6 +124,38 @@ export const SUPPORTED_COINS = [
 ] as const;
 export type SupportedCoin = (typeof SUPPORTED_COINS)[number];
 
+// Tradfi coins (deployer markets on HL, xyz: prefix)
+export const TRADFI_COINS = [
+  "xyz:TSLA", "xyz:NVDA", "xyz:AAPL", "xyz:GOOGL", "xyz:AMZN", "xyz:META", "xyz:MSFT",
+  "xyz:COIN", "xyz:PLTR", "xyz:HOOD", "xyz:AMD", "xyz:NFLX", "xyz:GOLD", "xyz:MSTR", "xyz:INTC",
+] as const;
+export type TradfiCoin = (typeof TRADFI_COINS)[number];
+
+// All tradeable coins (crypto + tradfi)
+export const ALL_SUPPORTED_COINS = [...SUPPORTED_COINS, ...TRADFI_COINS] as const;
+export type AnyCoin = SupportedCoin | TradfiCoin;
+
+export const TRADFI_NAMES: Record<string, string> = {
+  "xyz:TSLA": "Tesla", "xyz:NVDA": "NVIDIA", "xyz:AAPL": "Apple", "xyz:GOOGL": "Google",
+  "xyz:AMZN": "Amazon", "xyz:META": "Meta", "xyz:MSFT": "Microsoft", "xyz:COIN": "Coinbase",
+  "xyz:PLTR": "Palantir", "xyz:HOOD": "Robinhood", "xyz:AMD": "AMD", "xyz:NFLX": "Netflix",
+  "xyz:GOLD": "Gold", "xyz:MSTR": "MicroStrategy", "xyz:INTC": "Intel",
+};
+
+export const TRADFI_MAX_LEVERAGE: Record<string, number> = {
+  "xyz:TSLA": 10, "xyz:NVDA": 10, "xyz:AAPL": 10, "xyz:GOOGL": 10, "xyz:AMZN": 10,
+  "xyz:META": 10, "xyz:MSFT": 10, "xyz:COIN": 10, "xyz:PLTR": 10, "xyz:HOOD": 10,
+  "xyz:AMD": 10, "xyz:NFLX": 10, "xyz:GOLD": 20, "xyz:MSTR": 10, "xyz:INTC": 10,
+};
+
+export function isTradfiCoin(coin: string): boolean {
+  return coin.startsWith("xyz:");
+}
+
+export function coinDisplayName(coin: string): string {
+  return isTradfiCoin(coin) ? coin.replace("xyz:", "") : coin;
+}
+
 export const TIMEFRAMES = ["1m", "5m", "15m", "1h", "4h", "1d"] as const;
 export type Timeframe = (typeof TIMEFRAMES)[number];
 
@@ -146,4 +182,8 @@ export const FALLBACK_PRICES: Record<string, number> = {
   STX: 1.8,
   NEAR: 5.2,
   BONK: 0.00002345,
+  // Tradfi fallback prices
+  "xyz:TSLA": 417, "xyz:NVDA": 189, "xyz:AAPL": 265, "xyz:GOOGL": 313, "xyz:AMZN": 199,
+  "xyz:META": 653, "xyz:MSFT": 401, "xyz:COIN": 140, "xyz:PLTR": 127, "xyz:HOOD": 71,
+  "xyz:AMD": 207, "xyz:NFLX": 800, "xyz:GOLD": 4960, "xyz:MSTR": 121, "xyz:INTC": 47,
 };

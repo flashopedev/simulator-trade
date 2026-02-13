@@ -32,6 +32,22 @@ const SYMBOL_MAP: Record<string, string> = {
   STX: "BINANCE:STXUSDT",
   NEAR: "BINANCE:NEARUSDT",
   BONK: "BINANCE:BONKUSDT",
+  // Tradfi coins (TradingView stock symbols)
+  "xyz:TSLA": "NASDAQ:TSLA",
+  "xyz:NVDA": "NASDAQ:NVDA",
+  "xyz:AAPL": "NASDAQ:AAPL",
+  "xyz:GOOGL": "NASDAQ:GOOGL",
+  "xyz:AMZN": "NASDAQ:AMZN",
+  "xyz:META": "NASDAQ:META",
+  "xyz:MSFT": "NASDAQ:MSFT",
+  "xyz:COIN": "NASDAQ:COIN",
+  "xyz:PLTR": "NASDAQ:PLTR",
+  "xyz:HOOD": "NASDAQ:HOOD",
+  "xyz:AMD": "NASDAQ:AMD",
+  "xyz:NFLX": "NASDAQ:NFLX",
+  "xyz:GOLD": "TVC:GOLD",
+  "xyz:MSTR": "NASDAQ:MSTR",
+  "xyz:INTC": "NASDAQ:INTC",
 };
 
 // Map our timeframe IDs to TradingView interval values
@@ -85,7 +101,6 @@ function TradingViewChartComponent({ coin, timeframe = "15m" }: TradingViewChart
       timezone: "Etc/UTC",
       theme: "dark",
       style: "1",
-      locale: "en",
       backgroundColor: HL_BG_COLOR,
       gridColor: HL_GRID_COLOR,
       hide_top_toolbar: true,
@@ -94,7 +109,6 @@ function TradingViewChartComponent({ coin, timeframe = "15m" }: TradingViewChart
       hide_volume: false,
       allow_symbol_change: false,
       save_image: false,
-      calendar: false,
       withdateranges: false,
       support_host: "https://www.tradingview.com",
       studies: ["Volume@tv-basicstudies"],
@@ -130,7 +144,7 @@ function TradingViewChartComponent({ coin, timeframe = "15m" }: TradingViewChart
   return (
     <div
       ref={containerRef}
-      className="w-full h-full overflow-hidden"
+      className="w-full h-full overflow-hidden relative z-0"
       style={{ backgroundColor: "#0f1a1f" }}
     />
   );

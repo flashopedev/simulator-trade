@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import {
   calculateLiquidationPrice,
   calculatePnl,
-  type SupportedCoin,
+  coinDisplayName,
 } from "@/lib/utils";
 import type { Position, TradeHistory, OrderHistory } from "@/lib/supabase/types";
 import { notify } from "@/components/Notification";
@@ -129,7 +129,7 @@ export function useTrading({ accountId, balance, onBalanceChange }: UseTradingPr
   // Place order — handles market (instant), limit (pending), and pro (forced entry price)
   const placeOrder = useCallback(
     async (order: {
-      coin: SupportedCoin;
+      coin: string;
       side: "Long" | "Short";
       size: number;
       price: number;
@@ -174,7 +174,7 @@ export function useTrading({ accountId, balance, onBalanceChange }: UseTradingPr
           }
 
           notify(
-            `Limit ${order.side} ${order.size.toFixed(4)} ${order.coin} @ ${order.price.toFixed(2)}`,
+            `Limit ${order.side} ${order.size.toFixed(4)} ${coinDisplayName(order.coin)} @ ${order.price.toFixed(2)}`,
             "success"
           );
           return true;
@@ -291,7 +291,7 @@ export function useTrading({ accountId, balance, onBalanceChange }: UseTradingPr
               ]);
 
               notify(
-                `Reduced ${existingPosition.side} ${existingPosition.coin} by ${closedSize.toFixed(4)} | PnL: ${pnl >= 0 ? "+" : ""}${pnl.toFixed(2)}`,
+                `Reduced ${existingPosition.side} ${coinDisplayName(existingPosition.coin)} by ${closedSize.toFixed(4)} | PnL: ${pnl >= 0 ? "+" : ""}${pnl.toFixed(2)}`,
                 pnl >= 0 ? "success" : "error"
               );
               return true;
@@ -382,7 +382,7 @@ export function useTrading({ accountId, balance, onBalanceChange }: UseTradingPr
               ]);
 
               notify(
-                `Flipped to ${order.side} ${remainingSize.toFixed(4)} ${order.coin} | Close PnL: ${closePnl >= 0 ? "+" : ""}${closePnl.toFixed(2)}`,
+                `Flipped to ${order.side} ${remainingSize.toFixed(4)} ${coinDisplayName(order.coin)} | Close PnL: ${closePnl >= 0 ? "+" : ""}${closePnl.toFixed(2)}`,
                 closePnl >= 0 ? "success" : "error"
               );
               return true;
@@ -435,7 +435,7 @@ export function useTrading({ accountId, balance, onBalanceChange }: UseTradingPr
         updateBalance(newBalance);
 
         notify(
-          `${order.side} ${order.size.toFixed(4)} ${order.coin} @ ${order.price.toFixed(2)} | ${order.leverage}x`,
+          `${order.side} ${order.size.toFixed(4)} ${coinDisplayName(order.coin)} @ ${order.price.toFixed(2)} | ${order.leverage}x`,
           "success"
         );
 
@@ -510,7 +510,7 @@ export function useTrading({ accountId, balance, onBalanceChange }: UseTradingPr
         ]);
 
         notify(
-          `Closed ${position.side} ${position.coin} | PnL: ${pnl >= 0 ? "+" : ""}${pnl.toFixed(2)}`,
+          `Closed ${position.side} ${coinDisplayName(position.coin)} | PnL: ${pnl >= 0 ? "+" : ""}${pnl.toFixed(2)}`,
           pnl >= 0 ? "success" : "error"
         );
 
@@ -610,7 +610,7 @@ export function useTrading({ accountId, balance, onBalanceChange }: UseTradingPr
             updateBalance(newBalance);
 
             notify(
-              `Limit filled: ${order.side} ${order.size.toFixed(4)} ${order.coin} @ ${order.price.toFixed(2)}`,
+              `Limit filled: ${order.side} ${order.size.toFixed(4)} ${coinDisplayName(order.coin)} @ ${order.price.toFixed(2)}`,
               "success"
             );
 
@@ -711,7 +711,7 @@ export function useTrading({ accountId, balance, onBalanceChange }: UseTradingPr
             ...prev,
           ]);
 
-          notify(`LIQUIDATED ${position.side} ${position.size.toFixed(4)} ${position.coin}`, "error");
+          notify(`LIQUIDATED ${position.side} ${position.size.toFixed(4)} ${coinDisplayName(position.coin)}`, "error");
         } catch (error) {
           console.error("Liquidation error:", error);
         }

@@ -1,12 +1,12 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { type SupportedCoin, type Timeframe } from "@/lib/utils";
+import { type Timeframe, coinDisplayName, isTradfiCoin } from "@/lib/utils";
 
 /**
  * Chart legend overlay — replicates real Hyperliquid's chart legend.
- * Format: {COIN}USD · {timeframe} · Hyperliquid  ●  O{open} H{high} L{low} C{close} {change} ({pct}%)
- * OHLC data fetched from Binance Futures klines API, updated every 3s.
+ * Format: {COIN}/USDC · {timeframe} · Hyperliquid  ●  O{open} H{high} L{low} C{close} {change} ({pct}%)
+ * OHLC data fetched from Binance Futures klines API (crypto) or HL API (tradfi), updated every 3s.
  */
 
 // Map timeframe to display label (matching real HL format)
@@ -29,7 +29,7 @@ const BINANCE_INTERVAL: Record<Timeframe, string> = {
   "1d": "1d",
 };
 
-// Map coins to Binance Futures symbols
+// Map coins to Binance Futures symbols (crypto only)
 const BINANCE_SYMBOL: Record<string, string> = {
   HYPE: "HYPEUSDT",
   BTC: "BTCUSDT",
@@ -55,6 +55,16 @@ const BINANCE_SYMBOL: Record<string, string> = {
   BONK: "BONKUSDT",
 };
 
+// Map our timeframes to HL candle intervals (ms)
+const HL_CANDLE_INTERVAL: Record<Timeframe, number> = {
+  "1m": 60000,
+  "5m": 300000,
+  "15m": 900000,
+  "1h": 3600000,
+  "4h": 14400000,
+  "1d": 86400000,
+};
+
 interface OHLCData {
   open: number;
   high: number;
@@ -62,11 +72,41 @@ interface OHLCData {
   close: number;
 }
 
-function useKlineOHLC(coin: SupportedCoin, timeframe: Timeframe): OHLCData | null {
+function useKlineOHLC(coin: string, timeframe: Timeframe): OHLCData | null {
   const [ohlc, setOhlc] = useState<OHLCData | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval>>();
 
   const fetchKline = useCallback(async () => {
+    // For tradfi coins, use HL candle API directly
+    if (isTradfiCoin(coin)) {
+      try {
+        const intervalMs = HL_CANDLE_INTERVAL[timeframe];
+        const now = Date.now();
+        const startTime = now - intervalMs * 2; // get last 2 candles
+        const res = await fetch("https://api.hyperliquid.xyz/info", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            type: "candleSnapshot",
+            req: { coin, interval: `${intervalMs}`, startTime, endTime: now },
+          }),
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data && data.length > 0) {
+          const last = data[data.length - 1];
+          setOhlc({
+            open: parseFloat(last.o),
+            high: parseFloat(last.h),
+            low: parseFloat(last.l),
+            close: parseFloat(last.c),
+          });
+        }
+      } catch { /* silent */ }
+      return;
+    }
+
+    // For crypto coins, use Binance Futures API
     const symbol = BINANCE_SYMBOL[coin];
     if (!symbol) return;
     const interval = BINANCE_INTERVAL[timeframe];
@@ -91,7 +131,7 @@ function useKlineOHLC(coin: SupportedCoin, timeframe: Timeframe): OHLCData | nul
   }, [coin, timeframe]);
 
   useEffect(() => {
-    // Fetch immediately, then every 3 seconds
+    setOhlc(null); // reset on coin/timeframe change
     fetchKline();
     intervalRef.current = setInterval(fetchKline, 3000);
     return () => {
@@ -116,14 +156,16 @@ function formatOHLC(value: number): string {
 }
 
 interface ChartLegendOverlayProps {
-  coin: SupportedCoin;
+  coin: string;
   timeframe: Timeframe;
   price: number | null;
 }
 
 export function ChartLegendOverlay({ coin, timeframe }: ChartLegendOverlayProps) {
   const tfLabel = TIMEFRAME_LABEL[timeframe] || timeframe;
-  const symbolName = `${coin}USD`;
+  // Real HL uses COIN/USDC format (e.g. HYPE/USDC, TSLA/USDC)
+  const displayCoin = coinDisplayName(coin);
+  const symbolName = `${displayCoin}/USDC`;
   const ohlc = useKlineOHLC(coin, timeframe);
 
   // Calculate change and percentage
@@ -159,7 +201,7 @@ export function ChartLegendOverlay({ coin, timeframe }: ChartLegendOverlayProps)
         }}
       />
 
-      {/* OHLC values — real candle data from Binance */}
+      {/* OHLC values — real candle data */}
       {ohlc && (
         <>
           <span className="text-[12px] leading-none ml-[6px]">

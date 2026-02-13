@@ -39,12 +39,20 @@ const OHLC_DECIMALS: Record<string, number> = {
   WIF: 5, PEPE: 6, JUP: 5, TIA: 5, SEI: 6,
   INJ: 4, RENDER: 4, FET: 5, ONDO: 5, STX: 5,
   NEAR: 4, BONK: 6,
-  // Tradfi — verified from real HL TradingView
-  "xyz:GOLD": 1,
+  // Tradfi Stocks — verified from real HL TradingView
   "xyz:TSLA": 2, "xyz:NVDA": 2, "xyz:AAPL": 2, "xyz:GOOGL": 2,
   "xyz:AMZN": 2, "xyz:META": 2, "xyz:MSFT": 2, "xyz:COIN": 2,
   "xyz:PLTR": 2, "xyz:HOOD": 3, "xyz:AMD": 2, "xyz:NFLX": 3,
   "xyz:MSTR": 2, "xyz:INTC": 3,
+  "xyz:ORCL": 2, "xyz:MU": 2, "xyz:SNDK": 2, "xyz:TSM": 2, "xyz:BABA": 2,
+  "xyz:CRWV": 3, "xyz:CRCL": 3, "xyz:RIVN": 3, "xyz:USAR": 3,
+  // Tradfi Indices
+  "xyz:XYZ100": 0,
+  // Tradfi Commodities
+  "xyz:GOLD": 1, "xyz:SILVER": 3, "xyz:COPPER": 4, "xyz:PLATINUM": 1,
+  "xyz:NATGAS": 4, "xyz:CL": 3, "xyz:URNM": 3,
+  // Tradfi FX
+  "xyz:EUR": 4, "xyz:USDJPY": 2,
 };
 
 // Change value decimals — TradingView shows the change (close-open) with MORE
@@ -56,11 +64,20 @@ const CHANGE_DECIMALS: Record<string, number> = {
   WIF: 7, PEPE: 8, JUP: 7, TIA: 7, SEI: 8,
   INJ: 6, RENDER: 6, FET: 7, ONDO: 7, STX: 7,
   NEAR: 6, BONK: 8,
-  "xyz:GOLD": 3,
+  // Tradfi Stocks
   "xyz:TSLA": 4, "xyz:NVDA": 4, "xyz:AAPL": 4, "xyz:GOOGL": 4,
   "xyz:AMZN": 4, "xyz:META": 4, "xyz:MSFT": 4, "xyz:COIN": 4,
   "xyz:PLTR": 4, "xyz:HOOD": 5, "xyz:AMD": 4, "xyz:NFLX": 5,
   "xyz:MSTR": 4, "xyz:INTC": 5,
+  "xyz:ORCL": 6, "xyz:MU": 5, "xyz:SNDK": 4, "xyz:TSM": 4, "xyz:BABA": 6,
+  "xyz:CRWV": 5, "xyz:CRCL": 5, "xyz:RIVN": 6, "xyz:USAR": 5,
+  // Tradfi Indices
+  "xyz:XYZ100": 3,
+  // Tradfi Commodities
+  "xyz:GOLD": 3, "xyz:SILVER": 5, "xyz:COPPER": 6, "xyz:PLATINUM": 4,
+  "xyz:NATGAS": 6, "xyz:CL": 5, "xyz:URNM": 4,
+  // Tradfi FX
+  "xyz:EUR": 6, "xyz:USDJPY": 4,
 };
 
 // Duration in ms for calculating startTime

@@ -87,10 +87,19 @@ export const COIN_DECIMALS: Record<string, number> = {
   STX: 3,
   NEAR: 3,
   BONK: 8,
-  // Tradfi coins (stocks use 2 decimals, gold uses 1)
+  // Tradfi — Stocks (2-3 decimals depending on price)
   "xyz:TSLA": 2, "xyz:NVDA": 2, "xyz:AAPL": 2, "xyz:GOOGL": 2, "xyz:AMZN": 2,
   "xyz:META": 2, "xyz:MSFT": 2, "xyz:COIN": 2, "xyz:PLTR": 2, "xyz:HOOD": 2,
-  "xyz:AMD": 2, "xyz:NFLX": 2, "xyz:GOLD": 1, "xyz:MSTR": 2, "xyz:INTC": 2,
+  "xyz:AMD": 2, "xyz:NFLX": 2, "xyz:MSTR": 2, "xyz:INTC": 2,
+  "xyz:ORCL": 2, "xyz:MU": 2, "xyz:SNDK": 2, "xyz:TSM": 2, "xyz:BABA": 2,
+  "xyz:CRWV": 3, "xyz:CRCL": 3, "xyz:RIVN": 3, "xyz:USAR": 3,
+  // Tradfi — Indices
+  "xyz:XYZ100": 0,
+  // Tradfi — Commodities
+  "xyz:GOLD": 1, "xyz:SILVER": 3, "xyz:COPPER": 4, "xyz:PLATINUM": 1,
+  "xyz:NATGAS": 4, "xyz:CL": 3, "xyz:URNM": 3,
+  // Tradfi — FX
+  "xyz:EUR": 4, "xyz:USDJPY": 2,
 };
 
 export const COIN_ICONS: Record<string, string> = {
@@ -125,9 +134,19 @@ export const SUPPORTED_COINS = [
 export type SupportedCoin = (typeof SUPPORTED_COINS)[number];
 
 // Tradfi coins (deployer markets on HL, xyz: prefix)
+// Full list scraped from app.hyperliquid.xyz Tradfi tab (Feb 2026)
 export const TRADFI_COINS = [
+  // Stocks
   "xyz:TSLA", "xyz:NVDA", "xyz:AAPL", "xyz:GOOGL", "xyz:AMZN", "xyz:META", "xyz:MSFT",
-  "xyz:COIN", "xyz:PLTR", "xyz:HOOD", "xyz:AMD", "xyz:NFLX", "xyz:GOLD", "xyz:MSTR", "xyz:INTC",
+  "xyz:COIN", "xyz:PLTR", "xyz:HOOD", "xyz:AMD", "xyz:NFLX", "xyz:MSTR", "xyz:INTC",
+  "xyz:ORCL", "xyz:MU", "xyz:SNDK", "xyz:CRCL", "xyz:TSM", "xyz:RIVN", "xyz:BABA",
+  "xyz:CRWV", "xyz:USAR",
+  // Indices
+  "xyz:XYZ100",
+  // Commodities
+  "xyz:GOLD", "xyz:SILVER", "xyz:COPPER", "xyz:PLATINUM", "xyz:NATGAS", "xyz:CL", "xyz:URNM",
+  // FX
+  "xyz:EUR", "xyz:USDJPY",
 ] as const;
 export type TradfiCoin = (typeof TRADFI_COINS)[number];
 
@@ -136,16 +155,38 @@ export const ALL_SUPPORTED_COINS = [...SUPPORTED_COINS, ...TRADFI_COINS] as cons
 export type AnyCoin = SupportedCoin | TradfiCoin;
 
 export const TRADFI_NAMES: Record<string, string> = {
+  // Stocks
   "xyz:TSLA": "Tesla", "xyz:NVDA": "NVIDIA", "xyz:AAPL": "Apple", "xyz:GOOGL": "Google",
   "xyz:AMZN": "Amazon", "xyz:META": "Meta", "xyz:MSFT": "Microsoft", "xyz:COIN": "Coinbase",
   "xyz:PLTR": "Palantir", "xyz:HOOD": "Robinhood", "xyz:AMD": "AMD", "xyz:NFLX": "Netflix",
-  "xyz:GOLD": "Gold", "xyz:MSTR": "MicroStrategy", "xyz:INTC": "Intel",
+  "xyz:MSTR": "MicroStrategy", "xyz:INTC": "Intel",
+  "xyz:ORCL": "Oracle", "xyz:MU": "Micron", "xyz:SNDK": "Western Digital", "xyz:CRCL": "Circle",
+  "xyz:TSM": "TSMC", "xyz:RIVN": "Rivian", "xyz:BABA": "Alibaba",
+  "xyz:CRWV": "CoreWeave", "xyz:USAR": "USAR",
+  // Indices
+  "xyz:XYZ100": "XYZ 100 Index",
+  // Commodities
+  "xyz:GOLD": "Gold", "xyz:SILVER": "Silver", "xyz:COPPER": "Copper",
+  "xyz:PLATINUM": "Platinum", "xyz:NATGAS": "Natural Gas", "xyz:CL": "Crude Oil",
+  "xyz:URNM": "Uranium ETF",
+  // FX
+  "xyz:EUR": "Euro", "xyz:USDJPY": "USD/JPY",
 };
 
 export const TRADFI_MAX_LEVERAGE: Record<string, number> = {
+  // Stocks (all 10x)
   "xyz:TSLA": 10, "xyz:NVDA": 10, "xyz:AAPL": 10, "xyz:GOOGL": 10, "xyz:AMZN": 10,
   "xyz:META": 10, "xyz:MSFT": 10, "xyz:COIN": 10, "xyz:PLTR": 10, "xyz:HOOD": 10,
-  "xyz:AMD": 10, "xyz:NFLX": 10, "xyz:GOLD": 20, "xyz:MSTR": 10, "xyz:INTC": 10,
+  "xyz:AMD": 10, "xyz:NFLX": 10, "xyz:MSTR": 10, "xyz:INTC": 10,
+  "xyz:ORCL": 10, "xyz:MU": 10, "xyz:SNDK": 10, "xyz:CRCL": 10, "xyz:TSM": 10,
+  "xyz:RIVN": 10, "xyz:BABA": 10, "xyz:CRWV": 10, "xyz:USAR": 10,
+  // Indices
+  "xyz:XYZ100": 25,
+  // Commodities
+  "xyz:GOLD": 20, "xyz:SILVER": 20, "xyz:COPPER": 20, "xyz:PLATINUM": 20,
+  "xyz:NATGAS": 10, "xyz:CL": 20, "xyz:URNM": 10,
+  // FX
+  "xyz:EUR": 50, "xyz:USDJPY": 50,
 };
 
 export function isTradfiCoin(coin: string): boolean {
@@ -182,8 +223,17 @@ export const FALLBACK_PRICES: Record<string, number> = {
   STX: 1.8,
   NEAR: 5.2,
   BONK: 0.00002345,
-  // Tradfi fallback prices
-  "xyz:TSLA": 417, "xyz:NVDA": 189, "xyz:AAPL": 265, "xyz:GOOGL": 313, "xyz:AMZN": 199,
-  "xyz:META": 653, "xyz:MSFT": 401, "xyz:COIN": 140, "xyz:PLTR": 127, "xyz:HOOD": 71,
-  "xyz:AMD": 207, "xyz:NFLX": 800, "xyz:GOLD": 4960, "xyz:MSTR": 121, "xyz:INTC": 47,
+  // Tradfi fallback prices — Stocks
+  "xyz:TSLA": 417, "xyz:NVDA": 185, "xyz:AAPL": 259, "xyz:GOOGL": 307, "xyz:AMZN": 200,
+  "xyz:META": 649, "xyz:MSFT": 404, "xyz:COIN": 166, "xyz:PLTR": 132, "xyz:HOOD": 76,
+  "xyz:AMD": 208, "xyz:NFLX": 77, "xyz:MSTR": 135, "xyz:INTC": 47,
+  "xyz:ORCL": 160, "xyz:MU": 411, "xyz:SNDK": 630, "xyz:CRCL": 60, "xyz:TSM": 366,
+  "xyz:RIVN": 18, "xyz:BABA": 155, "xyz:CRWV": 95, "xyz:USAR": 19,
+  // Tradfi fallback prices — Indices
+  "xyz:XYZ100": 24700,
+  // Tradfi fallback prices — Commodities
+  "xyz:GOLD": 5030, "xyz:SILVER": 77, "xyz:COPPER": 5.84, "xyz:PLATINUM": 2068,
+  "xyz:NATGAS": 3.08, "xyz:CL": 62.4, "xyz:URNM": 69,
+  // Tradfi fallback prices — FX
+  "xyz:EUR": 1.187, "xyz:USDJPY": 145,
 };

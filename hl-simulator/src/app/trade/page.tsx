@@ -13,6 +13,8 @@ import { NotificationContainer } from "@/components/Notification";
 import { ChartToolbar } from "@/components/ChartToolbar";
 import { PositionOverlay } from "@/components/PositionOverlay";
 import { ChartLegendOverlay } from "@/components/ChartLegendOverlay";
+import { ChartTopBar } from "@/components/ChartTopBar";
+import { ChartBottomBar } from "@/components/ChartBottomBar";
 import { useAuth } from "@/hooks/useAuth";
 import { useTrading } from "@/hooks/useTrading";
 import { useMarketData } from "@/hooks/useMarketData";
@@ -147,7 +149,9 @@ export default function TradePage() {
 
           {/* Chart area — fixed height with rounded corners */}
           <div className="h-[568px] flex-shrink-0 flex flex-col rounded-[5px] overflow-hidden bg-[#0f1a1f]">
-            <div className="flex-1 flex">
+            {/* Top bar: 5m | 1h | D | candles | Indicators */}
+            <ChartTopBar timeframe={timeframe} onTimeframeChange={setTimeframe} />
+            <div className="flex-1 flex min-h-0">
               {/* Left toolbar */}
               <ChartToolbar />
               {/* Chart + overlays */}
@@ -166,6 +170,8 @@ export default function TradePage() {
                 />
               </div>
             </div>
+            {/* Bottom bar: 5y | 1y | ... | time(UTC-8) | % | log | auto */}
+            <ChartBottomBar />
           </div>
 
           {/* Bottom Panel — fixed height, rounded */}

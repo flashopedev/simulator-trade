@@ -29,10 +29,8 @@ const CandlesIcon = () => (
 );
 
 const IndicatorsIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28" fill="currentColor">
-    <path d="M12.5 17a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9zm0-1a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"></path>
-    <path d="M8.37 12H1.5v-1h6.87a5.495 5.495 0 0 0 0 1zm8.26-1h8.87v1h-8.87a5.495 5.495 0 0 0 0-1z"></path>
-    <path d="M12 8.37V1.5h1v6.87a5.495 5.495 0 0 1-1 0zm1 8.26v8.87h-1v-8.87a5.495 5.495 0 0 1 1 0z"></path>
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28" fill="none">
+    <path stroke="currentColor" d="M20 17l-5 5M15 17l5 5M9 11.5h7M17.5 8a2.5 2.5 0 0 0-5 0v11a2.5 2.5 0 0 1-5 0"></path>
   </svg>
 );
 
